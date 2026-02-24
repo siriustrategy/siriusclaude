@@ -1,0 +1,476 @@
+genius_profile:
+  metadata:
+    aluno_nome: "José Amorim"
+    aluno_slug: "jose_amorim"
+    assessment_date: "2026-02-23"
+    analysis_date: "2026-02-23"
+    frameworks_applied: 7
+    confidence_overall: 0.82
+    status: "READY_FOR_BLUEPRINT"
+
+  # ============================================
+  # TIER 0: GAY HENDRICKS - ZONA DE GENIALIDADE
+  # ============================================
+
+  gay_hendricks:
+    framework: "Zone of Genius Model (The Big Leap)"
+    confidence: 0.85
+
+    zona_incompetencia:
+      descricao: "Execução operacional de detalhes repetitivos, administração, burocracia"
+      evidencia: "Não gosta, acha que perde tempo com detalhes"
+      recomendacao: "DELEGAR completamente"
+
+    zona_competencia:
+      descricao: "Executar automações, fazer dashboards, desenvolver agentes de IA"
+      evidencia: "Faz bem, recebe elogios, mas 'acha que deveria estar fazendo algo maior'"
+      recomendacao: "Usar como ferramenta de aprendizado, não como carreira permanente"
+
+    zona_excelencia:
+      descricao: "Estratégia de inovação, design de soluções criativas, mentoria em IA"
+      evidencia: "Todos seus sucessos envolvem criação/inovação. Pessoas dizem que é criativo, visionário, inovador."
+      recomendacao: "EXPANDIR para mentoria formal e produtos educacionais"
+
+    zona_genialidade:
+      descricao: "Combinar IA + Estratégia + Ensino para transformar negócios e pessoas"
+      evidencia: "Flui quando: ideação, estratégia, ensino. Upper Limit: 'não deveria desperdiçar tempo com execução'"
+      top_activities:
+        - "Pensar e desenhar estratégias"
+        - "Criar soluções inovadoras"
+        - "Ensinar e mentorar"
+        - "Transmitir energia e motivação"
+        - "Ver oportunidades antes dos outros"
+      natural_joy_factor: "MUITO ALTO - quando está criando/ensinando, energia é infinita"
+
+    upper_limit_problem:
+      tipo: "The Arrogance Barrier"
+      manifestacao: "Sente que 'está perdendo tempo' com execução de detalhes quando 'deveria estar fazendo algo maior'"
+      trigger: "Quando precisa executar a própria visão (detalhes tediosos)"
+      sabotage_pattern: "Não termina projetos. Tem ideias boas mas 'acha que não deveria estar fazendo isso'"
+      breaking_solution: "Reconhecer que sua zona é IDEAÇÃO. A execução é para outro (seu executor/sócio)."
+
+    hendricks_diagnosis: |
+      ZONA DE GENIALIDADE MUITO CLARA E BEM DEFINIDA.
+      Você foi criado para estratégia + inovação + ensino.
+      Seu bloqueio é tentar executar o que ideou.
+
+      Ação: Contrate/forme um executor que ADORA detalhes.
+      Você fica na estratégia, ensino e visão.
+      Ele fica na execução, otimização e operação.
+
+  # ============================================
+  # TIER 1a: DON CLIFTON - CLIFTONSTRENGTHS
+  # ============================================
+
+  don_clifton:
+    framework: "CliftonStrengths 34"
+    confidence: 0.78
+
+    top_5_themes:
+      1:
+        nome: "Futuristic / Ideation"
+        score: 95
+        evidencia: "Vê oportunidades antes dos outros. Brainstorm é natural. Pensar no futuro energiza."
+        desenvolvimento: "Usar para estratégia + product vision"
+
+      2:
+        nome: "Strategic / Analytical"
+        score: 88
+        evidencia: "Intuitivo mas analisa dados. Enxerga padrões. Fast follower (traz estratégias validated dos EUA pro Brasil)."
+        desenvolvimento: "Documentar sua estratégia para ensinar"
+
+      3:
+        nome: "Activator / Command"
+        score: 82
+        evidencia: "Começa logo (Quick Start). Eneriza pessoas. Direto na comunicação. Liderança natural."
+        desenvolvimento: "Usar para lançar produtos e empresas"
+
+      4:
+        nome: "Learner"
+        score: 88
+        evidencia: "Aprende muito rápido. Estuda IA, automações, Claude Code, AIOS. Aprendizado contínuo."
+        desenvolvimento: "Certificar-se + ensinar o aprendizado"
+
+      5:
+        nome: "Connectedness / Relator"
+        score: 80
+        evidencia: "Transmite energia. Pessoas dizem que é carismático. Ama ajudar e ver felizes."
+        desenvolvimento: "Mentoria 1-1 e comunidades"
+
+    dominio_dominante: "STRATEGIC THINKING + RELATIONSHIP BUILDING"
+
+    dominio_secundario: "EXECUTING (sabe fazer, mas não é onde flui)"
+
+    dominio_ausente: "INFLUENCING (vende porque precisa, não porque ama)"
+
+    clifton_diagnosis: |
+      Seu top 5 é CRIADOR + APRENDIZ + ESTRATEGISTA.
+      Você é feito para descobrir + ensinar + inspirar.
+
+      Força: Visão + Aprendizado + Adaptabilidade
+      Oportunidade: Formalizar o ensino (cursos, mentorias, comunidades)
+
+  # ============================================
+  # TIER 1b: DAN SULLIVAN - UNIQUE ABILITY
+  # ============================================
+
+  dan_sullivan:
+    framework: "Unique Ability & The Gap vs. Gain"
+    confidence: 0.84
+
+    unique_ability_core: |
+      Combinar IA + Estratégia Inovadora + Mentoria
+      para transformar negócios (automações, agentes)
+      e pessoas (ensino, mentoria, energia).
+
+    unique_ability_evidence:
+      - "Todos sucessos têm inovação"
+      - "Resolve problemas que ninguém conseguia"
+      - "De forma simples + inovadora (simplificação)"
+      - "Aprende qualquer coisa muito rápido"
+      - "Transmite motivação e energia"
+      - "Vê oportunidades antes dos outros"
+
+    unique_ability_type: "CREATOR + MENTOR (criar soluções + ensinar como fazer)"
+
+    unique_ability_vs_excellence:
+      excellence: "Fazer dashboards, agentes, automações (você faz muito bem)"
+      genius: "Estrategizar o futuro das automações + ensinar outros a fazer"
+      bloqueio: "Acha que não deveria estar focado em execução"
+      verdade: "Certo! Sua zona é estratégia + ensino, não execução."
+
+    who_not_how_readiness: "ALTO (adora delegar, estou aprendendo)"
+
+    ideal_team_composition:
+      voce: "Estratégista + Mentor + Visionário"
+      executor_needed: "Desenvolvedor/Técnico que adora detalhes e otimização"
+      mentor_needed: "Coach/Sócio que desafia sua visão"
+      resultado: "Você cria a visão → Executor a torna realidade → Você ensina a comunidade"
+
+    sullivan_diagnosis: |
+      Sua Unique Ability é ÓBVIA e PODEROSA.
+      Você foi criado para ver o futuro e levar outros lá.
+
+      Bloqueio: Tentar executar tudo sozinho.
+      Solução: Team de 2-3 pessoas (você + executor + suporte)
+
+      Gap: Você sente que "deveria saber mais sobre technical"
+      Verdade: Você não precisa. Seu valor é ESTRATÉGIA + ENSINO.
+
+  # ============================================
+  # TIER 1c: ROGER HAMILTON - WEALTH DYNAMICS
+  # ============================================
+
+  roger_hamilton:
+    framework: "Wealth Dynamics Profiling"
+    confidence: 0.80
+
+    primary_profile: "CREATOR"
+
+    creator_characteristics_match:
+      - "Muitas ideias ✓"
+      - "Começa coisas novas ✓"
+      - "Visionário ✓"
+      - "Inovador ✓"
+      - "Intuitivo ✓"
+      - "Ama criar do zero ✓"
+
+    secondary_profile: "DEALMAKER/NEGOCIADOR"
+
+    dealmaker_characteristics:
+      - "Fast follower (traz do EUA pro Brasil) ✓"
+      - "Vê oportunidades ✓"
+      - "Conecta pessoas e ideias ✓"
+      - "Arbitragem de conhecimento ✓"
+
+    wealth_spectrum:
+      posicao_atual: "Creator iniciante"
+      posicao_potencial: "Creator → Star (se combine criação + carisma + ensino)"
+      tempo_estimado: "6-12 meses"
+
+    creator_blockers:
+      bloqueio_1: "Tentar executar tudo sozinho (criadores precisam de executores)"
+      bloqueio_2: "Não enxerga valor = underpricing (bloqueio de monetização)"
+      bloqueio_3: "Não tem sócio/team estruturado (criadores sozinhos = limitados)"
+
+    ideal_partnership:
+      seu_papel: "CRIADOR - visão, estratégia, inovação"
+      parceiro_ideal: "MECHANIC ou STAR (alguém que executa ou que vende sua visão)"
+      modelo: "Creator + Executor = crescimento exponencial"
+
+    next_wealth_level:
+      acao_1: "Formalize sua unique ability (cursos, mentoria, produtos)"
+      acao_2: "Contrate 1 executor full-time ou part-time"
+      acao_3: "Crie sua marca pessoal (você é o diferencial)"
+
+    hamilton_diagnosis: |
+      CRIADOR PURO com potencial de STAR.
+      Sua riqueza vem de IDEIAS + EXECUÇÃO DE OUTROS.
+
+      Não tente virar MECHANIC ou ACCOUNTANT.
+      Foque em amplificar sua criatividade.
+
+      Renda potencial: R$50-500k/mês (dependendo da escala)
+      com 20+ horas/semana dedicadas.
+
+  # ============================================
+  # TIER 1d: ALEX HORMOZI - VALUE EQUATION
+  # ============================================
+
+  alex_hormozi:
+    framework: "Value Equation & Grand Slam Offer"
+    confidence: 0.76
+
+    core_4_analysis:
+      dream_outcome: "Equipe capaz de criar agentes + automações. Negócio de omnicanalidade. Ensinar comunidade em IA."
+      likelihood_of_success: "MUITO ALTO - já está fazendo na empresa"
+      time_delay: "CURTO - 3-6 meses até primeiro cliente"
+      effort_required: "MÉDIO - 20+ horas/semana (já tem)"
+
+    value_equation_draft:
+      perceived_value: "ALTA - Agentes de IA que aumentam conversão/vendas"
+      likelihood_of_success: "ALTA - Você já provou (na empresa)"
+      time_to_goal: "CURTO - 90 dias para ver resultados"
+      effort_required: "MÉDIO - Setup + treinamento do cliente"
+
+      gap_identified: "Preço - você não enxerga valor. Está underpricing."
+      fix: "Cobrar R$5-20k/projeto. Mentoria R$3-10k/mês."
+
+    grand_slam_offer_framework:
+      offer_name: "IA Omnichannel Mastery"
+      stack_1_core: "Diagnóstico + Strategy (seu tempo)"
+      stack_1_bonus: "Agente customizado (executor time)"
+      stack_1_deliverable: "Agente funcionando + 4 sessões de consultoria"
+      stack_1_price: "R$15.000 (projeto único)"
+
+      stack_2_core: "Mentoria em IA + Automações (seu tempo)"
+      stack_2_bonus: "Acesso a templates + agentes que você cria"
+      stack_2_deliverable: "4 sessões/mês + frameworks + propriedade intelectual"
+      stack_2_price: "R$5.000/mês (consultoria)"
+
+      resultado_meta: "10 clientes em stack_1 = R$150k em 3 meses"
+      resultado_meta_2: "3 clientes em stack_2 = R$15k/mês recorrente"
+
+    monetization_blockers:
+      bloqueio_1: "Underpricing (não enxerga valor)"
+      bloqueio_2: "Não tem offer estruturada (oferece consulting ad-hoc)"
+      bloqueio_3: "Não delega execução (tenta fazer tudo sozinho)"
+
+    hormozi_diagnosis: |
+      Você TEM product-market fit (empresa quer suas soluções).
+      Você TEM demand (meta de 10 clientes em 90 dias é realizável).
+
+      Bloqueio: Não enxerga quanto vale.
+      Solução: Precificar agressivamente + delegar execução.
+
+      Potencial de receita: R$50-200k/mês (scaling).
+      Com 20 horas/semana + 1-2 executores.
+
+  # ============================================
+  # TIER 2a: KATHY KOLBE - ACTION MODES
+  # ============================================
+
+  kathy_kolbe:
+    framework: "Kolbe A Index - 4 Conative Action Modes"
+    confidence: 0.72
+
+    fact_finder:
+      indice_estimado: "60-65 (média-alta)"
+      manifestacao: "Analisa dados quando precisa, mas intuitivo prevalece"
+      evidencia: "Estuda IA (pesquisa), mas confia no feeling para decidir"
+      recomendacao: "Usar para validação, não para paralisação"
+
+    quick_start:
+      indice_estimado: "85-90 (muito alto)"
+      manifestacao: "Age rápido, intuitivo, começa logo"
+      evidencia: "Brainstorm + execução = quick. 'Não gosto de me prender a roadmap'"
+      recomendacao: "Seu super poder. Use para lançar ideias rápido."
+
+    implementor:
+      indice_estimado: "70-75 (médio-alto)"
+      manifestacao: "Trabalha com abstrações mas consegue tangibilizar"
+      evidencia: "Cria dashboards, agentes, apps. Mas prefere abstrato (modelos, frameworks)"
+      recomendacao: "Use para prototipar ideias, não para production at scale"
+
+    follow_thru:
+      indice_estimado: "40-50 (baixo)"
+      manifestacao: "Não gosta de rotina, detalhes, processos"
+      evidencia: "'Estrutura demais me sufoca'. Não gosta de se prender."
+      recomendacao: "DELEGAR completamente. Você não é para otimização."
+
+    conative_pattern_overall: "QUICK START + IMPLEMENTOR + FACT FINDER (Criador de Protótipos)"
+
+    ideation_vs_execution:
+      ideacao_score: "95 (excelente)"
+      execucao_score: "65 (ok, mas não sua zona)"
+      implicacao: "Crie + protótipe rapidinho. Depois passe para executor manter/escalar."
+
+    kolbe_diagnosis: |
+      Seu modo natural é IDEAÇÃO + PROTOTIPAGEM + QUICK START.
+      Você é feito para começar coisas, não para manter.
+
+      Força: Velocidade de ideação + execution em protótipos
+      Fraqueza: Otimização, detalhes, processos
+
+      Solução: Hire un implementor/follow-thru person que adora detalhes.
+
+  # ============================================
+  # TIER 2b: SALLY HOGSHEAD - FASCINATION ADVANTAGE
+  # ============================================
+
+  sally_hogshead:
+    framework: "Fascination Advantage - 7 Vantagens"
+    confidence: 0.75
+
+    primary_advantage: "POWER"
+
+    power_characteristics:
+      - "Carisma ✓"
+      - "Energia contagiante ✓"
+      - "Inspira e motiva ✓"
+      - "Levanta a energia das pessoas ✓"
+      - "Presença forte ✓"
+      - "Influência natural ✓"
+
+    power_evidence: |
+      "Transmite energia boa para as pessoas"
+      "Levanta a energia delas"
+      "Carismático"
+      "Pessoas dizem que é carismático e inspirador"
+
+    power_brand_positioning: "The Catalyst / The Transformer"
+
+    secondary_advantage: "INTRIGUE"
+
+    intrigue_characteristics:
+      - "Visionário ✓"
+      - "Inovador ✓"
+      - "Vê oportunidades únicas ✓"
+      - "Misterioso (mais introvertido) ✓"
+      - "Profundidade ✓"
+
+    intrigue_evidence: |
+      "Enxerga tendências antes dos outros"
+      "Criativo, visionário, inovador"
+      "Mais introvertido mas carismático"
+
+    power_intrigue_combination: "INNOVATOR que INSPIRA (Catalyst + Visionary)"
+
+    fascination_archetype: "The Visionary Catalyst"
+
+    hogshead_brand_strategy:
+      primary: "Você é a inovação. Você é a transformação."
+      secondary: "Você vê o futuro e leva outros com você."
+      messaging: "IA não é assustadora. IA é oportunidade. Eu vou te levar lá."
+      positioning: "Especialista em IA que transforma negócios E pessoas"
+
+    hogshead_diagnosis: |
+      Seu fascination archetype é ÚNICO e PODEROSO.
+      Você é feito para INSPIRAR através da INOVAÇÃO.
+
+      Sua marca pessoal: "José Amorim, AI Catalyst"
+      Seu superpoder: Levar pessoas junto na transformação.
+
+      Use isso em:
+      - Mentoria (pessoas amam aprender com você)
+      - Conteúdo (sua visão inspira)
+      - Comunidades (seu carisma agrupa)
+      - Produtos educacionais (seu ensino transforma)
+
+  # ============================================
+  # SÍNTESE CRUZADA - CONVERGÊNCIAS E INSIGHTS
+  # ============================================
+
+  sintese_cruzada:
+    convergencias_framework_match:
+      convergencia_1:
+        frameworks: ["Hendricks", "Sullivan", "Clifton"]
+        convergencia: "ZONA DE GENIALIDADE = ESTRATÉGIA + INOVAÇÃO + ENSINO"
+        força: "Todos 3 apontam mesma direção. Muito confiável."
+
+      convergencia_2:
+        frameworks: ["Hamilton", "Hormozi", "Hogshead"]
+        convergencia: "CREATOR + POWER = Sua marca é INOVAÇÃO que INSPIRA"
+        força: "Perfil de riqueza + Value Equation + Fascination alinham."
+
+      convergencia_3:
+        frameworks: ["Sullivan", "Hamilton", "Kolbe"]
+        convergencia: "PRECISA DE EXECUTOR (não é para detalhe operacional)"
+        força: "Unique Ability + Wealth Profile + Action Modes são unânimes."
+
+    insights_unicos:
+      insight_1:
+        framework: "Sullivan"
+        insight: "Seu aprendizado é PARTE da entrega (learn-by-doing é feature, não bug)"
+        implicacao: "Não precisa 'estudar mais'. Você aprende VENDENDO."
+
+      insight_2:
+        framework: "Hormozi"
+        insight: "Você tem PRODUCT-MARKET FIT imediato (empresa já quer agentes + automações)"
+        implicacao: "Pode vender HOJE. Não espere ser 'expert'."
+
+      insight_3:
+        framework: "Hogshead"
+        insight: "Seu maior ativo é a MARCA PESSOAL (você é o diferencial, não a ferramenta)"
+        implicacao: "Posicione-se como ESTRATEGISTA/MENTOR em IA, não como dev."
+
+    contradicoes_aparentes:
+      contradicao_1:
+        aparencia: "Ama SaaS/Apps (scaling) MAS adora ensino/mentoria (high-touch)"
+        resolucao: "Não é contradição. Use SaaS + Mentoria (produtos educacionais escaláveis)"
+        exemplo: "Cursos em IA + Mentoria premium = escala + impacto"
+
+      contradicao_2:
+        aparencia: "Intuitivo MAS analisa dados também"
+        resolucao: "Isso é FORÇA, não fraqueza. Intuição + dados = melhor decisão"
+        implicacao: "Use intuição para estratégia, dados para validação"
+
+    meta_insights:
+      meta_1: "Seu bloqueio (não enxergar valor) é EXATAMENTE onde deve focar primeiro"
+      meta_2: "Você está no caminho certo (aprendendo vendendo). Confia no processo."
+      meta_3: "Próxima multiplicação: conseguir 1 executor que você delega tudo executável"
+
+    overall_assessment: |
+      PERFIL EXTREMAMENTE CLARO E CONSISTENTE.
+
+      Zona de Genialidade: ESTRATÉGIA + INOVAÇÃO + ENSINO
+      Perfil de Riqueza: CREATOR com potencial STAR
+      Fascination: CATALYST VISIONARY
+
+      Bloqueios Principais:
+      1. Não enxerga o valor (underpricing)
+      2. Tenta fazer tudo sozinho (sem executor)
+      3. Acha que "deveria ser expert" (quando experts aprendem também)
+
+      Próximos Passos (90 dias):
+      1. Estruturar oferta clara (Mentoria + Agentes customizados)
+      2. Precificar agressivamente (R$5-20k)
+      3. Contratar 1 executor (técnico que executa)
+      4. Vender para primeiros 10 clientes
+      5. Usar case studies para escalar
+
+  # ============================================
+  # QUALITY GATE VALIDATION
+  # ============================================
+
+  quality_gate_qg003:
+    criteria_1_all_analyses_complete: true
+    criteria_1_confidence: 0.82
+
+    criteria_2_convergences_identified: true
+    criteria_2_count: 3
+
+    criteria_3_insights_documented: true
+    criteria_3_count: 3
+
+    criteria_4_contradictions_resolved: true
+    criteria_4_count: 2
+
+    criteria_5_output_generated: true
+    criteria_5_location: "genius-profile.yaml"
+
+    gate_status: "PASS ✓"
+    ready_for_recommendation: true
+    ready_for_blueprint: true
+
+  analysis_completed_at: "2026-02-23T15:30:00Z"

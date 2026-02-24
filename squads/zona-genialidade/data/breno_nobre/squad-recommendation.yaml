@@ -1,0 +1,252 @@
+squad_recommendation:
+  metadata:
+    aluno_nome: "José Amorim"
+    aluno_slug: "jose_amorim"
+    matching_date: "2026-02-23"
+    algorithm_version: "2.0"
+    total_squads_evaluated: 18
+
+  matching_algorithm:
+    scoring_layers:
+      hamilton_match_weight: "40%"
+      kolbe_match_weight: "30%"
+      clifton_match_weight: "20%"
+      context_bonus_weight: "10%"
+
+  top_3_recommendations:
+    rank_1:
+      squad_name: "Sales Navigator"
+      squad_id: "sales-navigator"
+      overall_score: 0.94
+      scores:
+        hamilton_match: 0.95
+        kolbe_match: 0.92
+        clifton_match: 0.90
+        context_bonus: 0.95
+
+      hamilton_rationale: |
+        CREATOR com tendência STAR = Sales Navigator
+        - Você cria estratégias de crescimento
+        - Precisa de executores que vendem
+        - Seu carisma + inovação = marca pessoal forte
+
+      kolbe_rationale: |
+        Quick Start (85) alinha perfeitamente com sales
+        - Você começa quick, negocia, vê oportunidades
+        - Fast follower = traz validadas do mercado
+        - Arbitragem de conhecimento = sales skill
+
+      clifton_rationale: |
+        Futuristic (95) + Strategic (88) + Activator (82)
+        - Você vê oportunidade (Futuristic)
+        - Você estrategiza (Strategic)
+        - Você começa logo (Activator)
+        = Sales Navigator DNA
+
+      context_bonus: |
+        - Você quer R$15-50k/mês em 6 meses = Sales model
+        - Você quer 10 clientes = Sales focus
+        - Você quer mentoria = Coach inside sales
+        - Squad ideal: Vender seu conhecimento + agentes
+
+      why_perfect_fit: |
+        SALES NAVIGATOR = Estrategista que vende sua própria visão
+
+        Você não vai vender porque precisa.
+        Você vai vender porque EU SOU O PRODUTO.
+
+        Sua marca = inovação em IA
+        Seu produto = agentes customizados
+        Seu serviço = mentoria em automação
+
+        Sales Navigator te leva de R$0 para R$50k/mês
+        porque o foco é VOCÊ + seu conhecimento.
+
+      squad_structure:
+        seu_papel: "Estrategista + Mentor + Marca"
+        executor_squad: "Desenvolvimento de agentes, delivery técnica"
+        mentor_squad: "Coach que te ajuda a precificar + vender"
+        resultado: "Você cria visão, eles executam, você vende expertise"
+
+      implementation_3_months:
+        semana_1_2: "Estruturar oferta (mentoria + agentes customizados)"
+        semana_3_4: "Precificar agressivamente (R$5-20k per deal)"
+        semana_5_8: "Vender para primeiros 3 clientes (mentoria)"
+        semana_9_12: "Escalar para 10 clientes (agentes) + 3 (mentoria)"
+
+      revenue_potential: "R$15-50k/mês com 20 horas/semana"
+
+    rank_2:
+      squad_name: "AI Automations"
+      squad_id: "ai-automations"
+      overall_score: 0.88
+      scores:
+        hamilton_match: 0.85
+        kolbe_match: 0.90
+        clifton_match: 0.88
+        context_bonus: 0.80
+
+      why_good_fit: |
+        AI AUTOMATIONS = Criar agentes + automações escaláveis
+
+        Você é CRIADOR de soluções em IA.
+        Este squad te deixa nessa zona 100%.
+
+        Porém: Foca mais em PRODUTO do que em MARCA.
+        Se preferir vender agentes sem sua marca,
+        este squad é ótimo. Se quer vender VOCÊ,
+        Sales Navigator é melhor.
+
+      differentiator: |
+        Sales Navigator = Você vende sua expertise
+        AI Automations = Você cria produtos escalaveis
+
+        Recomendação: Sales Navigator primeiro.
+        Depois evolua para AI Automations
+        quando tiver 20+ clientes estáveis.
+
+      revenue_potential: "R$20-100k/mês (produto escalável)"
+
+    rank_3:
+      squad_name: "Mentorship Hub"
+      squad_id: "mentorship-hub"
+      overall_score: 0.85
+      scores:
+        hamilton_match: 0.75
+        kolbe_match: 0.82
+        clifton_match: 0.95
+        context_bonus: 0.90
+
+      why_good_fit: |
+        MENTORSHIP HUB = Ensinar + capacitar pessoas
+
+        Seu Clifton Strengths alinha PERFEITO (Learner + Connectedness)
+        Sua Fascination é POWER (carisma para ensino)
+        Sua Zona é ENSINO (confirmado por Hendricks)
+
+        Porém: Foca em EDUCAÇÃO mais que em NEGÓCIO.
+        Se quer impacto, este é perfeito.
+        Se quer receita rápida, Sales Navigator é melhor.
+
+      warning: |
+        Este squad pode te deixar underpricing
+        porque educadores amam compartilhar.
+        Você precisa PRECIFICAR seu conhecimento.
+
+      revenue_potential: "R$5-30k/mês (educação)"
+
+  dream_squad_custom:
+    nome: "AI Strategist + Sales Catalyst"
+    descricao: |
+      Squad customizado para VOCÊ, combinando:
+      - Sales Navigator (estratégia de crescimento + vendas)
+      - AI Automations (criação de agentes)
+      - Mentorship Hub (ensino + impacto)
+
+    composicao:
+      voce: "Estrategista + Mentor + Marca"
+      cofounder_ideal: "Executor técnico que adora detalhes (full-time ou part-time)"
+      mentor: "Alguém que já fez R$50k+/mês em educação ou SaaS"
+
+    modelo_negocio:
+      pilar_1_agentes: "10 clientes @ R$5-20k/projeto = R$50-200k"
+      pilar_2_mentoria: "3 clientes @ R$5k/mês = R$15k recorrente"
+      pilar_3_educacao: "Cursos/comunidade = R$10-50k/mês (long-tail)"
+
+    primeiro_90_dias:
+      sprint_1: "Estruturar + vender 3 clientes de mentoria"
+      sprint_2: "Estruturar + vender 5 clientes de agentes"
+      sprint_3: "Escalar para 10 agentes + 3 mentoria + iniciar curso"
+
+    revenue_month_3: "R$35-50k/mês"
+    revenue_month_6: "R$50-150k/mês"
+
+  priority_actions:
+    action_1:
+      prioridade: "1 - IMEDIATAMENTE"
+      acao: "Definir seu positioning claro"
+      opcoes:
+        - "AI Strategist for Omnichannel Growth"
+        - "Automation Architect + AI Mentor"
+        - "Growth through Intelligence (Strategy + IA)"
+      resultado: "Sua marca ≠ sua ferramenta"
+
+    action_2:
+      prioridade: "2 - ESTA SEMANA"
+      acao: "Estruturar sua oferta (Mentoria vs Agentes vs Educação)"
+      opcoes:
+        - "Mentoria premium em IA (R$5-10k/mês)"
+        - "Agentes customizados (R$10-20k/projeto)"
+        - "Cursos/Comunidade (R$97-997/pessoa)"
+      resultado: "Oferta clara = venda mais fácil"
+
+    action_3:
+      prioridade: "3 - PROXIMAS 2 SEMANAS"
+      acao: "Precificar agressivamente"
+      recomendacao: |
+        Você está UNDERPRICING.
+
+        Seu conhecimento vale:
+        - R$5-10k/mês (mentoria)
+        - R$10-20k/projeto (agentes)
+        - R$997-5k (cursos)
+
+        Não venda mais barato que isso.
+        Se cliente não pagar, não é seu cliente.
+
+    action_4:
+      prioridade: "4 - ANTES DOS 90 DIAS"
+      acao: "Contratar/Encontrar 1 executor"
+      tipo: "Dev that loves details + operations"
+      arranjo: "Full-time, part-time, ou freelance"
+      resultado: "Você escala 3-5x quando delega"
+
+    action_5:
+      prioridade: "5 - DENTRO DE 6 MESES"
+      acao: "Validar squad escolhido com primeiros clientes"
+      metricas:
+        - "Satisfação cliente"
+        - "Receita esperada vs real"
+        - "Sua energia (still fluxing?)"
+      decision: "Continuar, pivotar, ou escalar"
+
+  squad_comparison_matrix:
+    | Squad | Foco | Receita | Energia | Escalabilidade |
+    |-------|------|---------|---------|-----------------|
+    | Sales Navigator | Você + Marca | R$15-50k | ALTA | Média |
+    | AI Automations | Produto | R$20-100k | Alta | ALTA |
+    | Mentorship Hub | Impacto | R$5-30k | ALTA | Média |
+    | Dream Squad | Híbrido | R$50-150k | MUITO ALTA | MUITO ALTA |
+
+  recommendation_logic:
+    recomendacao_1: "SALES NAVIGATOR para próximos 90 dias (foco em receita + brand)"
+    recomendacao_2: "Validar com 10 clientes"
+    recomendacao_3: "Aos 6 meses: pivotar para AI AUTOMATIONS ou manter híbrido"
+    recomendacao_4: "Ideal final: seu own squad (Sales Navigator + AI Automations + Mentorship)"
+
+  final_recommendation: |
+    SALES NAVIGATOR é a escolha certa AGORA porque:
+
+    1. Você quer R$15-50k/mês em 90 dias
+       → Sales Navigator te leva lá vendendo expertise
+
+    2. Você tem product-market fit imediato
+       → Clientes já querem agentes/automações
+
+    3. Você ama vender conhecimento (mentoria)
+       → Sales Navigator foca nisso
+
+    4. Você é Creator, não Executor
+       → Sales Navigator não te força a escalar produto tech
+
+    5. Sua marca é seu diferencial
+       → Sales Navigator AMPLIFICA sua marca
+
+    PRÓXIMO PASSO: Escolha entre Sales Navigator
+    (recomendado) ou seu own Dream Squad.
+
+    Ambos funcionam. Sales Navigator é mais rápido
+    para os próximos 90 dias.
+
+  recommendation_completed_at: "2026-02-23T15:45:00Z"
+  ready_for_blueprint: true

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Red Explosion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        // Configurar canvas para fullscreen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Caracteres que aparecem na animação
+        const characters = '01ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+
+        // Configurações
+        const fontSize = 16;
+        const fontFamily = 'monospace';
+        const columns = Math.floor(canvas.width / fontSize);
+
+        // Array para armazenar y para cada coluna
+        let drops = Array(columns).fill(0).map(() => Math.random() * canvas.height);
+        let speeds = Array(columns).fill(0).map(() => 1 + Math.random() * 4);
+
+        // Sistema de partículas para explosões
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 15;
+                this.vy = (Math.random() - 0.5) * 15;
+                this.size = Math.random() * 8 + 3;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.015;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.angularVelocity = (Math.random() - 0.5) * 0.2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.3; // gravidade
+                this.alpha -= this.decay;
+                this.rotation += this.angularVelocity;
+            }
+
+            draw(ctx) {
+                if (this.alpha <= 0) return;
+
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Desenhar partícula como quadrado rotacionado
+                ctx.fillStyle = `rgb(255, ${Math.floor(Math.random() * 100)}, 0)`;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+
+                ctx.restore();
+            }
+
+            isAlive() {
+                return this.alpha > 0;
+            }
+        }
+
+        let particles = [];
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+
+        // Rastrear movimento do mouse
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function createExplosion(x, y, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (!particles[i].isAlive()) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            for (let particle of particles) {
+                particle.draw(ctx);
+            }
+        }
+
+        function drawNeonMouseLight() {
+            // Criar gradiente radial para efeito neon
+            const gradientRadius = 120;
+            const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, gradientRadius);
+
+            // Cores do gradiente neon vermelho
+            gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+            gradient.addColorStop(0.3, 'rgba(255, 0, 0, 0.4)');
+            gradient.addColorStop(0.7, 'rgba(255, 0, 0, 0.1)');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(mouseX - gradientRadius, mouseY - gradientRadius, gradientRadius * 2, gradientRadius * 2);
+
+            // Glow adicional mais intenso no centro
+            const smallGradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 40);
+            smallGradient.addColorStop(0, 'rgba(255, 100, 100, 0.6)');
+            smallGradient.addColorStop(0.5, 'rgba(255, 0, 0, 0.2)');
+            smallGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+            ctx.fillStyle = smallGradient;
+            ctx.fillRect(mouseX - 40, mouseY - 40, 80, 80);
+
+            // Círculo brilhante no centro
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(mouseX, mouseY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function draw() {
+            // Cria efeito de fade - em vez de limpar tudo, desenha um retângulo semi-transparente
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Cor vermelha do Matrix
+            ctx.fillStyle = '#ff0000';
+            ctx.font = `${fontSize}px ${fontFamily}`;
+
+            // Desenhar caracteres
+            for (let i = 0; i < columns; i++) {
+                // Caractere aleatório
+                const char = characters[Math.floor(Math.random() * characters.length)];
+
+                // Desenhar com efeito de fade (mais claro conforme sobe)
+                const alpha = Math.max(0.1, 1 - (drops[i] / canvas.height) * 0.5);
+                ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+                ctx.font = `${fontSize}px ${fontFamily}`;
+
+                // Desenhar o caractere
+                ctx.fillText(char, i * fontSize, drops[i]);
+
+                // Criar explosão quando a letra atinge o fundo
+                if (drops[i] > canvas.height && Math.random() > 0.3) {
+                    createExplosion(i * fontSize, canvas.height, 15);
+                }
+
+                // Atualizar posição
+                drops[i] += speeds[i];
+
+                // Se caiu para fora da tela, reinicia do topo
+                if (drops[i] > canvas.height + 50) {
+                    drops[i] = 0;
+                    speeds[i] = 1 + Math.random() * 4;
+                }
+            }
+
+            // Explosões aleatórias ocasionais
+            if (Math.random() > 0.98) {
+                const randomX = Math.random() * canvas.width;
+                const randomY = Math.random() * canvas.height;
+                createExplosion(randomX, randomY, 25);
+            }
+
+            // Atualizar e desenhar partículas
+            updateParticles();
+            drawParticles();
+
+            // Desenhar luz neon do mouse
+            drawNeonMouseLight();
+
+            // Continuar animação
+            requestAnimationFrame(draw);
+        }
+
+        // Iniciar animação
+        draw();
+
+        // Detectar cliques para criar explosões no ponto clicado
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            createExplosion(x, y, 40);
+        });
+    </script>
+</body>
+</html>

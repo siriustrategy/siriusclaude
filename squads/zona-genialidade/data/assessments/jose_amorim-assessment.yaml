@@ -1,0 +1,131 @@
+assessment_result:
+  metadata:
+    id: "assessment_jose_amorim_20260223"
+    name: "José Amorim"
+    date: "2026-02-23T14:30:00Z"
+    duration_minutes: "30"
+    version: "1.0.0"
+    completeness_score: "100%"
+    assessment_quality: "EXCELLENT"
+
+  section_1_context:
+    nome: "José Amorim"
+    area_atuacao: "Tecnologia, IA, Marketing Digital, Growth, Vendas, Produtos Digitais"
+    tempo_experiencia: "1 a 3 anos"
+    descricao_dia_a_dia: "Estudo inteligência artificial, treino (musculação ou corrida), trabalho em um grupo de empresas em desenvolvimento. Cuido da parte de inovação, automação, IA. Ajudo também um pouco em marketing. Estou desenvolvendo agentes de IA que fazem vendas e suporte. Gosto muito de desenvolver dashboards para análises de dados e de sites com Lovable."
+    se_dinheiro_nao_importasse: "Viajaria o mundo, ajudaria pessoas com necessidade, ensinaria através de aulas e mentorias e imersões. Gosto muito de ajudar pessoas e vê-las felizes. Focaria em aprender produção musical e tocar como DJ. Gosto muito de espiritualidade e autoconhecimento (meu maior hobby)."
+    espectro_introextro: "Mais introvertido - gosto de pessoas mas preciso de tempo sozinho"
+    espectro_analitico_intuitivo: "Intuitivo, porém analiso dados também, mas principalmente feeling e intuição"
+    espectro_estrutura_flex: "Mais flexibilidade - estrutura demais me sufoca"
+
+  section_2_activities:
+    atividades_drenam:
+      - "Tarefas administrativas e burocráticas"
+      - "Trabalho repetitivo e operacional (rotina)"
+    atividades_energizam:
+      - "Criar coisas novas (produtos, conteúdo, arte)"
+      - "Ensinar e mentorar pessoas"
+    outros_agradecem_por: "Resolver problemas que ninguém conseguia e de forma simples com inovação. Dar motivação, levantar a energia delas, enxergar problemas como soluções."
+    perde_tempo_em: "Todas: ensino (informalmente com amigos), programação, estratégia e planejamento, estudar conteúdos inovadores. Pensar e planejar me anima MAIS do que executar. Quando começo a fazer, não é tão satisfatório."
+    como_inicia_projetos: "Gosto de fazer brainstorm, ter ideias visionárias pensando também em detalhes que fazem diferença. Não penso muito em roadmap, não gosto de me prender a coisas. Penso bastante e já vou logo executando. Porém, pensar e planejar me anima mais."
+    como_resolve_problemas: "Paro e analiso todas as opções antes de agir"
+    manual_vs_conceitual: "Coisas abstratas - modelos mentais, frameworks, ideias"
+    nivel_detalhe: "Cuida dos detalhes importantes mas não se perde nos pequenos"
+    estilo_delegacao: "Adoro delegar e estou caminhando nesse caminho. Sou inexperiente mas estou aprendendo. Sei lidar muito bem com pessoas. Estou equilibrando para ser delegador, não delegado."
+    ritmo_trabalho: "Bimodal: melhor de manhã e depois das 16h. Funciono muito bem na tarde da noite e principalmente madrugada quando animado."
+    inovacao_vs_otimizacao: "Gosto mais de criar algo do zero. Porém me amarro em pegar coisas que já existem e melhorar através de inovação e tecnologia (como trocar Excel por dashboard em Lovable)."
+    foco_vs_multitask: "Funciono extremamente bem com hiperfoco, porém 1 coisa só durante o dia todo me deixa cansativo e monótono. Máximo 1-3 projetos."
+
+  section_3_talents:
+    padrao_sucesso: "Em todos eu estava criando algo novo e inovador"
+    como_outros_descrevem: "Criativo, visionário, inovador, carismático, e principalmente que aprendo muito rápido"
+    facilidade_natural: "Enxergar tendências e oportunidades antes dos outros"
+    dominio_strengths: "PENSADOR ESTRATEGICO - trago visao de futuro"
+    frustracao_recorrente: "Processos lentos e burocráticos"
+    estilo_comunicacao: "Direto e objetivo - vou ao ponto"
+    estilo_aprendizado: "Assisto vídeos e tutoriais focados em mentor/especialista. Também gosto de observar outras pessoas e estratégias. Sou muito cabeça aberta."
+    reacao_feedback: "Analisa friamente e extrai o que é útil"
+    contribuicao_mundo: "Ensinar e capacitar pessoas a se desenvolverem"
+    competencia_vs_genialidade: "Executar o que recebo de intuição/ideias, principalmente nas questões mais burocráticas e repetitivas. Tenho ideias muito boas porém na execução não faço por achar que estou perdendo meu tempo com detalhes."
+    principal_forca: "Soluções inovadoras e aprender coisas muito rápido"
+
+  section_4_business:
+    modelo_preferido: "Criar produtos digitais (cursos, apps, ferramentas) e vender em escala"
+    tolerancia_risco: "Amo risco, porém não sei se é o melhor caminho"
+    solo_vs_time: "Nunca tive oportunidade, porém acredito que com um mentor e ao mesmo tempo liderando um time pequeno"
+    timing_mercado: "Entrar cedo em algo validado (trazer estratégias que já deram certo nos EUA para o Brasil)"
+    fonte_receita_ideal: "Pensando no dinheiro: SaaS e apps (não depender do tempo). Porém gostaria muito de ir para consultoria e ensinar pessoas."
+    relacao_preco: "Não consigo enxergar o valor no meu trabalho e conhecimento. Às vezes não percebo quanto acrescento e o valor do que sei."
+    escala_vs_profundidade: "Poucos clientes com muita profundidade (mentoria), porém também criaria produtos que abrangem muitas pessoas de forma mais básica."
+    perfil_wealth_dynamics: "CRIADOR - Tenho muitas ideias, começo coisas novas, sou visionário"
+
+  section_5_vision:
+    resultado_90_dias: "Abrir empresa de omnicanalidade e growth. Ter pelo menos 10 clientes pagando para ter automações e agentes de IA feitas por mim. 1-3 clientes recebendo consultoria."
+    meta_receita_mensal: "R$15.000 a R$50.000/mês (próximos 6 meses)"
+    maior_bloqueio: "Conhecimento - ainda estou estudando como fazer as automações. Mas reconheço que o que faço na empresa é exatamente o que vou vender, então na verdade até me ajuda. Não seria tempo perdido."
+    tempo_disponivel: "20+ horas/semana"
+    nivel_ai: "Intermediário/Avançado (usa IA no dia a dia, desenvolve automações e agentes)"
+
+  framework_synthesis:
+    gay_hendricks_signal:
+      zona_atual: "Zone of Excellence (cria dashboards, agentes, automações bem)"
+      zona_desejada: "Zone of Genius (estratégia, inovação, ensino)"
+      upper_limit_problem: "Não quer 'desperdiçar tempo' com execução de detalhes. Acha que deve estar fazendo algo 'maior'."
+      acao_recomendada: "DELEGAR a execução operacional. Sua zona é ideação + estratégia + mentoria."
+
+    dan_sullivan_signal:
+      unique_ability_core: "Combinar IA + Estratégia + Visão = criar soluções inovadoras que transformam negócios"
+      unique_ability_evidence: "Todos sucessos têm inovação. Aprende rápido. Vê oportunidades que outros não veem."
+      who_not_how_readiness: "ALTO. Adora delegar, está aprendendo. Precisa de mentor + pequeno time."
+      gap_vs_gain: "Sente que está no gap (não sabe tudo sobre automações). Mas reconhece que está no caminho certo (aprendendo vendendo)."
+
+    roger_hamilton_signal:
+      primary_profile: "CRIADOR"
+      secondary_signals: "Negociador (fast follower, arbitragem de conhecimento)"
+      wealth_spectrum: "Early stage, mas com potencial de Creator → Star (carisma, energia, inspira)"
+      ideal_partner: "Mechanic ou Supporter para executar as ideias"
+
+    alex_hormozi_signal:
+      monetization_readiness: "ALTA - tem product-market fit (empresa quer automações + agentes)"
+      core_4_opportunity: "Delivery: Cursos + Mentoria + Agentes customizados"
+      value_equation_gap: "BLOQUEIO: Não enxerga o valor do seu conhecimento. Precisa de price architecture clara."
+      grand_slam_offer_draft: "Mentoria em IA + Desenvolvimento de Agentes Customizados + Acesso a Dashboards/Templates"
+
+    kathy_kolbe_signal:
+      quick_start: "ALTO - age rápido, intuitivo, começa logo"
+      fact_finder: "MÉDIO - analisa dados também, mas intuitivo prevalece"
+      follow_thru: "BAIXO - não gosta de rotina, prefere deixar detalhes para outros"
+      implementor: "MÉDIO-ALTO - trabalha com abstrações (modelos, frameworks)"
+      recomendacao: "Seu action mode é IDEAÇÃO + ESTRATÉGIA. Delegate detail work."
+
+    sally_hogshead_signal:
+      primary_advantage: "POWER (carisma, energia, inspira, levanta a energia dos outros)"
+      secondary_advantage: "INTRIGUE (visionário, novo, inovador, vê oportunidades)"
+      mystique: "Introvertido mas carismático = magnetismo"
+      fascination_archetype: "The Innovator meets The Catalyst"
+
+  validation:
+    completeness: "43/43 perguntas respondidas (100%)"
+    quality_assessment: "EXCELENTE - respostas específicas, consistentes, substantivas"
+    consistency_check: "CONSISTENTE - padrão claro: Criador/Visionário que adora inovação e ensino, mas não execução operacional"
+    contradiction_flags: "NENHUMA contradição significativa"
+    readiness_for_analysis: "PRONTO para análise multi-framework"
+
+  assessment_notes: |
+    PERFIL MUITO CLARO E CONSISTENTE:
+
+    1. Zona de Genialidade ÓBVIA: Estratégia + Inovação em IA + Ensino
+    2. Bloqueio Principal: Acha que "desperdiça tempo" com execução (quando na verdade é sua Zona de Excelência, não Genialidade)
+    3. Modelo de Negócio: Creator que precisa de Executor/Mechanic
+    4. Oportunidade Imediata: Já tem product-market fit (empresa quer agentes + automações). Pode vender HOJE.
+    5. Bloqueio Secundário: Não enxerga valor do conhecimento (pricing issue)
+    6. Aprendizado: Está no caminho certo (learn-by-doing em IA)
+
+    RECOMENDAÇÃO IMEDIATA:
+    - Não quer "estudar mais" para vender. Está certo: aprenda VENDENDO.
+    - Procure 1 executor/desenvolvedor para escalar as automações.
+    - Posicione-se como ESTRATEGISTA + MENTOR em IA, não como dev.
+    - Squad recomendado: Sales Navigator ou AI Automations (Creator + Executor)
+
+  assessment_completed_at: "2026-02-23T15:00:00Z"
+  ready_for_analysis: true

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BN - Synkra AIOS Architect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            animation: glow-shift 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes glow-shift {
+            0%, 100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            perspective: 1000px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            width: 380px;
+            height: 240px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .card:hover {
+            transform: rotateY(180deg) translateY(-10px);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+            border: 2px solid #d4af37;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            box-shadow:
+                0 0 30px rgba(212, 175, 55, 0.3),
+                inset 0 0 30px rgba(212, 175, 55, 0.05),
+                0 20px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .front {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .back {
+            transform: rotateY(180deg);
+            flex-direction: column;
+            gap: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #b8b8b8;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .logo {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #d4af37;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .name {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37 0%, #f0e68c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin: 5px 0;
+        }
+
+        .title {
+            font-size: 13px;
+            color: #d4af37;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12px;
+            color: #9a9a9a;
+        }
+
+        .detail-icon {
+            color: #d4af37;
+            font-weight: bold;
+            min-width: 20px;
+            margin-top: 2px;
+        }
+
+        .detail-text {
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        .highlight {
+            color: #d4af37;
+            font-weight: 600;
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 4px;
+            font-size: 10px;
+            color: #d4af37;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hover effects */
+        .card-face {
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .card-face {
+            box-shadow:
+                0 0 50px rgba(212, 175, 55, 0.5),
+                inset 0 0 30px rgba(212, 175, 55, 0.1),
+                0 30px 60px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Hint text */
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 1px;
+            animation: pulse 2s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Front Face -->
+            <div class="card-face front">
+                <div class="header">
+                    <div class="logo">⚡ Synkra AIOS</div>
+                    <div class="name">BN</div>
+                    <div class="title">AI Orchestration Architect</div>
+                </div>
+                <div class="content">
+                    <div class="detail">
+                        <div class="detail-icon">◆</div>
+                        <div class="detail-text">Meta-Framework for Full Stack Development</div>
+                    </div>
+                    <div class="detail">
+                        <div class="detail-icon">◆</div>
+                        <div class="detail-text">AI-Powered Agent Orchestration</div>
+                    </div>
+                </div>
+                <div class="badges">
+                    <span class="badge">AIOS</span>
+                    <span class="badge">AI Agents</span>
+                    <span class="badge">Dev</span>
+                </div>
+            </div>
+
+            <!-- Back Face -->
+            <div class="card-face back">
+                <div class="header" style="border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 15px; text-align: left;">
+                    <div style="font-size: 11px; letter-spacing: 2px; color: #d4af37; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Framework Details</div>
+                </div>
+                <div>
+                    <div style="margin-bottom: 12px;">
+                        <div class="highlight" style="margin-bottom: 4px;">Agent System</div>
+                        <div>@dev, @qa, @architect, @pm, @po, @sm, @analyst, @aios-master</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <div class="highlight" style="margin-bottom: 4px;">Core Workflows</div>
+                        <div>Story Development • QA Loop • Spec Pipeline • Brownfield Discovery</div>
+                    </div>
+                    <div>
+                        <div class="highlight" style="margin-bottom: 4px;">Tech Stack</div>
+                        <div>TypeScript • Node.js 18+ • Docker • GitHub CLI</div>
+                    </div>
+                </div>
+                <div class="footer">
+                    Synkra AIOS v2.0 | Feb 2026
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hint">Hover para virar | Flip to see more</div>
+
+    <script>
+        // Add smooth animation on load
+        window.addEventListener('load', () => {
+            document.querySelector('.card').style.animation = 'float 3s ease-in-out infinite';
+        });
+
+        // Optional: Add click to flip for touch devices
+        document.querySelector('.card').addEventListener('click', function() {
+            this.style.transform = this.style.transform === 'rotateY(180deg) translateY(-10px)'
+                ? 'translateY(-10px)'
+                : 'rotateY(180deg) translateY(-10px)';
+        });
+    </script>
+</body>
+</html>

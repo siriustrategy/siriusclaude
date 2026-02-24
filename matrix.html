@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Rain Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        // Configurar canvas para fullscreen
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Caracteres que aparecem na animação
+        const characters = '01ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+
+        // Configurações
+        const fontSize = 16;
+        const fontFamily = 'monospace';
+        const columns = Math.floor(canvas.width / fontSize);
+
+        // Array para armazenar y para cada coluna
+        let drops = Array(columns).fill(0).map(() => Math.random() * canvas.height);
+        let speeds = Array(columns).fill(0).map(() => 1 + Math.random() * 4);
+
+        function draw() {
+            // Cria efeito de fade - em vez de limpar tudo, desenha um retângulo semi-transparente
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Cor verde do Matrix
+            ctx.fillStyle = '#00ff00';
+            ctx.font = `${fontSize}px ${fontFamily}`;
+
+            // Desenhar caracteres
+            for (let i = 0; i < columns; i++) {
+                // Caractere aleatório
+                const char = characters[Math.floor(Math.random() * characters.length)];
+
+                // Desenhar com efeito de fade (mais claro conforme sobe)
+                const alpha = Math.max(0.1, 1 - (drops[i] / canvas.height) * 0.5);
+                ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+                ctx.font = `${fontSize}px ${fontFamily}`;
+
+                // Desenhar o caractere
+                ctx.fillText(char, i * fontSize, drops[i]);
+
+                // Atualizar posição
+                drops[i] += speeds[i];
+
+                // Se caiu para fora da tela, reinicia do topo
+                if (drops[i] > canvas.height) {
+                    drops[i] = 0;
+                    speeds[i] = 1 + Math.random() * 4;
+                }
+            }
+
+            // Continuar animação
+            requestAnimationFrame(draw);
+        }
+
+        // Iniciar animação
+        draw();
+    </script>
+</body>
+</html>
