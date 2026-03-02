@@ -90,3 +90,18 @@ agentIdentity:
     performance:
       gitCheckCache: true
       gitCheckTTL: 300
+
+squads:
+  location: squads
+  autoDiscovery: true
+  registry:
+    squad-creator:
+      name: Squad Creator Premium v3.0.0
+      path: squads/squad-creator
+      enabled: true
+      slashPrefix: squadCreator
+    zona-genialidade:
+      name: Zona Genialidade
+      path: squads/zona-genialidade
+      enabled: true
+      slashPrefix: zonaGenialidade
