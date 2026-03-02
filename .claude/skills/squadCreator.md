@@ -1,5 +1,5 @@
 ---
-name: squad
+name: squad-creator-premium
 description: |
   Master orchestrator for squad creation. Creates teams of AI agents specialized
   in any domain. Use when user wants to create a new squad, clone minds, or
