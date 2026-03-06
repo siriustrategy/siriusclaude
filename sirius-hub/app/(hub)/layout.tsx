@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Sidebar from '@/components/layout/Sidebar'
-import BottomNav from '@/components/layout/BottomNav'
 
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -42,7 +41,6 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
-      <BottomNav />
     </div>
   )
 }
