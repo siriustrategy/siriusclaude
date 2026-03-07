@@ -2,11 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 
 async function sendTelegram(chatId: number, text: string) {
@@ -42,6 +37,10 @@ function parseIntent(text: string): { intent: string; data: Record<string, strin
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
     const body = await req.json()
     const message = body?.message
     if (!message) return NextResponse.json({ ok: true })
