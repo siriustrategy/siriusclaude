@@ -1470,7 +1470,22 @@ function CheckoutContent() {
               <StepOne
                 data={form}
                 onChange={handleChange}
-                onSubmit={() => setStep(2)}
+                onSubmit={async () => {
+                  // Salva lead silenciosamente (não bloqueia o fluxo)
+                  fetch('/api/asaas/lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      userId,
+                      nome: form.name,
+                      email: form.email,
+                      telefone: form.phone,
+                      produtoTipo,
+                      cursoId,
+                    }),
+                  }).catch(() => {}) // silencioso
+                  setStep(2)
+                }}
               />
             ) : (
               <StepTwo
