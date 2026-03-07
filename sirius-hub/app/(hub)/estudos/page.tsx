@@ -98,12 +98,12 @@ export default function EstudosPage() {
   if (loading) return <div style={{ color: 'var(--text-muted)', padding: 40, textAlign: 'center' }}>Carregando estudos...</div>
 
   return (
-    <div>
-      <div className="page-header">
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <div className="section-label" style={{ marginBottom: 8 }}>ESTUDOS</div>
-          <h1 className="page-title">Meus Estudos</h1>
-          <p className="page-subtitle">{totalHoras}h concluídas · {estudos.filter(e => e.status === 'Em andamento').length} em andamento</p>
+          <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>ESTUDOS</span>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Meus Estudos</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{totalHoras}h concluídas · {estudos.filter(e => e.status === 'Em andamento').length} em andamento</p>
         </div>
         <button className="btn-primary" onClick={openNew}><Plus size={16} /> Novo Estudo</button>
       </div>

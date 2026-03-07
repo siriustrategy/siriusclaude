@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import {
   LayoutDashboard, FolderOpen, BookOpen, Award,
   CalendarDays, TrendingUp, Lightbulb, Brain,
-  Plug2, Star, LogOut, ChevronRight,
+  Plug2, Star, LogOut, ChevronRight, Bot,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/ideias',       icon: Lightbulb,       label: 'Ideias' },
   { href: '/second-brain', icon: Brain,           label: 'Second Brain' },
   { href: '/integracoes',  icon: Plug2,           label: 'Integrações' },
+  { href: '/agentes',      icon: Bot,             label: 'Agentes AIOS' },
 ]
 
 export default function Sidebar() {

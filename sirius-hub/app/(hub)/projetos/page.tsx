@@ -87,13 +87,13 @@ export default function ProjetosPage() {
   if (loading) return <div style={{ color: 'var(--text-muted)', padding: 40, textAlign: 'center' }}>Carregando projetos...</div>
 
   return (
-    <div>
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
       {/* Header */}
-      <div className="page-header">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <div className="section-label" style={{ marginBottom: 8 }}>PROJETOS</div>
-          <h1 className="page-title">Meus Projetos</h1>
-          <p className="page-subtitle">{projetos.length} projeto{projetos.length !== 1 ? 's' : ''} cadastrado{projetos.length !== 1 ? 's' : ''}</p>
+          <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>PROJETOS</span>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Meus Projetos</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{projetos.length} projeto{projetos.length !== 1 ? 's' : ''} cadastrado{projetos.length !== 1 ? 's' : ''}</p>
         </div>
         <button className="btn-primary" onClick={openNew}>
           <Plus size={16} /> Novo Projeto

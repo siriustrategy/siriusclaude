@@ -87,7 +87,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="breno@siriusstrategy.com"
+                placeholder=""
                 required
                 className="input-field"
               />
@@ -107,7 +107,7 @@ export default function LoginPage() {
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder=""
                   required
                   className="input-field"
                   style={{ paddingRight: 44 }}

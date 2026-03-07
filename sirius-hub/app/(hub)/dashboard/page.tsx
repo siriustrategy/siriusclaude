@@ -77,12 +77,12 @@ export default function DashboardPage() {
   )
 
   return (
-    <div>
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <div className="section-label" style={{ marginBottom: 10 }}>VISÃO GERAL</div>
-        <h1 className="page-title gradient-text">Bom dia, Breno</h1>
-        <p className="page-subtitle">Aqui está tudo o que está acontecendo hoje.</p>
+        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>VISÃO GERAL</span>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6, marginTop: 4 }} className="gradient-text">Bom dia, Breno</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Aqui está tudo o que está acontecendo hoje.</p>
       </div>
 
       {/* KPIs */}

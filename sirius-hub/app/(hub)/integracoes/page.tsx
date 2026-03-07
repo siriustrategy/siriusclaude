@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import {
-  Plug2, Calendar, MessageCircle, LayoutList, Mic,
-  CheckCircle2, Circle, ExternalLink, ChevronRight, Zap,
-  Bot, FileText, Bell, RefreshCw,
+  Calendar, MessageCircle, LayoutList, Mic,
+  CheckCircle2, ExternalLink, ChevronDown, Zap, ArrowRight,
 } from 'lucide-react'
 
-type Status = 'conectado' | 'pendente' | 'desconectado'
+type Status = 'conectado' | 'pendente'
 
 interface Integration {
   id: string
@@ -19,225 +18,193 @@ interface Integration {
   recursos: string[]
   instrucoes: string[]
   envVar: string
+  link: string
 }
 
 const INTEGRATIONS: Integration[] = [
   {
     id: 'google-calendar',
     nome: 'Google Calendar',
-    desc: 'Sincronize suas reuniões automaticamente. Eventos do Google aparecem no módulo Reuniões em tempo real.',
+    desc: 'Reuniões do Google aparecem automaticamente no Hub.',
     status: 'pendente',
     icon: Calendar,
     cor: '#4285F4',
-    recursos: [
-      'Importar eventos automaticamente',
-      'Criar reuniões no Hub sincroniza com Google',
-      'Notificações antes das reuniões',
-      'Suporte a múltiplos calendários',
-    ],
-    instrucoes: [
-      'Crie um projeto no Google Cloud Console',
-      'Ative a API Google Calendar',
-      'Crie credenciais OAuth 2.0',
-      'Copie Client ID e Client Secret para o .env.local',
-    ],
+    recursos: ['Importar eventos automaticamente', 'Notificações antes das reuniões', 'Suporte a múltiplos calendários'],
+    instrucoes: ['Crie um projeto no Google Cloud Console', 'Ative a API Google Calendar', 'Crie credenciais OAuth 2.0', 'Cole Client ID e Client Secret no .env.local'],
     envVar: 'GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET',
+    link: 'https://console.cloud.google.com',
   },
   {
     id: 'telegram',
     nome: 'Telegram Bot',
-    desc: 'Controle o Sirius Hub pelo Telegram. Fale em português natural e o bot organiza tudo automaticamente.',
+    desc: 'Fale em português natural e o bot organiza tudo no Hub.',
     status: 'pendente',
     icon: MessageCircle,
     cor: '#229ED9',
-    recursos: [
-      '"Tive ideia de X" → cria card no Kanban',
-      '"Reunião com Fulano amanhã 15h" → cadastra reunião',
-      '"Status do projeto Y" → responde com % progresso',
-      'Jogar áudio/PDF → extrai action items com IA',
-      'Daily briefing automático toda manhã',
-    ],
-    instrucoes: [
-      'Abra o Telegram e fale com @BotFather',
-      'Digite /newbot e siga as instruções',
-      'Copie o token gerado para TELEGRAM_BOT_TOKEN',
-      'Configure o webhook: /api/telegram/webhook',
-    ],
+    recursos: ['"Tive ideia de X" → cria card no Kanban', '"Reunião amanhã 15h" → cadastra reunião', '"Status do projeto Y" → responde com progresso', 'Envia áudio/PDF → extrai action items com IA'],
+    instrucoes: ['Abra o Telegram e fale com @BotFather', 'Digite /newbot e siga as instruções', 'Copie o token para TELEGRAM_BOT_TOKEN', 'Configure o webhook: /api/telegram/webhook'],
     envVar: 'TELEGRAM_BOT_TOKEN',
+    link: 'https://t.me/BotFather',
   },
   {
     id: 'clickup',
     nome: 'ClickUp',
-    desc: 'Sincronize projetos e tarefas da empresa diretamente no Hub. Veja o backlog e atualize status sem sair do Sirius.',
+    desc: 'Projetos e tarefas da empresa direto no Hub.',
     status: 'pendente',
     icon: LayoutList,
     cor: '#7B68EE',
-    recursos: [
-      'Importar workspaces e listas da empresa',
-      'Ver tasks por projeto com status atualizado',
-      'Criar tasks no Hub que aparecem no ClickUp',
-      'Sincronização bidirecional (em breve)',
-    ],
-    instrucoes: [
-      'Acesse clickup.com → Configurações → Apps',
-      'Gere uma API Key pessoal',
-      'Copie para CLICKUP_API_KEY no .env.local',
-      'Configure CLICKUP_WORKSPACE_ID com o ID do seu workspace',
-    ],
+    recursos: ['Importar workspaces e listas da empresa', 'Ver tasks com status atualizado', 'Criar tasks no Hub que vão pro ClickUp'],
+    instrucoes: ['Acesse clickup.com → Configurações → Apps', 'Gere uma API Key pessoal', 'Cole em CLICKUP_API_KEY no .env.local', 'Adicione CLICKUP_WORKSPACE_ID'],
     envVar: 'CLICKUP_API_KEY + CLICKUP_WORKSPACE_ID',
+    link: 'https://app.clickup.com/settings/apps',
   },
   {
     id: 'plaud',
     nome: 'Plaud / Áudio',
-    desc: 'Jogue transcrições, áudios e resumos do Plaud. A IA extrai action items e cria reuniões automaticamente.',
+    desc: 'Transcrições e resumos do Plaud viram reuniões com action items.',
     status: 'pendente',
     icon: Mic,
     cor: '#F59E0B',
-    recursos: [
-      'Suporte a PDF, TXT e arquivos de áudio',
-      'Transcrição automática via Whisper API (OpenAI)',
-      'Extração de action items com IA',
-      'Criação automática de reunião com notas preenchidas',
-      'Via Telegram (arraste o arquivo) ou upload direto',
-    ],
-    instrucoes: [
-      'Configure OPENAI_API_KEY para transcrição de áudio',
-      'Arquivos PDF/TXT já funcionam sem chave extra',
-      'Pelo Telegram: envie o arquivo direto no chat com o bot',
-      'Pelo Hub: use o módulo Reuniões > "Importar do Plaud"',
-    ],
+    recursos: ['Suporte a PDF, TXT e áudio', 'Transcrição via Whisper (OpenAI)', 'Extração automática de action items', 'Via Telegram ou upload direto no Hub'],
+    instrucoes: ['Configure OPENAI_API_KEY para áudio', 'PDF/TXT já funcionam sem chave extra', 'Pelo Telegram: envie o arquivo no chat', 'Pelo Hub: Reuniões > Importar do Plaud'],
     envVar: 'OPENAI_API_KEY (para áudio)',
+    link: '#',
   },
 ]
 
-const STATUS_CONFIG: Record<Status, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  conectado: { label: 'Conectado', color: 'var(--success)', icon: CheckCircle2 },
-  pendente: { label: 'Configurar', color: 'var(--warning)', icon: Circle },
-  desconectado: { label: 'Desconectado', color: 'var(--danger)', icon: Circle },
-}
-
 export default function IntegracoesPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
-
   const conectadas = INTEGRATIONS.filter(i => i.status === 'conectado').length
 
   return (
-    <div className="space-y-6">
+    <div style={{ padding: '40px 48px', maxWidth: 900, margin: '0 auto' }}>
+
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Plug2 size={24} color="var(--accent)" />
-          Integrações
+      <div style={{ marginBottom: 32 }}>
+        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>INTEGRAÇÕES</span>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
+          Conecte o Hub ao seu mundo
         </h1>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          {conectadas}/{INTEGRATIONS.length} conectadas — Configure para ativar o Sirius Hub completo
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
+          {conectadas}/{INTEGRATIONS.length} conectadas — Configure para ativar o Sirius Hub completo.
         </p>
       </div>
 
-      {/* Visão geral do fluxo */}
-      <div className="p-5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <Zap size={14} color="var(--accent)" />
-          Como tudo se conecta
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
-          {[
-            { label: 'Telegram', icon: MessageCircle, color: '#229ED9' },
-            { label: '→', icon: null, color: '' },
-            { label: 'IA interpreta', icon: Bot, color: 'var(--accent)' },
-            { label: '→', icon: null, color: '' },
-            { label: 'Supabase', icon: null, color: '#3ECF8E' },
-            { label: '→', icon: null, color: '' },
-            { label: 'Sirius Hub', icon: null, color: 'var(--accent)' },
-          ].map((item, i) => item.label === '→' ? (
-            <ChevronRight key={i} size={14} style={{ color: 'var(--text-muted)' }} />
-          ) : (
-            <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{
-              background: (item.color || 'var(--accent)') + '20',
-              color: item.color || 'var(--accent)',
-            }}>
-              {item.icon && <item.icon size={12} />}
-              {item.label}
-            </div>
-          ))}
+      {/* Banner como funciona */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(59,91,219,0.15) 0%, rgba(124,58,237,0.08) 100%)',
+        border: '1px solid rgba(59,91,219,0.3)',
+        borderRadius: 14,
+        padding: '20px 24px',
+        marginBottom: 28,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 18,
+      }}>
+        <div style={{
+          width: 44, height: 44, flexShrink: 0,
+          background: 'rgba(59,91,219,0.2)',
+          border: '1px solid rgba(59,91,219,0.35)',
+          borderRadius: 11,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Zap size={20} color="#93c5fd" />
         </div>
-        <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
-          Você fala no Telegram → a IA interpreta a intenção → salva no Supabase → aparece no Hub automaticamente.
-        </p>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd', letterSpacing: '0.1em', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 6 }}>
+            COMO TUDO SE CONECTA
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {['Telegram', '→', 'IA interpreta', '→', 'Supabase', '→', 'Sirius Hub'].map((item, i) => (
+              item === '→'
+                ? <ArrowRight key={i} size={13} color="var(--text-muted)" />
+                : <span key={i} style={{
+                    background: 'rgba(59,91,219,0.15)',
+                    border: '1px solid rgba(59,91,219,0.25)',
+                    color: '#93c5fd',
+                    borderRadius: 6,
+                    padding: '2px 10px',
+                    fontSize: 12,
+                    fontFamily: 'Space Grotesk, sans-serif',
+                    fontWeight: 600,
+                  }}>{item}</span>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Cards de Integração */}
-      <div className="space-y-3">
+      {/* Cards de integração */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {INTEGRATIONS.map(integ => {
           const Icon = integ.icon
-          const statusCfg = STATUS_CONFIG[integ.status]
-          const StatusIcon = statusCfg.icon
           const isOpen = expanded === integ.id
+          const connected = integ.status === 'conectado'
 
           return (
-            <div key={integ.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-              {/* Card Header */}
+            <div key={integ.id} className="glass-card" style={{ overflow: 'hidden' }}>
+              {/* Header do card */}
               <button
-                className="w-full flex items-center gap-4 p-5 text-left transition-colors hover:bg-white/5"
-                style={{ background: 'var(--surface)' }}
                 onClick={() => setExpanded(isOpen ? null : integ.id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center',
+                  gap: 16, padding: '18px 22px',
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                }}
               >
-                {/* Icon */}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: integ.cor + '20' }}>
-                  <Icon size={24} style={{ color: integ.cor }} />
+                <div style={{
+                  width: 44, height: 44, flexShrink: 0, borderRadius: 11,
+                  background: `${integ.cor}18`, border: `1px solid ${integ.cor}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={20} color={integ.cor} />
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-white">{integ.nome}</p>
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium" style={{
-                      background: statusCfg.color + '20',
-                      color: statusCfg.color,
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 3 }}>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+                      {integ.nome}
+                    </span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif',
+                      padding: '2px 9px', borderRadius: 20,
+                      background: connected ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.1)',
+                      color: connected ? '#34d399' : '#fbbf24',
+                      border: `1px solid ${connected ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
                     }}>
-                      <StatusIcon size={10} />
-                      {statusCfg.label}
-                    </div>
+                      {connected ? 'Conectado' : 'Configurar'}
+                    </span>
                   </div>
-                  <p className="text-sm mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>{integ.desc}</p>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{integ.desc}</div>
                 </div>
 
-                {/* Chevron */}
-                <div style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
-                  {isOpen ? <ChevronRight size={18} style={{ transform: 'rotate(90deg)' }} /> : <ChevronRight size={18} />}
-                </div>
+                <ChevronDown size={16} color="var(--text-muted)" style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
               </button>
 
-              {/* Expanded Content */}
+              {/* Expandido */}
               {isOpen && (
-                <div className="p-5 space-y-5" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* O que faz */}
+                <div style={{ borderTop: '1px solid var(--border)', padding: '22px 22px 22px 82px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 20 }}>
                     <div>
-                      <p className="text-xs font-semibold text-white mb-2 flex items-center gap-1.5">
-                        <CheckCircle2 size={12} color="var(--success)" />
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 10 }}>
                         O que você pode fazer
-                      </p>
-                      <ul className="space-y-1.5">
+                      </div>
+                      <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {integ.recursos.map((r, i) => (
-                          <li key={i} className="text-xs flex items-start gap-2" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="mt-0.5 flex-shrink-0" style={{ color: 'var(--success)' }}>•</span>
+                          <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                            <CheckCircle2 size={13} color="var(--success)" style={{ marginTop: 2, flexShrink: 0 }} />
                             {r}
                           </li>
                         ))}
                       </ul>
                     </div>
-
-                    {/* Como configurar */}
                     <div>
-                      <p className="text-xs font-semibold text-white mb-2 flex items-center gap-1.5">
-                        <RefreshCw size={12} color="var(--accent)" />
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 10 }}>
                         Como configurar
-                      </p>
-                      <ol className="space-y-1.5">
+                      </div>
+                      <ol style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {integ.instrucoes.map((inst, i) => (
-                          <li key={i} className="text-xs flex items-start gap-2" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="font-bold flex-shrink-0" style={{ color: 'var(--accent)' }}>{i + 1}.</span>
+                          <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>{i + 1}.</span>
                             {inst}
                           </li>
                         ))}
@@ -245,36 +212,18 @@ export default function IntegracoesPage() {
                     </div>
                   </div>
 
-                  {/* Variável de ambiente */}
-                  <div className="p-3 rounded-lg" style={{ background: 'var(--surface)' }}>
-                    <p className="text-xs font-semibold text-white mb-1 flex items-center gap-1.5">
-                      <FileText size={12} style={{ color: 'var(--text-muted)' }} />
-                      Adicione ao <code className="ml-1 px-1 rounded" style={{ background: 'var(--bg-elevated)', color: 'var(--accent)', fontSize: 11 }}>.env.local</code>
-                    </p>
-                    <code className="text-xs" style={{ color: '#F59E0B' }}>{integ.envVar}</code>
-                  </div>
-
-                  {/* Action */}
-                  <div className="flex gap-3">
-                    {integ.status === 'conectado' ? (
-                      <button className="btn-secondary text-sm flex items-center gap-2">
-                        <RefreshCw size={14} />
-                        Sincronizar agora
-                      </button>
-                    ) : (
-                      <a
-                        href={
-                          integ.id === 'google-calendar' ? 'https://console.cloud.google.com' :
-                          integ.id === 'telegram' ? 'https://t.me/BotFather' :
-                          integ.id === 'clickup' ? 'https://app.clickup.com/settings/apps' :
-                          '#'
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-primary text-sm flex items-center gap-2"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        <ExternalLink size={14} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 18 }}>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif' }}>
+                        Adicione ao{' '}
+                        <code style={{ background: 'rgba(59,91,219,0.12)', color: '#93c5fd', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>.env.local</code>
+                        {' '}→{' '}
+                        <code style={{ color: '#f59e0b', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>{integ.envVar}</code>
+                      </span>
+                    </div>
+                    {integ.link !== '#' && (
+                      <a href={integ.link} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', fontSize: 13, padding: '8px 18px' }}>
+                        <ExternalLink size={13} />
                         Ir configurar
                       </a>
                     )}
@@ -286,24 +235,23 @@ export default function IntegracoesPage() {
         })}
       </div>
 
-      {/* Webhook Info */}
-      <div className="p-4 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        <p className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-          <Bell size={13} color="var(--accent)" />
-          Endpoints disponíveis para configurar
-        </p>
-        <div className="space-y-1.5">
+      {/* Endpoints */}
+      <div className="glass-card" style={{ padding: '20px 24px', marginTop: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 14 }}>
+          Endpoints disponíveis
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { path: '/api/telegram/webhook', desc: 'Recebe mensagens do bot Telegram' },
-            { path: '/api/google-calendar/sync', desc: 'Sincronização manual de eventos' },
-            { path: '/api/clickup/sync', desc: 'Importa projetos e tasks do ClickUp' },
-            { path: '/api/brain/chat', desc: 'Chat com IA do Second Brain' },
+            { path: 'POST /api/telegram/webhook', desc: 'Recebe mensagens do bot Telegram' },
+            { path: 'POST /api/google-calendar/sync', desc: 'Sincronização de eventos' },
+            { path: 'POST /api/clickup/sync', desc: 'Importa projetos e tasks do ClickUp' },
+            { path: 'POST /api/brain/chat', desc: 'Chat com a IA do Second Brain' },
           ].map(ep => (
-            <div key={ep.path} className="flex items-center gap-3 text-xs">
-              <code className="px-2 py-0.5 rounded font-mono" style={{ background: 'var(--bg-elevated)', color: 'var(--accent)' }}>
-                POST {ep.path}
+            <div key={ep.path} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#93c5fd', background: 'rgba(59,91,219,0.1)', padding: '3px 10px', borderRadius: 6 }}>
+                {ep.path}
               </code>
-              <span style={{ color: 'var(--text-muted)' }}>{ep.desc}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{ep.desc}</span>
             </div>
           ))}
         </div>

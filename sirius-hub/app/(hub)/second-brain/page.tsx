@@ -5,45 +5,43 @@ import { supabase } from '@/lib/supabase'
 import { Livro, NotaBrain, LivroStatus } from '@/lib/types'
 import Modal from '@/components/ui/Modal'
 import {
-  Brain, BookOpen, StickyNote, Sparkles, User, Star,
-  Plus, Pencil, Trash2, Send, Loader2, ChevronDown, ChevronRight,
-  Moon, Zap, Heart, Compass,
+  Brain, BookOpen, StickyNote, Sparkles, User,
+  Plus, Pencil, Trash2, Send, Loader2,
+  Moon, Zap, Heart, Compass, Star, ChevronDown, ChevronRight,
 } from 'lucide-react'
 
 type Tab = 'biblioteca' | 'notas' | 'pessoal' | 'espiritual' | 'chat'
 
 const LIVROS_BRENO: Partial<Livro>[] = [
-  { titulo: 'O Alquimista', autor: 'Paulo Coelho', categoria: 'Espiritual', subcategoria: 'Autoconhecimento', status: 'Lido', progresso: 100, cover_color: '#F59E0B', insights: 'Seguir a Lenda Pessoal. O universo conspira a favor de quem sonha com determinação.', frases_marcantes: ['Quando você quer algo, todo o universo conspira para que você realize o seu desejo.'] },
-  { titulo: 'As 48 Leis do Poder', autor: 'Robert Greene', categoria: 'Estratégia', subcategoria: 'Poder e Influência', status: 'Lido', progresso: 100, cover_color: '#1F2937', insights: 'Entender as dinâmicas de poder para navegar o mundo social com consciência.', frases_marcantes: ['Lei 1: Nunca ofusque o mestre.', 'Lei 48: Assuma uma forma amorfa.'] },
-  { titulo: 'O Caibalion', autor: 'Três Iniciados', categoria: 'Espiritual', subcategoria: 'Hermetismo', status: 'Lido', progresso: 100, cover_color: '#7C3AED', insights: 'Os 7 princípios herméticos: Mentalismo, Correspondência, Vibração, Polaridade, Ritmo, Causa e Efeito, Gênero.', frases_marcantes: ['O Todo é Mente; o Universo é Mental.', 'Como é em cima, é embaixo; como é embaixo, é em cima.'] },
-  { titulo: 'Tao Te Ching', autor: 'Lao-Tsé', categoria: 'Espiritual', subcategoria: 'Taoísmo', status: 'Lido', progresso: 100, cover_color: '#10B981', insights: 'Wu wei — agir sem forçar. A água é o símbolo maior: mole e irresistível.', frases_marcantes: ['Conhecer os outros é sabedoria. Conhecer a si mesmo é iluminação.'] },
-  { titulo: 'A Arte da Guerra', autor: 'Sun Tzu', categoria: 'Estratégia', subcategoria: 'Tática', status: 'Lido', progresso: 100, cover_color: '#DC2626', insights: 'Vencer sem lutar é a excelência suprema. Conheça o inimigo e a si mesmo.', frases_marcantes: ['A oportunidade de vencer o inimigo é proporcionada pelo próprio inimigo.'] },
-  { titulo: 'A Arte da Sedução', autor: 'Robert Greene', categoria: 'Estratégia', subcategoria: 'Persuasão', status: 'Lido', progresso: 100, cover_color: '#EC4899', insights: 'Sedução é criar desejo. Entender os arquétipos para influenciar com autenticidade.', frases_marcantes: ['A chave para a sedução é nunca deixar a outra pessoa adivinhar o próximo passo.'] },
-  { titulo: 'O Poder do Hábito', autor: 'Charles Duhigg', categoria: 'Desenvolvimento Pessoal', subcategoria: 'Produtividade', status: 'Lido', progresso: 100, cover_color: '#3B5BDB', insights: 'Loop do hábito: gatilho → rotina → recompensa. Mudar a rotina mantendo o gatilho e a recompensa.', frases_marcantes: ['Mude a rotina, mantenha o gatilho e a recompensa.'] },
-  { titulo: 'Como Fazer Amigos e Influenciar Pessoas', autor: 'Dale Carnegie', categoria: 'Desenvolvimento Pessoal', subcategoria: 'Relacionamentos', status: 'Lido', progresso: 100, cover_color: '#059669', insights: 'O nome da pessoa é o som mais doce para ela. Interesse genuíno abre portas.', frases_marcantes: ['Fique genuinamente interessado nas outras pessoas.'] },
-  { titulo: 'Manual de Persuasão do FBI', autor: 'Jack Schafer', categoria: 'Estratégia', subcategoria: 'Persuasão', status: 'Lido', progresso: 100, cover_color: '#1D4ED8', insights: 'Rapport, escuta ativa e o princípio da amizade como base de toda influência ética.', frases_marcantes: ['Faça as pessoas se sentirem bem consigo mesmas e elas gostarão de você.'] },
+  { titulo: 'O Alquimista', autor: 'Paulo Coelho', categoria: 'Espiritual', status: 'Lido', progresso: 100, cover_color: '#F59E0B', insights: 'Seguir a Lenda Pessoal. O universo conspira a favor de quem sonha com determinação.', frases_marcantes: ['Quando você quer algo, todo o universo conspira para que você realize o seu desejo.'] },
+  { titulo: 'As 48 Leis do Poder', autor: 'Robert Greene', categoria: 'Estratégia', status: 'Lido', progresso: 100, cover_color: '#374151', insights: 'Entender as dinâmicas de poder para navegar o mundo social com consciência.', frases_marcantes: ['Lei 1: Nunca ofusque o mestre.', 'Lei 48: Assuma uma forma amorfa.'] },
+  { titulo: 'O Caibalion', autor: 'Três Iniciados', categoria: 'Espiritual', status: 'Lido', progresso: 100, cover_color: '#7C3AED', insights: 'Os 7 princípios herméticos: Mentalismo, Correspondência, Vibração, Polaridade, Ritmo, Causa e Efeito, Gênero.', frases_marcantes: ['O Todo é Mente; o Universo é Mental.', 'Como é em cima, é embaixo; como é embaixo, é em cima.'] },
+  { titulo: 'Tao Te Ching', autor: 'Lao-Tsé', categoria: 'Espiritual', status: 'Lido', progresso: 100, cover_color: '#10B981', insights: 'Wu wei — agir sem forçar. A água é o símbolo maior: mole e irresistível.', frases_marcantes: ['Conhecer os outros é sabedoria. Conhecer a si mesmo é iluminação.'] },
+  { titulo: 'A Arte da Guerra', autor: 'Sun Tzu', categoria: 'Estratégia', status: 'Lido', progresso: 100, cover_color: '#DC2626', insights: 'Vencer sem lutar é a excelência suprema. Conheça o inimigo e a si mesmo.', frases_marcantes: ['A oportunidade de vencer o inimigo é proporcionada pelo próprio inimigo.'] },
+  { titulo: 'A Arte da Sedução', autor: 'Robert Greene', categoria: 'Estratégia', status: 'Lido', progresso: 100, cover_color: '#EC4899', insights: 'Sedução é criar desejo. Entender os arquétipos para influenciar com autenticidade.', frases_marcantes: ['A chave para a sedução é nunca deixar a outra pessoa adivinhar o próximo passo.'] },
+  { titulo: 'O Poder do Hábito', autor: 'Charles Duhigg', categoria: 'Desenvolvimento Pessoal', status: 'Lido', progresso: 100, cover_color: '#3B5BDB', insights: 'Loop: gatilho → rotina → recompensa. Mude a rotina mantendo o gatilho e a recompensa.', frases_marcantes: ['Mude a rotina, mantenha o gatilho e a recompensa.'] },
+  { titulo: 'Como Fazer Amigos e Influenciar Pessoas', autor: 'Dale Carnegie', categoria: 'Desenvolvimento Pessoal', status: 'Lido', progresso: 100, cover_color: '#059669', insights: 'O nome da pessoa é o som mais doce para ela. Interesse genuíno abre portas.', frases_marcantes: ['Fique genuinamente interessado nas outras pessoas.'] },
+  { titulo: 'Manual de Persuasão do FBI', autor: 'Jack Schafer', categoria: 'Estratégia', status: 'Lido', progresso: 100, cover_color: '#1D4ED8', insights: 'Rapport, escuta ativa e o princípio da amizade como base de toda influência ética.', frases_marcantes: ['Faça as pessoas se sentirem bem consigo mesmas e elas gostarão de você.'] },
 ]
 
 const STATUS_COLOR: Record<LivroStatus, string> = {
-  'Quero ler': '#6B7280',
-  'Lendo': 'var(--accent)',
-  'Lido': 'var(--success)',
+  'Quero ler': '#6B7280', 'Lendo': 'var(--accent)', 'Lido': 'var(--success)',
 }
 
-const PRINCIPIOS_HERMETICOS = [
-  { num: 'I', nome: 'Mentalismo', desc: 'O Todo é Mente. O universo é mental. Sua realidade começa no pensamento.', icon: Brain },
-  { num: 'II', nome: 'Correspondência', desc: 'Como é em cima, é embaixo. Os padrões se repetem em todas as escalas.', icon: Compass },
-  { num: 'III', nome: 'Vibração', desc: 'Nada está em repouso. Tudo vibra. Eleve sua frequência.', icon: Zap },
-  { num: 'IV', nome: 'Polaridade', desc: 'Tudo tem dois pólos. Opostos são idênticos em natureza, diferentes em grau.', icon: Moon },
-  { num: 'V', nome: 'Ritmo', desc: 'Tudo tem maré, fluxo e refluxo. Aprenda a dançar com os ciclos.', icon: Heart },
-  { num: 'VI', nome: 'Causa e Efeito', desc: 'Toda causa tem seu efeito. Seja a causa, não apenas o efeito.', icon: Star },
-  { num: 'VII', nome: 'Gênero', desc: 'O gênero está em tudo. Masculino e feminino se manifestam em todos os planos.', icon: Sparkles },
+const PRINCIPIOS = [
+  { num: 'I',   nome: 'Mentalismo',     desc: 'O Todo é Mente. O universo é mental. Sua realidade começa no pensamento.',             icon: Brain,   cor: '#7C3AED' },
+  { num: 'II',  nome: 'Correspondência',desc: 'Como é em cima, é embaixo. Os padrões se repetem em todas as escalas.',              icon: Compass, cor: '#3B5BDB' },
+  { num: 'III', nome: 'Vibração',       desc: 'Nada está em repouso. Tudo vibra em frequências. Eleve a sua.',                       icon: Zap,     cor: '#F59E0B' },
+  { num: 'IV',  nome: 'Polaridade',     desc: 'Tudo tem dois pólos. Opostos são idênticos em natureza, diferentes em grau.',         icon: Moon,    cor: '#6366F1' },
+  { num: 'V',   nome: 'Ritmo',          desc: 'Tudo tem maré, fluxo e refluxo. Aprenda a dançar com os ciclos da vida.',             icon: Heart,   cor: '#EC4899' },
+  { num: 'VI',  nome: 'Causa e Efeito', desc: 'Toda causa tem seu efeito. Seja a causa consciente, não apenas o efeito.',            icon: Star,    cor: '#10B981' },
+  { num: 'VII', nome: 'Gênero',         desc: 'O gênero está em tudo. Masculino e feminino se manifestam em todos os planos.',       icon: Sparkles,cor: '#F97316' },
 ]
 
+// ── Biblioteca ─────────────────────────────────────────────────────────────────
 function BibliotecaTab() {
   const [livros, setLivros] = useState<Livro[]>([])
   const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(false)
   const [selected, setSelected] = useState<Livro | null>(null)
   const [seeding, setSeeding] = useState(false)
   const [filtro, setFiltro] = useState<LivroStatus | 'Todos'>('Todos')
@@ -55,7 +53,6 @@ function BibliotecaTab() {
     setLivros(data || [])
     setLoading(false)
   }
-
   useEffect(() => { load() }, [])
 
   async function seedLibrary() {
@@ -65,89 +62,95 @@ function BibliotecaTab() {
     for (const livro of LIVROS_BRENO) {
       await supabase.from('livros').insert({ ...livro, user_id: user.id })
     }
-    setSeeding(false)
-    load()
+    setSeeding(false); load()
   }
 
   const filtered = filtro === 'Todos' ? livros : livros.filter(l => l.status === filtro)
 
-  if (loading) return <div className="flex justify-center py-20"><div className="spinner" /></div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner" /></div>
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           {(['Todos', 'Lido', 'Lendo', 'Quero ler'] as const).map(s => (
-            <button key={s} onClick={() => setFiltro(s)} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" style={{
-              background: filtro === s ? 'var(--accent)' : 'var(--surface)',
+            <button key={s} onClick={() => setFiltro(s)} style={{
+              padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              fontFamily: 'Space Grotesk, sans-serif', cursor: 'pointer', border: 'none',
+              background: filtro === s ? 'var(--accent)' : 'rgba(59,91,219,0.08)',
               color: filtro === s ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.15s',
             }}>{s}</button>
           ))}
         </div>
         {livros.length === 0 && (
-          <button className="btn-primary text-sm flex items-center gap-2" onClick={seedLibrary} disabled={seeding}>
-            {seeding ? <Loader2 size={14} className="animate-spin" /> : <BookOpen size={14} />}
+          <button className="btn-primary" onClick={seedLibrary} disabled={seeding} style={{ fontSize: 13, padding: '8px 18px' }}>
+            {seeding ? <Loader2 size={14} style={{ animation: 'spin 0.7s linear infinite' }} /> : <BookOpen size={14} />}
             Importar minha biblioteca
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14 }}>
         {filtered.map(livro => (
-          <div key={livro.id} className="rounded-xl overflow-hidden cursor-pointer group transition-transform hover:-translate-y-1" style={{ border: '1px solid var(--border)' }} onClick={() => { setSelected(livro); setModal(true) }}>
-            <div className="h-32 flex items-center justify-center relative" style={{ background: livro.cover_color || 'var(--accent)' }}>
-              <BookOpen size={32} color="rgba(255,255,255,0.6)" />
-              <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: 'rgba(0,0,0,0.5)', color: '#fff' }}>
-                {livro.progresso}%
-              </div>
+          <div key={livro.id} onClick={() => setSelected(livro)} style={{
+            borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+            border: '1px solid var(--card-border)',
+            transition: 'transform 0.15s, border-color 0.15s',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(59,91,219,0.35)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--card-border)' }}
+          >
+            <div style={{ height: 110, background: livro.cover_color, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <BookOpen size={28} color="rgba(255,255,255,0.5)" />
+              {livro.status === 'Lido' && (
+                <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(16,185,129,0.9)', borderRadius: 4, padding: '2px 6px', fontSize: 9, fontWeight: 700, color: '#fff', fontFamily: 'Space Grotesk, sans-serif' }}>LIDO</div>
+              )}
             </div>
-            <div className="p-3" style={{ background: 'var(--surface)' }}>
-              <p className="font-semibold text-xs text-white leading-tight line-clamp-2">{livro.titulo}</p>
-              <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>{livro.autor}</p>
-              <div className="mt-2 flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full" style={{ background: STATUS_COLOR[livro.status] }} />
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{livro.status}</span>
+            <div style={{ padding: '10px 12px', background: 'var(--card-bg)' }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.3, marginBottom: 3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+                {livro.titulo}
               </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{livro.autor}</div>
             </div>
           </div>
         ))}
+        {filtered.length === 0 && (
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+            <BookOpen size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+            <p style={{ fontSize: 14 }}>Nenhum livro encontrado.</p>
+          </div>
+        )}
       </div>
 
-      {/* Book Detail Modal */}
-      <Modal open={modal} onClose={() => setModal(false)} title={selected?.titulo || ''}>
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.titulo || ''}>
         {selected && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-16 rounded-lg flex items-center justify-center" style={{ background: selected.cover_color }}>
-                <BookOpen size={20} color="rgba(255,255,255,0.8)" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <div style={{ width: 52, height: 70, borderRadius: 8, background: selected.cover_color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <BookOpen size={20} color="rgba(255,255,255,0.7)" />
               </div>
               <div>
-                <p className="font-bold text-white">{selected.titulo}</p>
-                <p style={{ color: 'var(--text-muted)' }}>{selected.autor}</p>
-                <div className="flex gap-2 mt-1">
-                  <span className="badge">{selected.categoria}</span>
-                  <span className="badge">{selected.status}</span>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 4 }}>{selected.titulo}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}>{selected.autor}</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <span className="badge badge-blue">{selected.categoria}</span>
+                  <span className="badge" style={{ background: STATUS_COLOR[selected.status] + '20', color: STATUS_COLOR[selected.status], borderColor: STATUS_COLOR[selected.status] + '40' }}>{selected.status}</span>
                 </div>
               </div>
             </div>
-
             {selected.insights && (
-              <div className="p-3 rounded-lg" style={{ background: 'var(--surface)' }}>
-                <p className="text-xs font-semibold text-white mb-1">Insights Principais</p>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{selected.insights}</p>
+              <div style={{ background: 'rgba(59,91,219,0.06)', border: '1px solid rgba(59,91,219,0.15)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.07em', marginBottom: 6 }}>INSIGHTS</div>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{selected.insights}</p>
               </div>
             )}
-
             {selected.frases_marcantes?.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-white mb-2">Frases Marcantes</p>
-                <div className="space-y-2">
-                  {selected.frases_marcantes.map((f, i) => (
-                    <blockquote key={i} className="pl-3 italic text-sm" style={{ borderLeft: '2px solid var(--accent)', color: 'var(--text-secondary)' }}>
-                      "{f}"
-                    </blockquote>
-                  ))}
-                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.07em', marginBottom: 10 }}>FRASES MARCANTES</div>
+                {selected.frases_marcantes.map((f, i) => (
+                  <blockquote key={i} style={{ borderLeft: '2px solid var(--accent)', paddingLeft: 14, fontStyle: 'italic', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.6 }}>"{f}"</blockquote>
+                ))}
               </div>
             )}
           </div>
@@ -157,6 +160,7 @@ function BibliotecaTab() {
   )
 }
 
+// ── Notas ──────────────────────────────────────────────────────────────────────
 function NotasTab() {
   const [notas, setNotas] = useState<NotaBrain[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,10 +173,8 @@ function NotasTab() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { data } = await supabase.from('notas_brain').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-    setNotas(data || [])
-    setLoading(false)
+    setNotas(data || []); setLoading(false)
   }
-
   useEffect(() => { load() }, [])
 
   function openNew() { setEditing(null); setForm({ titulo: '', conteudo: '', categoria: 'Geral', tags: '' }); setModal(true) }
@@ -182,80 +184,58 @@ function NotasTab() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean)
-    if (editing) {
-      await supabase.from('notas_brain').update({ ...form, tags }).eq('id', editing.id)
-    } else {
-      await supabase.from('notas_brain').insert({ ...form, tags, user_id: user.id })
-    }
+    if (editing) await supabase.from('notas_brain').update({ ...form, tags }).eq('id', editing.id)
+    else await supabase.from('notas_brain').insert({ ...form, tags, user_id: user.id })
     setModal(false); load()
   }
 
   async function remove(id: string) {
     if (!confirm('Excluir nota?')) return
-    await supabase.from('notas_brain').delete().eq('id', id)
-    load()
+    await supabase.from('notas_brain').delete().eq('id', id); load()
   }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="spinner" /></div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner" /></div>
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <button className="btn-primary flex items-center gap-2" onClick={openNew}>
-          <Plus size={16} /> Nova Nota
-        </button>
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
+        <button className="btn-primary" onClick={openNew} style={{ gap: 8 }}><Plus size={15} />Nova Nota</button>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
         {notas.map(nota => (
-          <div key={nota.id} className="rounded-xl p-4 space-y-2 group" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="flex items-start justify-between">
-              <p className="font-semibold text-sm text-white">{nota.titulo}</p>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => openEdit(nota)} className="p-1 rounded hover:bg-white/10"><Pencil size={12} style={{ color: 'var(--text-muted)' }} /></button>
-                <button onClick={() => remove(nota.id)} className="p-1 rounded hover:bg-white/10"><Trash2 size={12} color="var(--danger)" /></button>
+          <div key={nota.id} className="glass-card" style={{ padding: '18px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>{nota.titulo}</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => openEdit(nota)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Pencil size={12} color="var(--text-muted)" /></button>
+                <button onClick={() => remove(nota.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 3 }}><Trash2 size={12} color="var(--danger)" /></button>
               </div>
             </div>
-            <p className="text-xs line-clamp-4" style={{ color: 'var(--text-secondary)' }}>{nota.conteudo}</p>
-            <div className="flex flex-wrap gap-1">
-              <span className="badge text-xs">{nota.categoria}</span>
-              {nota.tags?.map(t => <span key={t} className="badge text-xs" style={{ background: 'var(--accent)20', color: 'var(--accent)' }}>#{t}</span>)}
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden', marginBottom: 12 }}>{nota.conteudo}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+              <span className="badge badge-blue" style={{ fontSize: 10 }}>{nota.categoria}</span>
+              {nota.tags?.map(t => <span key={t} className="badge" style={{ fontSize: 10, background: 'rgba(124,58,237,0.1)', color: '#c4b5fd', borderColor: 'rgba(124,58,237,0.2)' }}>#{t}</span>)}
             </div>
           </div>
         ))}
         {notas.length === 0 && (
-          <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
-            <StickyNote size={32} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
-            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>Nenhuma nota ainda. Capture seus insights!</p>
+          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+            <StickyNote size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+            <p style={{ fontSize: 14 }}>Nenhuma nota ainda. Capture seus insights!</p>
           </div>
         )}
       </div>
-
       <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Editar Nota' : 'Nova Nota'}>
-        <div className="space-y-4">
-          <div>
-            <label className="label">Título *</label>
-            <input className="input" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} placeholder="Título da nota..." />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div><label className="label">Título</label><input className="input-field" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} placeholder="Título da nota..." /></div>
+          <div><label className="label">Conteúdo</label><textarea className="input-field" rows={5} value={form.conteudo} onChange={e => setForm({ ...form, conteudo: e.target.value })} placeholder="Escreva livremente..." /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label className="label">Categoria</label><select className="input-field" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}>{CATS.map(c => <option key={c}>{c}</option>)}</select></div>
+            <div><label className="label">Tags (vírgula)</label><input className="input-field" value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="ia, poder..." /></div>
           </div>
-          <div>
-            <label className="label">Conteúdo</label>
-            <textarea className="input" rows={6} value={form.conteudo} onChange={e => setForm({ ...form, conteudo: e.target.value })} placeholder="Escreva livremente..." />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Categoria</label>
-              <select className="input" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}>
-                {CATS.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Tags (separadas por vírgula)</label>
-              <input className="input" value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="ia, estratégia, poder..." />
-            </div>
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button className="btn-secondary flex-1" onClick={() => setModal(false)}>Cancelar</button>
-            <button className="btn-primary flex-1" onClick={save} disabled={!form.titulo}>Salvar</button>
+          <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+            <button className="btn-ghost" style={{ flex: 1 }} onClick={() => setModal(false)}>Cancelar</button>
+            <button className="btn-primary" style={{ flex: 1 }} onClick={save} disabled={!form.titulo}>Salvar</button>
           </div>
         </div>
       </Modal>
@@ -263,132 +243,116 @@ function NotasTab() {
   )
 }
 
+// ── Pessoal ────────────────────────────────────────────────────────────────────
 function PessoalTab() {
   const reflexoes = [
-    { area: 'Missão de Vida', pergunta: 'Qual é o propósito maior pelo qual estou aqui?', icon: Compass, color: 'var(--accent)' },
-    { area: 'Valores Centrais', pergunta: 'O que é inegociável para mim? Quais princípios guiam minhas decisões?', icon: Heart, color: '#EC4899' },
-    { area: 'Zona de Genialidade', pergunta: 'Em que momentos o tempo passa voando e eu produzo algo extraordinário?', icon: Zap, color: '#F59E0B' },
-    { area: 'Legado', pergunta: 'Daqui a 20 anos, o que quero que digam sobre o impacto que causei?', icon: Star, color: '#8B5CF6' },
-    { area: 'Padrões que Percebo', pergunta: 'Que padrões de comportamento e pensamento se repetem na minha vida?', icon: Brain, color: '#10B981' },
+    { area: 'Missão de Vida', pergunta: 'Qual é o propósito maior pelo qual estou aqui?', icon: Compass, cor: '#3B5BDB' },
+    { area: 'Valores Centrais', pergunta: 'O que é inegociável para mim? Quais princípios guiam minhas decisões?', icon: Heart, cor: '#EC4899' },
+    { area: 'Zona de Genialidade', pergunta: 'Em que momentos o tempo passa voando e produzo algo extraordinário?', icon: Zap, cor: '#F59E0B' },
+    { area: 'Legado', pergunta: 'Daqui a 20 anos, que impacto quero ter deixado no mundo?', icon: Star, cor: '#8B5CF6' },
+    { area: 'Padrões que Percebo', pergunta: 'Que padrões de comportamento e pensamento se repetem na minha vida?', icon: Brain, cor: '#10B981' },
   ]
-
   const [respostas, setRespostas] = useState<Record<string, string>>({})
   const [expanded, setExpanded] = useState<string | null>(null)
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div className="p-4 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-        <p className="text-sm font-semibold text-white mb-1">Mapa do Eu</p>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          Reflexões profundas que formam o seu perfil no Second Brain. Quanto mais você responde, mais o sistema te entende.
-        </p>
+    <div style={{ maxWidth: 680 }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(59,91,219,0.12) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(59,91,219,0.25)', borderRadius: 14, padding: '18px 22px', marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#93c5fd', letterSpacing: '0.08em', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 6 }}>MAPA DO EU</div>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>Reflexões profundas que formam seu perfil no Second Brain. Quanto mais você responde, mais o sistema te entende.</p>
       </div>
 
-      {reflexoes.map(r => {
-        const Icon = r.icon
-        const isOpen = expanded === r.area
-        return (
-          <div key={r.area} className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-            <button className="w-full flex items-center gap-3 p-4 text-left" style={{ background: 'var(--surface)' }} onClick={() => setExpanded(isOpen ? null : r.area)}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: r.color + '20' }}>
-                <Icon size={16} style={{ color: r.color }} />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm text-white">{r.area}</p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{r.pergunta}</p>
-              </div>
-              {isOpen ? <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />}
-            </button>
-
-            {isOpen && (
-              <div className="p-4" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}>
-                <textarea
-                  className="input w-full"
-                  rows={4}
-                  placeholder="Escreva sua reflexão aqui..."
-                  value={respostas[r.area] || ''}
-                  onChange={e => setRespostas({ ...respostas, [r.area]: e.target.value })}
-                />
-                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                  Em breve estas respostas alimentarao o seu perfil de IA personalizado.
-                </p>
-              </div>
-            )}
-          </div>
-        )
-      })}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {reflexoes.map(r => {
+          const Icon = r.icon
+          const isOpen = expanded === r.area
+          return (
+            <div key={r.area} className="glass-card" style={{ overflow: 'hidden' }}>
+              <button onClick={() => setExpanded(isOpen ? null : r.area)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: r.cor + '18', border: `1px solid ${r.cor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={16} color={r.cor} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 2 }}>{r.area}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{r.pergunta}</div>
+                </div>
+                {isOpen ? <ChevronDown size={15} color="var(--text-muted)" /> : <ChevronRight size={15} color="var(--text-muted)" />}
+              </button>
+              {isOpen && (
+                <div style={{ borderTop: '1px solid var(--border)', padding: '16px 20px' }}>
+                  <textarea className="input-field" rows={4} placeholder="Escreva sua reflexão aqui..." value={respostas[r.area] || ''} onChange={e => setRespostas({ ...respostas, [r.area]: e.target.value })} />
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Em breve estas respostas alimentarão o seu perfil de IA personalizado.</p>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
+// ── Espiritual ─────────────────────────────────────────────────────────────────
 function EspiritualTab() {
   return (
-    <div className="space-y-6 max-w-3xl">
-      {/* Intro */}
-      <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(135deg, #1a0a2e 0%, #0d1225 100%)', border: '1px solid #4C1D9560' }}>
-        <div className="flex items-center gap-3 mb-3">
-          <Moon size={20} color="#8B5CF6" />
-          <p className="font-semibold text-white">Dimensão Espiritual</p>
-        </div>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          A espiritualidade no contexto do Sirius Hub não é dogma — é a dimensão do autoconhecimento profundo, da conexão com propósito superior e do entendimento das leis universais que você já estudou.
-        </p>
-      </div>
-
-      {/* 7 Principios Herméticos */}
-      <div>
-        <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <Star size={14} color="#8B5CF6" />
-          Os 7 Princípios Herméticos — O Caibalion
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {PRINCIPIOS_HERMETICOS.map(p => {
-            const Icon = p.icon
-            return (
-              <div key={p.num} className="p-4 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold" style={{ color: '#8B5CF6' }}>Princípio {p.num}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon size={16} color="#8B5CF6" />
-                  <p className="font-bold text-sm text-white">{p.nome}</p>
-                </div>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{p.desc}</p>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Diário Espiritual */}
-      <div>
-        <p className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <Sparkles size={14} color="#F59E0B" />
-          Diário de Práticas e Sincronicidades
-        </p>
-        <div className="p-4 rounded-xl space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <textarea className="input w-full" rows={4} placeholder="Registre sonhos, sincronicidades, insights meditativos, percepções espirituais do dia..." />
-          <div className="flex gap-3">
-            <select className="input flex-1">
-              <option>Sincronicidade</option>
-              <option>Sonho</option>
-              <option>Meditação</option>
-              <option>Insight</option>
-              <option>Manifestação</option>
-              <option>Ritual</option>
-            </select>
-            <button className="btn-primary px-6">Registrar</button>
+    <div style={{ maxWidth: 780 }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(59,91,219,0.06) 100%)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Moon size={18} color="#c4b5fd" />
           </div>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Em breve: histórico de registros e padrões de sincronicidade detectados por IA.</p>
+          <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>Dimensão Espiritual</div>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+          A espiritualidade no Sirius Hub não é dogma — é autoconhecimento profundo, conexão com propósito superior e entendimento das leis universais que você já estudou.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <span className="section-label purple">OS 7 PRINCÍPIOS HERMÉTICOS — O CAIBALION</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 28 }}>
+        {PRINCIPIOS.map(p => {
+          const Icon = p.icon
+          return (
+            <div key={p.num} className="glass-card" style={{ padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: p.cor + '18', border: `1px solid ${p.cor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={15} color={p.cor} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: p.cor, fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.1em' }}>PRINCÍPIO {p.num}</div>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{p.nome}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{p.desc}</p>
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <span className="section-label">DIÁRIO DE PRÁTICAS E SINCRONICIDADES</span>
+      </div>
+      <div className="glass-card" style={{ padding: '20px 22px' }}>
+        <textarea className="input-field" rows={4} placeholder="Registre sonhos, sincronicidades, insights meditativos, percepções espirituais do dia..." style={{ marginBottom: 12 }} />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <select className="input-field" style={{ flex: 1 }}>
+            <option>Sincronicidade</option><option>Sonho</option><option>Meditação</option>
+            <option>Insight</option><option>Manifestação</option><option>Ritual</option>
+          </select>
+          <button className="btn-primary" style={{ padding: '10px 24px' }}>Registrar</button>
         </div>
       </div>
     </div>
   )
 }
 
-function ChatIATab() {
-  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
-    { role: 'ai', text: 'Olá, Breno. Sou a IA do seu Second Brain. Tenho acesso a tudo que você registrou aqui — seus livros, notas, reflexões pessoais e princípios espirituais. Me pergunte qualquer coisa sobre você mesmo, sua jornada, seus padrões ou peça insights baseados no que você estudou.' }
+// ── Chat IA ────────────────────────────────────────────────────────────────────
+function ChatTab() {
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: 'Olá, Breno. Sou a IA do seu Second Brain. Tenho acesso a tudo que você registrou — livros, notas, reflexões e princípios espirituais. Me pergunte qualquer coisa sobre você mesmo ou peça insights baseados no que estudou.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -398,113 +362,112 @@ function ChatIATab() {
 
   async function send() {
     if (!input.trim() || loading) return
-    const userMsg = input.trim()
-    setInput('')
+    const userMsg = input.trim(); setInput('')
     setMessages(prev => [...prev, { role: 'user', text: userMsg }])
     setLoading(true)
-
-    // Simulated AI response - in production, connect to /api/brain/chat
-    await new Promise(r => setTimeout(r, 1200))
-    const aiResponse = `Baseado no seu Second Brain: "${userMsg}" — Esta funcionalidade conectará ao seu histórico completo de livros, notas e reflexões para gerar insights personalizados. Configure a chave de API da IA em Integrações para ativar.`
-    setMessages(prev => [...prev, { role: 'ai', text: aiResponse }])
+    await new Promise(r => setTimeout(r, 1000))
+    setMessages(prev => [...prev, { role: 'ai', text: `Baseado no seu Second Brain: configure ANTHROPIC_API_KEY em Integrações para ativar respostas personalizadas baseadas nos seus livros e notas.` }])
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-col h-[600px]">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
+    <div style={{ display: 'flex', flexDirection: 'column', height: 560, maxWidth: 740 }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(59,91,219,0.12) 0%, rgba(124,58,237,0.08) 100%)', border: '1px solid rgba(59,91,219,0.25)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(59,91,219,0.2)', border: '1px solid rgba(59,91,219,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Brain size={16} color="#93c5fd" />
+        </div>
+        <div>
+          <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Sirius Brain — IA Personalizada</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Responde com base nos seus livros, notas e reflexões</div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className="max-w-[80%] px-4 py-3 rounded-xl text-sm leading-relaxed" style={{
-              background: m.role === 'user' ? 'var(--accent)' : 'var(--surface)',
+          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            <div style={{
+              maxWidth: '80%', padding: '12px 16px', borderRadius: 12, fontSize: 14, lineHeight: 1.6,
+              background: m.role === 'user' ? 'var(--accent)' : 'var(--card-bg)',
               color: m.role === 'user' ? '#fff' : 'var(--text-secondary)',
-              border: m.role === 'ai' ? '1px solid var(--border)' : 'none',
+              border: m.role === 'ai' ? '1px solid var(--card-border)' : 'none',
             }}>
-              {m.role === 'ai' && (
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Brain size={12} color="var(--accent)" />
-                  <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>Sirius Brain</span>
-                </div>
-              )}
+              {m.role === 'ai' && <div style={{ fontSize: 10, fontWeight: 700, color: '#93c5fd', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.07em', marginBottom: 6 }}>SIRIUS BRAIN</div>}
               {m.text}
             </div>
           </div>
         ))}
         {loading && (
-          <div className="flex justify-start">
-            <div className="px-4 py-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--accent)' }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ padding: '12px 16px', borderRadius: 12, background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <Loader2 size={16} color="var(--accent)" style={{ animation: 'spin 0.7s linear infinite' }} />
             </div>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      {/* Input */}
-      <div className="flex gap-3">
-        <input
-          className="input flex-1"
-          placeholder="Pergunte algo sobre você, seus padrões, seus livros..."
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-        />
-        <button className="btn-primary px-4" onClick={send} disabled={!input.trim() || loading}>
-          <Send size={16} />
-        </button>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <input className="input-field" style={{ flex: 1 }} placeholder="Pergunte sobre seus padrões, livros, missão de vida..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
+        <button className="btn-primary" onClick={send} disabled={!input.trim() || loading} style={{ padding: '10px 18px' }}><Send size={16} /></button>
       </div>
     </div>
   )
 }
 
+// ── Página principal ────────────────────────────────────────────────────────────
 const TABS: { key: Tab; label: string; icon: typeof Brain }[] = [
   { key: 'biblioteca', label: 'Biblioteca', icon: BookOpen },
-  { key: 'notas', label: 'Notas', icon: StickyNote },
-  { key: 'pessoal', label: 'Pessoal', icon: User },
+  { key: 'notas',      label: 'Notas',      icon: StickyNote },
+  { key: 'pessoal',    label: 'Pessoal',    icon: User },
   { key: 'espiritual', label: 'Espiritual', icon: Moon },
-  { key: 'chat', label: 'Chat IA', icon: Sparkles },
+  { key: 'chat',       label: 'Chat IA',    icon: Sparkles },
 ]
 
 export default function SecondBrainPage() {
   const [tab, setTab] = useState<Tab>('biblioteca')
 
   return (
-    <div className="space-y-6">
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Brain size={24} color="var(--accent)" />
+      <div style={{ marginBottom: 32 }}>
+        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>SEGUNDO CÉREBRO</span>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
           Second Brain
         </h1>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Sua memória expandida — livros, notas, reflexões pessoais, dimensão espiritual e IA personalizada
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
+          Sua memória expandida — livros, notas, reflexões pessoais, dimensão espiritual e IA personalizada.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', gap: 4, background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 12, padding: 4, marginBottom: 28, width: 'fit-content' }}>
         {TABS.map(t => {
           const Icon = t.icon
           const active = tab === t.key
           return (
-            <button key={t.key} onClick={() => setTab(t.key)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-shrink-0" style={{
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '8px 18px', borderRadius: 9,
+              fontSize: 13, fontWeight: active ? 600 : 500,
+              fontFamily: 'Space Grotesk, sans-serif',
+              cursor: 'pointer', border: 'none',
               background: active ? 'var(--accent)' : 'transparent',
               color: active ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.15s',
             }}>
-              <Icon size={15} />
+              <Icon size={14} />
               {t.label}
             </button>
           )
         })}
       </div>
 
-      {/* Content */}
+      {/* Conteúdo */}
       {tab === 'biblioteca' && <BibliotecaTab />}
-      {tab === 'notas' && <NotasTab />}
-      {tab === 'pessoal' && <PessoalTab />}
+      {tab === 'notas'      && <NotasTab />}
+      {tab === 'pessoal'    && <PessoalTab />}
       {tab === 'espiritual' && <EspiritualTab />}
-      {tab === 'chat' && <ChatIATab />}
+      {tab === 'chat'       && <ChatTab />}
     </div>
   )
 }

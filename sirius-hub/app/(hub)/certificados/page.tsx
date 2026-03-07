@@ -63,12 +63,12 @@ export default function CertificadosPage() {
   if (loading) return <div style={{ color: 'var(--text-muted)', padding: 40, textAlign: 'center' }}>Carregando certificados...</div>
 
   return (
-    <div>
-      <div className="page-header">
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <div className="section-label" style={{ marginBottom: 8 }}>CERTIFICADOS</div>
-          <h1 className="page-title">Meus Certificados</h1>
-          <p className="page-subtitle">{certs.length} certificado{certs.length !== 1 ? 's' : ''} · {certs.filter(c => c.tipo === 'gerado').length} gerados pelo Hub</p>
+          <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>CERTIFICADOS</span>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Meus Certificados</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{certs.length} certificado{certs.length !== 1 ? 's' : ''} · {certs.filter(c => c.tipo === 'gerado').length} gerados pelo Hub</p>
         </div>
         <button className="btn-primary" onClick={openNew}><Plus size={16} /> Importar Certificado</button>
       </div>

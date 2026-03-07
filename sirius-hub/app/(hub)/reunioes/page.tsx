@@ -112,12 +112,12 @@ export default function ReunioesPage() {
   if (loading) return <div style={{ color: 'var(--text-muted)', padding: 40, textAlign: 'center' }}>Carregando reuniões...</div>
 
   return (
-    <div>
-      <div className="page-header">
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <div className="section-label" style={{ marginBottom: 8 }}>REUNIÕES</div>
-          <h1 className="page-title">Reuniões</h1>
-          <p className="page-subtitle">{proximas.length} próxima{proximas.length !== 1 ? 's' : ''} · {passadas.length} passada{passadas.length !== 1 ? 's' : ''}</p>
+          <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>REUNIÕES</span>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Reuniões</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{proximas.length} próxima{proximas.length !== 1 ? 's' : ''} · {passadas.length} passada{passadas.length !== 1 ? 's' : ''}</p>
         </div>
         <button className="btn-primary" onClick={openNew}><Plus size={16} /> Nova Reunião</button>
       </div>

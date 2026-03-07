@@ -58,13 +58,11 @@ export default function PerformancePage() {
   ]
 
   return (
-    <div>
-      <div className="page-header">
-        <div>
-          <div className="section-label" style={{ marginBottom: 8 }}>PERFORMANCE</div>
-          <h1 className="page-title">Análise de Performance</h1>
-          <p className="page-subtitle">Visão comparativa de todos os seus projetos</p>
-        </div>
+    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
+      <div style={{ marginBottom: 32 }}>
+        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>PERFORMANCE</span>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Análise de Performance</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Visão comparativa de todos os seus projetos</p>
       </div>
 
       {projetos.length === 0 ? (
