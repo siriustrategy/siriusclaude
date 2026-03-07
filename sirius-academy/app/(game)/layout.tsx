@@ -7,7 +7,7 @@ import { supabase, type Profile } from '@/lib/supabase'
 import { getLevelInfo, getXPToNextLevel } from '@/lib/game-data'
 import { AvatarIcon, InitialsAvatar, type AvatarId } from '@/components/Avatars'
 import OnboardingModal from '@/components/OnboardingModal'
-import { LayoutDashboard, User, LogOut, TrendingUp, BarChart2, Megaphone, BookOpen } from 'lucide-react'
+import { LayoutDashboard, User, LogOut, TrendingUp, BarChart2, Megaphone, BookOpen, ShieldCheck, Sparkles, Lock, Zap } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const StarfieldCanvas = dynamic(() => import('@/components/StarfieldCanvas'), { ssr: false })
@@ -55,6 +55,8 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
+  const [isAdmin, setIsAdmin] = useState(false)
+
   const loadProfile = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
@@ -62,6 +64,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     if (!data) { router.push('/login'); return }
     setProfile(data)
     if (!data.onboarding_complete) setShowOnboarding(true)
+    if (session.user.email === 'breno.nobre@gruporiomais.com.br') setIsAdmin(true)
     setLoading(false)
   }, [router])
 
@@ -221,6 +224,62 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             )
           })}
         </nav>
+
+        {isAdmin && (
+          <>
+            <div style={{ height: 1, background: 'var(--border)', margin: '14px 0 8px 0' }} />
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 6px', marginBottom: 6 }}>
+              Admin
+            </div>
+            <Link href="/admin" style={{ textDecoration: 'none' }}>
+              <div className={`nav-pill ${pathname === '/admin' ? 'active' : ''}`}>
+                <div className="nav-icon" style={{
+                  background: pathname === '/admin' ? 'rgba(245,158,11,0.18)' : 'var(--muted-bg)',
+                  border: `1px solid ${pathname === '/admin' ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                }}>
+                  <ShieldCheck size={15} color={pathname === '/admin' ? '#f59e0b' : 'var(--text-secondary)'} strokeWidth={2} />
+                </div>
+                <span>Painel de Alunos</span>
+              </div>
+            </Link>
+          </>
+        )}
+
+        <div style={{ height: 1, background: 'var(--border)', margin: '14px 0 8px 0' }} />
+
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.14em', textTransform: 'uppercase', padding: '0 6px', marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Sparkles size={9} color="var(--text-muted)" strokeWidth={2} />
+            Ferramentas
+          </div>
+        </div>
+
+        <Link href="/genialidade" style={{ textDecoration: 'none' }}>
+          <div className={`nav-pill ${pathname.startsWith('/genialidade') ? 'active' : ''}`}>
+            <div className="nav-icon" style={{
+              background: pathname.startsWith('/genialidade') ? 'rgba(124,58,237,0.18)' : 'var(--muted-bg)',
+              border: `1px solid ${pathname.startsWith('/genialidade') ? 'rgba(124,58,237,0.3)' : 'var(--border)'}`,
+            }}>
+              {isAdmin
+                ? <Sparkles size={15} color={pathname.startsWith('/genialidade') ? '#7C3AED' : 'var(--text-secondary)'} strokeWidth={2} />
+                : <Lock size={15} color="var(--text-muted)" strokeWidth={2} />
+              }
+            </div>
+            <span style={{ color: isAdmin ? undefined : 'var(--text-muted)' }}>Zona de Genio</span>
+          </div>
+        </Link>
+
+        <Link href="/especializacoes" style={{ textDecoration: 'none' }}>
+          <div className={`nav-pill ${pathname.startsWith('/especializacoes') || pathname.startsWith('/curso/') ? 'active' : ''}`}>
+            <div className="nav-icon" style={{
+              background: (pathname.startsWith('/especializacoes') || pathname.startsWith('/curso/')) ? 'rgba(232,93,4,0.18)' : 'var(--muted-bg)',
+              border: `1px solid ${(pathname.startsWith('/especializacoes') || pathname.startsWith('/curso/')) ? 'rgba(232,93,4,0.3)' : 'var(--border)'}`,
+            }}>
+              <Zap size={15} color={(pathname.startsWith('/especializacoes') || pathname.startsWith('/curso/')) ? '#E85D04' : 'var(--text-secondary)'} strokeWidth={2} />
+            </div>
+            <span>Especializacoes</span>
+          </div>
+        </Link>
 
         <div style={{ height: 1, background: 'var(--border)', margin: '14px 0' }} />
 
