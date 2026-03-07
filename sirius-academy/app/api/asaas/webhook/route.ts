@@ -3,9 +3,19 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // ── POST /api/asaas/webhook ────────────────────────────────
 // Asaas envia eventos aqui quando o status do pagamento muda.
-// Configure em: Asaas → Configurações → Notificações → Webhook URL
+// O token configurado no Asaas é validado via header asaas-access-token.
 export async function POST(req: NextRequest) {
   try {
+    // Valida o token de autenticação enviado pelo Asaas em cada requisição
+    const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN
+    if (webhookToken) {
+      const receivedToken = req.headers.get('asaas-access-token')
+      if (receivedToken !== webhookToken) {
+        console.warn('[asaas/webhook] Token inválido recebido')
+        return NextResponse.json({ ok: false }, { status: 401 })
+      }
+    }
+
     const body = await req.json()
 
     const event = body?.event as string | undefined
