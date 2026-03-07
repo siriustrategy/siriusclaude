@@ -1,92 +1,151 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import {
   Calendar, MessageCircle, LayoutList, Mic,
-  CheckCircle2, ExternalLink, ChevronDown, Zap, ArrowRight,
+  CheckCircle2, ExternalLink, ChevronDown, Zap, ArrowRight, RefreshCw,
 } from 'lucide-react'
 
-type Status = 'conectado' | 'pendente'
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-interface Integration {
-  id: string
-  nome: string
-  desc: string
-  status: Status
-  icon: typeof Calendar
-  cor: string
-  recursos: string[]
-  instrucoes: string[]
-  envVar: string
-  link: string
+interface StatusMap {
+  googleCalendar: boolean
+  telegram: boolean
+  clickup: boolean
+  plaud: boolean
 }
 
-const INTEGRATIONS: Integration[] = [
-  {
-    id: 'google-calendar',
-    nome: 'Google Calendar',
-    desc: 'Reuniões do Google aparecem automaticamente no Hub.',
-    status: 'pendente',
-    icon: Calendar,
-    cor: '#4285F4',
-    recursos: ['Importar eventos automaticamente', 'Notificações antes das reuniões', 'Suporte a múltiplos calendários'],
-    instrucoes: ['Crie um projeto no Google Cloud Console', 'Ative a API Google Calendar', 'Crie credenciais OAuth 2.0', 'Cole Client ID e Client Secret no .env.local'],
-    envVar: 'GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET',
-    link: 'https://console.cloud.google.com',
-  },
-  {
-    id: 'telegram',
-    nome: 'Telegram Bot',
-    desc: 'Fale em português natural e o bot organiza tudo no Hub.',
-    status: 'pendente',
-    icon: MessageCircle,
-    cor: '#229ED9',
-    recursos: ['"Tive ideia de X" → cria card no Kanban', '"Reunião amanhã 15h" → cadastra reunião', '"Status do projeto Y" → responde com progresso', 'Envia áudio/PDF → extrai action items com IA'],
-    instrucoes: ['Abra o Telegram e fale com @BotFather', 'Digite /newbot e siga as instruções', 'Copie o token para TELEGRAM_BOT_TOKEN', 'Configure o webhook: /api/telegram/webhook'],
-    envVar: 'TELEGRAM_BOT_TOKEN',
-    link: 'https://t.me/BotFather',
-  },
-  {
-    id: 'clickup',
-    nome: 'ClickUp',
-    desc: 'Projetos e tarefas da empresa direto no Hub.',
-    status: 'pendente',
-    icon: LayoutList,
-    cor: '#7B68EE',
-    recursos: ['Importar workspaces e listas da empresa', 'Ver tasks com status atualizado', 'Criar tasks no Hub que vão pro ClickUp'],
-    instrucoes: ['Acesse clickup.com → Configurações → Apps', 'Gere uma API Key pessoal', 'Cole em CLICKUP_API_KEY no .env.local', 'Adicione CLICKUP_WORKSPACE_ID'],
-    envVar: 'CLICKUP_API_KEY + CLICKUP_WORKSPACE_ID',
-    link: 'https://app.clickup.com/settings/apps',
-  },
-  {
-    id: 'plaud',
-    nome: 'Plaud / Áudio',
-    desc: 'Transcrições e resumos do Plaud viram reuniões com action items.',
-    status: 'pendente',
-    icon: Mic,
-    cor: '#F59E0B',
-    recursos: ['Suporte a PDF, TXT e áudio', 'Transcrição via Whisper (OpenAI)', 'Extração automática de action items', 'Via Telegram ou upload direto no Hub'],
-    instrucoes: ['Configure OPENAI_API_KEY para áudio', 'PDF/TXT já funcionam sem chave extra', 'Pelo Telegram: envie o arquivo no chat', 'Pelo Hub: Reuniões > Importar do Plaud'],
-    envVar: 'OPENAI_API_KEY (para áudio)',
-    link: '#',
-  },
-]
+interface SyncResult {
+  loading: boolean
+  result: string | null
+}
 
 export default function IntegracoesPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
-  const conectadas = INTEGRATIONS.filter(i => i.status === 'conectado').length
+  const [status, setStatus] = useState<StatusMap | null>(null)
+  const [syncing, setSyncing] = useState<Record<string, SyncResult>>({})
+
+  useEffect(() => {
+    fetch('/api/integrations/status')
+      .then(r => r.json())
+      .then(setStatus)
+      .catch(() => {})
+  }, [])
+
+  async function syncClickUp() {
+    setSyncing(s => ({ ...s, clickup: { loading: true, result: null } }))
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setSyncing(s => ({ ...s, clickup: { loading: false, result: 'Faça login primeiro.' } })); return }
+      const res = await fetch('/api/clickup/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const json = await res.json()
+      if (json.error) {
+        setSyncing(s => ({ ...s, clickup: { loading: false, result: `Erro: ${json.error}` } }))
+      } else {
+        setSyncing(s => ({ ...s, clickup: { loading: false, result: `${json.spaces} spaces sincronizados. Veja em Projetos.` } }))
+      }
+    } catch {
+      setSyncing(s => ({ ...s, clickup: { loading: false, result: 'Erro ao sincronizar.' } }))
+    }
+  }
+
+  async function syncGoogleCalendar() {
+    setSyncing(s => ({ ...s, 'google-calendar': { loading: true, result: null } }))
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setSyncing(s => ({ ...s, 'google-calendar': { loading: false, result: 'Faça login primeiro.' } })); return }
+      const res = await fetch('/api/google-calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const json = await res.json()
+      if (json.error) {
+        setSyncing(s => ({ ...s, 'google-calendar': { loading: false, result: `Erro: ${json.error}` } }))
+      } else {
+        setSyncing(s => ({ ...s, 'google-calendar': { loading: false, result: `${json.synced} eventos sincronizados.` } }))
+      }
+    } catch {
+      setSyncing(s => ({ ...s, 'google-calendar': { loading: false, result: 'Erro ao sincronizar.' } }))
+    }
+  }
+
+  const integrations = [
+    {
+      id: 'google-calendar',
+      nome: 'Google Calendar',
+      desc: 'Reuniões do Google aparecem automaticamente no Hub.',
+      connected: status?.googleCalendar ?? false,
+      icon: Calendar,
+      cor: '#4285F4',
+      recursos: ['Importar eventos automaticamente', 'Notificações antes das reuniões', 'Suporte a múltiplos calendários'],
+      instrucoes: ['Crie um projeto no Google Cloud Console', 'Ative a API Google Calendar', 'Crie credenciais OAuth 2.0', 'Adicione GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no Railway'],
+      envVar: 'GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET',
+      link: 'https://console.cloud.google.com',
+      onSync: syncGoogleCalendar,
+    },
+    {
+      id: 'telegram',
+      nome: 'Telegram Bot',
+      desc: 'Fale em português natural e o bot organiza tudo no Hub.',
+      connected: status?.telegram ?? false,
+      icon: MessageCircle,
+      cor: '#229ED9',
+      recursos: ['"Tive ideia de X" → cria card no Kanban', '"Reunião amanhã 15h" → cadastra reunião', '"Status do projeto Y" → responde com progresso'],
+      instrucoes: ['Abra o Telegram e fale com @BotFather', 'Digite /newbot e siga as instruções', 'Copie o token para TELEGRAM_BOT_TOKEN no Railway', 'Configure o webhook: /api/telegram/webhook'],
+      envVar: 'TELEGRAM_BOT_TOKEN',
+      link: 'https://t.me/BotFather',
+      onSync: null,
+    },
+    {
+      id: 'clickup',
+      nome: 'ClickUp',
+      desc: 'Projetos e tarefas da empresa direto no Hub.',
+      connected: status?.clickup ?? false,
+      icon: LayoutList,
+      cor: '#7B68EE',
+      recursos: ['Importar workspaces e listas da empresa', 'Ver tasks com status atualizado', 'Criar tasks no Hub que vão pro ClickUp'],
+      instrucoes: ['Acesse clickup.com → Configurações → Apps', 'Gere uma API Key pessoal', 'Adicione CLICKUP_API_KEY no Railway', 'Adicione CLICKUP_WORKSPACE_ID no Railway'],
+      envVar: 'CLICKUP_API_KEY + CLICKUP_WORKSPACE_ID',
+      link: 'https://app.clickup.com/settings/apps',
+      onSync: syncClickUp,
+    },
+    {
+      id: 'plaud',
+      nome: 'Plaud / Áudio',
+      desc: 'Transcrições e resumos do Plaud viram reuniões com action items.',
+      connected: status?.plaud ?? false,
+      icon: Mic,
+      cor: '#F59E0B',
+      recursos: ['Suporte a PDF, TXT e áudio', 'Transcrição via Whisper (OpenAI)', 'Extração automática de action items', 'Via Telegram ou upload direto no Hub'],
+      instrucoes: ['Configure OPENAI_API_KEY no Railway para áudio', 'PDF/TXT já funcionam sem chave extra', 'Pelo Telegram: envie o arquivo no chat', 'Pelo Hub: Reuniões > Importar do Plaud'],
+      envVar: 'OPENAI_API_KEY (para áudio)',
+      link: '#',
+      onSync: null,
+    },
+  ]
+
+  const conectadas = integrations.filter(i => i.connected).length
 
   return (
     <div style={{ padding: '40px 48px', maxWidth: 900, margin: '0 auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>INTEGRAÇÕES</span>
+        <span className="section-label" style={{ marginBottom: 12, display: 'inline-flex' }}>INTEGRACOES</span>
         <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
           Conecte o Hub ao seu mundo
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-          {conectadas}/{INTEGRATIONS.length} conectadas — Configure para ativar o Sirius Hub completo.
+          {status ? `${conectadas}/${integrations.length} conectadas` : 'Verificando conexões...'} — Configure para ativar o Sirius Hub completo.
         </p>
       </div>
 
@@ -133,16 +192,15 @@ export default function IntegracoesPage() {
         </div>
       </div>
 
-      {/* Cards de integração */}
+      {/* Cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {INTEGRATIONS.map(integ => {
+        {integrations.map(integ => {
           const Icon = integ.icon
           const isOpen = expanded === integ.id
-          const connected = integ.status === 'conectado'
+          const syncState = syncing[integ.id]
 
           return (
             <div key={integ.id} className="glass-card" style={{ overflow: 'hidden' }}>
-              {/* Header do card */}
               <button
                 onClick={() => setExpanded(isOpen ? null : integ.id)}
                 style={{
@@ -167,11 +225,11 @@ export default function IntegracoesPage() {
                     <span style={{
                       fontSize: 11, fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif',
                       padding: '2px 9px', borderRadius: 20,
-                      background: connected ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.1)',
-                      color: connected ? '#34d399' : '#fbbf24',
-                      border: `1px solid ${connected ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                      background: integ.connected ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.1)',
+                      color: integ.connected ? '#34d399' : '#fbbf24',
+                      border: `1px solid ${integ.connected ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
                     }}>
-                      {connected ? 'Conectado' : 'Configurar'}
+                      {status === null ? '...' : integ.connected ? 'Conectado' : 'Configurar'}
                     </span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{integ.desc}</div>
@@ -180,13 +238,12 @@ export default function IntegracoesPage() {
                 <ChevronDown size={16} color="var(--text-muted)" style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }} />
               </button>
 
-              {/* Expandido */}
               {isOpen && (
                 <div style={{ borderTop: '1px solid var(--border)', padding: '22px 22px 22px 82px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 20 }}>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 10 }}>
-                        O que você pode fazer
+                        O que voce pode fazer
                       </div>
                       <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {integ.recursos.map((r, i) => (
@@ -212,21 +269,37 @@ export default function IntegracoesPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 18, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif' }}>
-                        Adicione ao{' '}
-                        <code style={{ background: 'rgba(59,91,219,0.12)', color: '#93c5fd', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>.env.local</code>
-                        {' '}→{' '}
+                        Railway →{' '}
                         <code style={{ color: '#f59e0b', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>{integ.envVar}</code>
                       </span>
+                      {syncState?.result && (
+                        <div style={{ marginTop: 6, fontSize: 12, color: syncState.result.startsWith('Erro') ? '#f87171' : '#34d399' }}>
+                          {syncState.result}
+                        </div>
+                      )}
                     </div>
-                    {integ.link !== '#' && (
-                      <a href={integ.link} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', fontSize: 13, padding: '8px 18px' }}>
-                        <ExternalLink size={13} />
-                        Ir configurar
-                      </a>
-                    )}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {integ.onSync && integ.connected && (
+                        <button
+                          onClick={e => { e.stopPropagation(); integ.onSync!() }}
+                          disabled={syncState?.loading}
+                          className="btn-primary"
+                          style={{ fontSize: 13, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6, opacity: syncState?.loading ? 0.6 : 1 }}
+                        >
+                          <RefreshCw size={13} style={{ animation: syncState?.loading ? 'spin 1s linear infinite' : 'none' }} />
+                          {syncState?.loading ? 'Sincronizando...' : 'Sincronizar agora'}
+                        </button>
+                      )}
+                      {integ.link !== '#' && (
+                        <a href={integ.link} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', fontSize: 13, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                          <ExternalLink size={13} />
+                          Ir configurar
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -243,7 +316,7 @@ export default function IntegracoesPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             { path: 'POST /api/telegram/webhook', desc: 'Recebe mensagens do bot Telegram' },
-            { path: 'POST /api/google-calendar/sync', desc: 'Sincronização de eventos' },
+            { path: 'POST /api/google-calendar/sync', desc: 'Sincronizacao de eventos' },
             { path: 'POST /api/clickup/sync', desc: 'Importa projetos e tasks do ClickUp' },
             { path: 'POST /api/brain/chat', desc: 'Chat com a IA do Second Brain' },
           ].map(ep => (
@@ -256,6 +329,8 @@ export default function IntegracoesPage() {
           ))}
         </div>
       </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
