@@ -87,10 +87,11 @@ export default function IntegracoesPage() {
       icon: Calendar,
       cor: '#4285F4',
       recursos: ['Importar eventos automaticamente', 'Notificações antes das reuniões', 'Suporte a múltiplos calendários'],
-      instrucoes: ['Crie um projeto no Google Cloud Console', 'Ative a API Google Calendar', 'Crie credenciais OAuth 2.0', 'Adicione GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no Railway'],
+      instrucoes: ['Adicione GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no Railway', 'Clique em "Conectar Google" abaixo', 'Autorize o acesso ao seu Google Calendar', 'Pronto — reunioes do bot vão direto no calendario'],
       envVar: 'GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET',
       link: 'https://console.cloud.google.com',
       onSync: syncGoogleCalendar,
+      connectUrl: '/api/google-calendar/auth',
     },
     {
       id: 'telegram',
@@ -104,6 +105,7 @@ export default function IntegracoesPage() {
       envVar: 'TELEGRAM_BOT_TOKEN',
       link: 'https://t.me/BotFather',
       onSync: null,
+      connectUrl: null,
     },
     {
       id: 'clickup',
@@ -117,6 +119,7 @@ export default function IntegracoesPage() {
       envVar: 'CLICKUP_API_KEY + CLICKUP_WORKSPACE_ID',
       link: 'https://app.clickup.com/settings/apps',
       onSync: syncClickUp,
+      connectUrl: null,
     },
     {
       id: 'plaud',
@@ -130,6 +133,7 @@ export default function IntegracoesPage() {
       envVar: 'OPENAI_API_KEY (para áudio)',
       link: '#',
       onSync: null,
+      connectUrl: null,
     },
   ]
 
@@ -282,6 +286,12 @@ export default function IntegracoesPage() {
                       )}
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
+                      {integ.connectUrl && !integ.connected && (
+                        <a href={integ.connectUrl} className="btn-primary" style={{ textDecoration: 'none', fontSize: 13, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <ExternalLink size={13} />
+                          Conectar Google
+                        </a>
+                      )}
                       {integ.onSync && integ.connected && (
                         <button
                           onClick={e => { e.stopPropagation(); integ.onSync!() }}
@@ -293,7 +303,7 @@ export default function IntegracoesPage() {
                           {syncState?.loading ? 'Sincronizando...' : 'Sincronizar agora'}
                         </button>
                       )}
-                      {integ.link !== '#' && (
+                      {integ.link !== '#' && !integ.connectUrl && (
                         <a href={integ.link} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none', fontSize: 13, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
                           <ExternalLink size={13} />
                           Ir configurar
