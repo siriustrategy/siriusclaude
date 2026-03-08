@@ -8,7 +8,12 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "terminal": "node sirius-terminal/server.js",
+    "sirius": "bash sirius-terminal/sirius-start.sh",
+    "sirius:stop": "pm2 stop sirius",
+    "sirius:logs": "pm2 logs sirius",
+    "sirius:restart": "pm2 restart sirius"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +21,10 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.97.0",
-    "playwright": "^1.58.2"
+    "express": "^5.2.1",
+    "js-yaml": "^4.1.1",
+    "node-pty-prebuilt-multiarch": "^0.10.1-pre.5",
+    "playwright": "^1.58.2",
+    "socket.io": "^4.8.3"
   }
 }

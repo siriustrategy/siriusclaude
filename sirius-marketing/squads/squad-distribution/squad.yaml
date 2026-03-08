@@ -1,0 +1,78 @@
+name: squad-distribution
+version: "1.0.0"
+description: >
+  Distribuição automática de conteúdo para TikTok e Meta (Instagram + Facebook) via n8n.
+  Gerencia agendamento, publicação automática, rastreamento pós-publicação e integração
+  com o squad-analytics para monitoramento de campanhas.
+
+agents:
+  - scheduler
+  - publisher
+  - n8n-connector
+
+tasks:
+  - schedule-post
+  - publish-now
+  - bulk-schedule
+  - track-published-content
+
+workflows:
+  - schedule-and-publish
+  - bulk-campaign-publish
+
+entry_point: scheduler
+
+supported_platforms:
+  instagram:
+    post_types: [feed_photo, feed_video, reel, story, carousel]
+    api: "Meta Content Publishing API"
+    auth: "Meta Business OAuth"
+    scheduling: true
+    max_schedule_ahead: "75 dias"
+  tiktok:
+    post_types: [video]
+    api: "TikTok Content Posting API"
+    auth: "OAuth 2.0"
+    scheduling: true
+    max_schedule_ahead: "10 dias"
+  facebook:
+    post_types: [feed_photo, feed_video, carousel]
+    api: "Meta Graph API"
+    scheduling: true
+
+n8n_integration:
+  base_url: "configurável por usuário"
+  webhooks:
+    post_published: "Dispara monitoramento de campanha no squad-analytics"
+    schedule_failed: "Alerta usuário sobre falha no agendamento"
+    engagement_spike: "Alerta quando post alcança threshold de engajamento"
+
+publishing_rules:
+  optimal_timing:
+    description: "Sugestão de melhor horário baseado em dados históricos da conta"
+    source: "squad-analytics insights-analyst"
+    override: true  # usuário pode sempre escolher horário manual
+  caption_check:
+    brand_police: true
+    max_hashtags:
+      instagram: 30
+      tiktok: 10
+  content_requirements:
+    instagram_reel:
+      duration: "15-90 segundos"
+      format: "MP4 H.264"
+    tiktok_video:
+      duration: "7-600 segundos"
+      format: "MP4"
+
+credits:
+  schedule-post: 2
+  publish-now: 2
+  bulk-schedule: 1  # por post no lote
+
+commands:
+  - "*schedule {content_id} {datetime} {platform}" — Agenda um post
+  - "*publish-now {content_id} {platform}" — Publica imediatamente
+  - "*bulk-schedule {calendar_id}" — Agenda todo o calendário editorial
+  - "*publishing-queue" — Exibe fila de publicações agendadas
+  - "*cancel-schedule {schedule_id}" — Cancela um agendamento

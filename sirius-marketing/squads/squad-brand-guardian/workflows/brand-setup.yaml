@@ -1,0 +1,65 @@
+name: brand-setup
+version: "1.0.0"
+description: >
+  Workflow completo de configuração de uma nova marca. Passa por onboarding,
+  voice training e configuração do brand police. Executado uma vez por marca.
+
+steps:
+  - id: check-brand-slots
+    agent: brand-analyst
+    action: Verificar quantas marcas o usuário já tem (máximo 3)
+    elicit: false
+    output: brand_slot_available
+
+  - id: brand-onboarding
+    agent: brand-analyst
+    action: Executar wizard completo de onboarding via perguntas guiadas
+    elicit: true
+    depends_on: check-brand-slots
+    output: brand_memory_draft
+
+  - id: logo-upload
+    agent: brand-analyst
+    action: Solicitar upload do logo e configurar opções de uso nos prompts
+    elicit: true
+    depends_on: brand-onboarding
+    optional: true
+    output: logo_config
+
+  - id: voice-training
+    agent: brand-voice-trainer
+    action: Solicitar 5 exemplos de copy e extrair Brand Voice Profile
+    elicit: true
+    depends_on: brand-onboarding
+    output: voice_profile
+
+  - id: brand-police-config
+    agent: brand-police
+    action: Configurar thresholds e dimensões de validação para a marca
+    elicit: false
+    depends_on: [brand-onboarding, voice-training]
+    output: police_config
+
+  - id: save-brand-memory
+    agent: brand-analyst
+    action: Consolidar tudo e salvar Brand Memory completa
+    elicit: false
+    depends_on: [brand-onboarding, voice-training, brand-police-config]
+    output: brand_memory_final
+
+  - id: brand-summary
+    agent: brand-analyst
+    action: Exibir resumo da Brand Memory criada para validação do usuário
+    elicit: true
+    depends_on: save-brand-memory
+    output: brand_approved
+
+outputs:
+  - brand_memory_file: ".brand-memory/{brand_id}/memory.json"
+  - voice_profile_file: ".brand-memory/{brand_id}/voice-profile.json"
+  - police_config_file: ".brand-memory/{brand_id}/police-config.json"
+
+credits_cost: 0
+triggers:
+  - "Usuário clica em 'Adicionar Marca'"
+  - "Primeira vez que o usuário acessa o sistema"

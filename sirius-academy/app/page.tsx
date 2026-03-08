@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { CURSOS } from '@/lib/curso-data'
+import { FadeInSection, StaggerSection, StaggerItem } from '@/components/animations'
+import StarfieldCanvas from '@/components/StarfieldCanvas'
 import {
   Megaphone, TrendingUp, BarChart2, ArrowRight,
-  BookOpen, Zap, Award, ChevronRight,
+  BookOpen, Zap, Award, ChevronRight, ChevronDown, ChevronUp, X,
 } from 'lucide-react'
 
 // ── Sirius Logo ───────────────────────────────────────────────
@@ -44,7 +47,7 @@ const AREAS = [
     Icon: Megaphone,
     title: 'Marketing',
     color: '#3B5BDB',
-    modules: 12,
+    cursoId: 'ia-conteudo',
     desc: 'Criação de conteúdo, campanhas, SEO, copy e automação de marketing com IA.',
     tags: ['Copy com IA', 'Conteúdo em escala', 'Estratégia digital'],
   },
@@ -52,7 +55,7 @@ const AREAS = [
     Icon: TrendingUp,
     title: 'Vendas',
     color: '#059669',
-    modules: 15,
+    cursoId: 'vendas-crm',
     desc: 'Prospecção inteligente, scripts personalizados, follow-up e fechamento de negócios com IA.',
     tags: ['Cold email com IA', 'Scripts de vendas', 'Preparação de reuniões'],
   },
@@ -60,11 +63,28 @@ const AREAS = [
     Icon: BarChart2,
     title: 'Financeiro',
     color: '#D97706',
-    modules: 15,
+    cursoId: 'dados-bi',
     desc: 'Análise de dados, relatórios executivos, automação de tarefas e decisões financeiras com IA.',
     tags: ['Análise de planilhas', 'Relatórios em minutos', 'Detecção de anomalias'],
   },
 ]
+
+const LEVEL_LABELS: Record<string, string> = {
+  basico: 'Básico',
+  intermediario: 'Intermediário',
+  avancado: 'Avançado',
+}
+const LEVEL_COLORS: Record<string, string> = {
+  basico: '#10b981',
+  intermediario: '#3B5BDB',
+  avancado: '#7C3AED',
+}
+const TYPE_LABELS: Record<string, string> = {
+  leitura: 'Leitura',
+  exercicio: 'Exercício',
+  quiz: 'Quiz',
+  pratica: 'Prática',
+}
 
 const HOW_IT_WORKS = [
   {
@@ -87,6 +107,37 @@ const HOW_IT_WORKS = [
   },
 ]
 
+const FAQ_ITEMS = [
+  {
+    q: 'O que é a Sirius Academy?',
+    a: 'É uma plataforma de aprendizado de IA feita para profissionais de Marketing, Vendas e Financeiro. Você aprende a usar ferramentas de IA no seu trabalho real — com módulos práticos de 10 minutos, prompts prontos para usar e exercícios do dia a dia.',
+  },
+  {
+    q: 'Preciso saber programar ou entender de tecnologia?',
+    a: 'Não. Zero. A Sirius Academy foi construída para quem nunca usou IA antes. Tudo é explicado de forma simples, com exemplos práticos direto para a sua área de atuação.',
+  },
+  {
+    q: 'O acesso é gratuito?',
+    a: 'Sim. Você cria sua conta grátis e já tem acesso ao conteúdo. Algumas ferramentas extras, como o Mapeamento de Zona de Genialidade, têm um custo avulso de R$ 12,90 — mas os cursos principais são gratuitos.',
+  },
+  {
+    q: 'Quanto tempo preciso dedicar por dia?',
+    a: 'Cada módulo leva em média 10 minutos. Você aprende no seu ritmo, quando quiser. Não tem prazo, não tem aula ao vivo obrigatória.',
+  },
+  {
+    q: 'Para quem é a Sirius Academy?',
+    a: 'Para profissionais que trabalham com Marketing, Vendas ou Financeiro e querem usar IA para trabalhar mais rápido e com mais qualidade. Não importa o nível — do analista ao gestor, todos saem aplicando.',
+  },
+  {
+    q: 'O que é o Mapeamento de Zona de Genialidade?',
+    a: 'É uma ferramenta exclusiva que analisa seu perfil com base em 7 metodologias usadas por coaches e empresas Fortune 500 (Gay Hendricks, CliftonStrengths, Kolbe e outras). No final, você recebe um relatório personalizado com sua zona de gênio, forças naturais e um plano de 90 dias com IA.',
+  },
+  {
+    q: 'O conteúdo é atualizado com frequência?',
+    a: 'Sim. A IA evolui rápido — e a Sirius Academy também. Novos módulos e atualizações são adicionados regularmente para refletir as ferramentas e técnicas mais recentes do mercado.',
+  },
+]
+
 const DIFFERENTIALS = [
   { Icon: BookOpen, label: '45+ módulos práticos', sub: 'Conteúdo direto ao ponto, sem enrolação', color: '#3B5BDB' },
   { Icon: Zap,      label: 'Aprenda em 10 min/dia', sub: 'Módulos curtos para quem tem pouco tempo', color: '#7C3AED' },
@@ -97,6 +148,10 @@ const DIFFERENTIALS = [
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [trilhaAberta, setTrilhaAberta] = useState<string | null>(null)
+
+  const cursoAberto = trilhaAberta ? CURSOS.find(c => c.id === trilhaAberta) : null
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -116,6 +171,23 @@ export default function Home() {
 
   return (
     <main style={{ minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <StarfieldCanvas />
+      <style>{`
+        @keyframes neon-badge {
+          0%, 100% {
+            box-shadow: 0 0 6px rgba(59,91,219,0.3), 0 0 16px rgba(59,91,219,0.15);
+            border-color: rgba(59,91,219,0.25);
+          }
+          50% {
+            box-shadow: 0 0 14px rgba(59,91,219,0.7), 0 0 32px rgba(59,91,219,0.35), 0 0 60px rgba(59,91,219,0.15);
+            border-color: rgba(59,91,219,0.6);
+          }
+        }
+        @keyframes modal-in {
+          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
 
       {/* ── Navbar ── */}
       <nav style={{
@@ -174,12 +246,14 @@ export default function Home() {
         }} />
 
         {/* Badge */}
-        <div style={{
+        <div className="hero-item hero-item-0" style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
           background: 'rgba(59,91,219,0.1)',
           border: '1px solid rgba(59,91,219,0.25)',
           borderRadius: 20, padding: '6px 16px',
           marginBottom: 32,
+          animation: 'neon-badge 2.8s ease-in-out infinite 0.8s, hero-rise 0.7s cubic-bezier(0.22,1,0.36,1) 0.05s forwards',
+          opacity: 0,
         }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B5BDB', boxShadow: '0 0 8px #3B5BDB' }} />
           <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 11, color: '#7B9FFF', letterSpacing: '0.12em' }}>
@@ -188,7 +262,7 @@ export default function Home() {
         </div>
 
         {/* Headline */}
-        <h1 style={{
+        <h1 className="hero-item hero-item-1" style={{
           fontFamily: 'Space Grotesk, sans-serif',
           fontSize: 'clamp(38px, 6vw, 76px)',
           fontWeight: 900,
@@ -208,16 +282,16 @@ export default function Home() {
         </h1>
 
         {/* Subtitle */}
-        <p style={{
+        <p className="hero-item hero-item-2" style={{
           color: '#8B9CC8',
           fontSize: 'clamp(16px, 2vw, 20px)',
           maxWidth: 580,
           lineHeight: 1.65,
           marginBottom: 20,
         }}>
-          A plataforma de aprendizado de IA feita para profissionais de Marketing, Vendas e Financeiro que querem resultados reais — não só teoria.
+          A plataforma de aprendizado de IA feita para profissionais de todas as áreas de uma empresa que querem resultados reais — não só teoria.
         </p>
-        <p style={{
+        <p className="hero-item hero-item-3" style={{
           color: '#6B7A9E',
           fontSize: 15,
           maxWidth: 480,
@@ -228,7 +302,7 @@ export default function Home() {
         </p>
 
         {/* CTAs */}
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 72 }}>
+        <div className="hero-item hero-item-4" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 72 }}>
           <Link href="/cadastro" style={{ textDecoration: 'none' }}>
             <button className="btn-primary" style={{ fontSize: 16, padding: '15px 36px', display: 'flex', alignItems: 'center', gap: 8 }}>
               Começar agora — é grátis
@@ -252,7 +326,7 @@ export default function Home() {
         </div>
 
         {/* Numbers */}
-        <div style={{
+        <StaggerSection className="hero-item hero-item-5" style={{
           display: 'flex', gap: 56, flexWrap: 'wrap', justifyContent: 'center',
           paddingTop: 40,
           borderTop: '1px solid rgba(59,91,219,0.12)',
@@ -262,29 +336,31 @@ export default function Home() {
             { value: '45+', label: 'Módulos práticos' },
             { value: '10min', label: 'Por módulo' },
             { value: '0', label: 'Conhecimento técnico exigido' },
-          ].map(stat => (
-            <div key={stat.label} style={{ textAlign: 'center' }}>
+          ].map((stat, i) => (
+            <StaggerItem key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 900, color: '#3B5BDB', lineHeight: 1 }}>
                 {stat.value}
               </div>
               <div style={{ color: '#6B7A9E', fontSize: 13, marginTop: 6 }}>{stat.label}</div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerSection>
       </section>
 
       {/* ── Propósito ── */}
       <section style={{ padding: '80px 24px', maxWidth: 820, margin: '0 auto', textAlign: 'center' }}>
-        <span className="section-label" style={{ marginBottom: 20, display: 'inline-block' }}>POR QUÊ EXISTE</span>
-        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.02em' }}>
-          A IA já está no seu setor.<br />A questão é: quem vai usá-la primeiro?
-        </h2>
-        <p style={{ color: '#8B9CC8', fontSize: 17, lineHeight: 1.75, maxWidth: 680, margin: '0 auto 20px' }}>
-          Profissionais que dominam IA não trabalham mais — trabalham melhor. Eles fazem em 30 minutos o que antes levava o dia inteiro. Criam campanhas melhores, abordam mais prospects, analisam dados mais rápido.
-        </p>
-        <p style={{ color: '#6B7A9E', fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: '0 auto' }}>
-          A Sirius Academy existe para que sua equipe não fique para trás. Cada módulo foi construído para gerar resultado prático imediato — não para parecer sofisticado.
-        </p>
+        <FadeInSection>
+          <span className="section-label" style={{ marginBottom: 20, display: 'inline-block' }}>POR QUÊ EXISTE</span>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.02em' }}>
+            A IA já está no seu setor.<br />A questão é: quem vai usá-la primeiro?
+          </h2>
+          <p style={{ color: '#8B9CC8', fontSize: 17, lineHeight: 1.75, maxWidth: 680, margin: '0 auto 20px' }}>
+            Profissionais que dominam IA não trabalham mais — trabalham melhor. Eles fazem em 30 minutos o que antes levava o dia inteiro. Criam campanhas melhores, abordam mais prospects, analisam dados mais rápido.
+          </p>
+          <p style={{ color: '#6B7A9E', fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: '0 auto' }}>
+            A Sirius Academy existe para que sua equipe não fique para trás. Cada módulo foi construído para gerar resultado prático imediato — não para parecer sofisticado.
+          </p>
+        </FadeInSection>
       </section>
 
       {/* ── Áreas ── */}
@@ -299,9 +375,10 @@ export default function Home() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+        <StaggerSection style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
           {AREAS.map(area => (
-            <div key={area.title} className="glass-card" style={{ padding: '28px 28px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <StaggerItem key={area.title} style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="glass-card" style={{ padding: '28px 28px', display: 'flex', flexDirection: 'column', gap: 0, height: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
                 <div style={{
                   width: 50, height: 50, flexShrink: 0,
@@ -317,7 +394,7 @@ export default function Home() {
                     {area.title}
                   </div>
                   <div style={{ fontSize: 12, color: area.color, fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif' }}>
-                    {area.modules} módulos · 3 níveis
+                    {CURSOS.find(c => c.id === area.cursoId)?.fases.reduce((acc, f) => acc + f.modules.length, 0) || 0} módulos · {CURSOS.find(c => c.id === area.cursoId)?.fases.length || 0} fases
                   </div>
                 </div>
               </div>
@@ -340,12 +417,20 @@ export default function Home() {
                 ))}
               </div>
 
-              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 6, color: area.color, fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
+              <button
+                onClick={() => setTrilhaAberta(area.cursoId)}
+                style={{
+                  marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 6,
+                  color: area.color, fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                }}
+              >
                 Ver trilha completa <ChevronRight size={14} strokeWidth={2.5} />
-              </div>
+              </button>
             </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerSection>
       </section>
 
       {/* ── Como funciona ── */}
@@ -360,9 +445,9 @@ export default function Home() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+        <StaggerSection style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {HOW_IT_WORKS.map((step, i) => (
-            <div key={step.n} style={{ position: 'relative' }}>
+            <StaggerItem key={step.n} style={{ position: 'relative' }}>
               {i < HOW_IT_WORKS.length - 1 && (
                 <div style={{
                   position: 'absolute', top: 24, right: -12, zIndex: 1,
@@ -384,16 +469,17 @@ export default function Home() {
                   {step.desc}
                 </p>
               </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerSection>
       </section>
 
       {/* ── Diferenciais ── */}
       <section style={{ padding: '60px 24px', maxWidth: 900, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <StaggerSection style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {DIFFERENTIALS.map(d => (
-            <div key={d.label} className="glass-card" style={{ padding: '22px 20px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <StaggerItem key={d.label}>
+            <div className="glass-card" style={{ padding: '22px 20px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{
                 width: 40, height: 40, flexShrink: 0,
                 background: `${d.color}14`, border: `1px solid ${d.color}25`,
@@ -411,12 +497,85 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            </StaggerItem>
           ))}
+        </StaggerSection>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section style={{ padding: '80px 24px', maxWidth: 760, margin: '0 auto' }}>
+        <FadeInSection style={{ textAlign: 'center', marginBottom: 52 }}>
+          <span className="section-label" style={{ marginBottom: 16, display: 'inline-block' }}>PERGUNTAS FREQUENTES</span>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
+            Ficou alguma dúvida?
+          </h2>
+          <p style={{ color: '#6B7A9E', fontSize: 16 }}>
+            As perguntas mais comuns de quem está chegando agora.
+          </p>
+        </FadeInSection>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {FAQ_ITEMS.map((item, i) => {
+            const isOpen = openFaq === i
+            return (
+              <div
+                key={i}
+                style={{
+                  background: isOpen ? 'rgba(59,91,219,0.06)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isOpen ? 'rgba(59,91,219,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  transition: 'border-color 0.2s, background 0.2s',
+                }}
+              >
+                <button
+                  onClick={() => setOpenFaq(isOpen ? null : i)}
+                  style={{
+                    width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '20px 24px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{
+                    fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15,
+                    color: isOpen ? '#E8EEFF' : '#C5CCEE',
+                    lineHeight: 1.4,
+                  }}>
+                    {item.q}
+                  </span>
+                  <div style={{
+                    width: 28, height: 28, flexShrink: 0,
+                    background: isOpen ? 'rgba(59,91,219,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isOpen ? 'rgba(59,91,219,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}>
+                    {isOpen
+                      ? <ChevronUp size={14} color="#7B9FFF" strokeWidth={2.5} />
+                      : <ChevronDown size={14} color="#6B7A9E" strokeWidth={2.5} />
+                    }
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div style={{ padding: '0 24px 20px' }}>
+                    <div style={{ height: 1, background: 'rgba(59,91,219,0.12)', marginBottom: 16 }} />
+                    <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.75, margin: 0 }}>
+                      {item.a}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </section>
 
       {/* ── CTA Final ── */}
       <section style={{ padding: '80px 24px 100px', textAlign: 'center' }}>
+        <FadeInSection>
         <div style={{
           maxWidth: 640, margin: '0 auto',
           background: 'linear-gradient(135deg, rgba(59,91,219,0.12) 0%, rgba(124,58,237,0.08) 100%)',
@@ -455,7 +614,153 @@ export default function Home() {
             Sem cartão de crédito · Acesso imediato
           </div>
         </div>
+        </FadeInSection>
       </section>
+
+      {/* ── Modal Trilha ── */}
+      {cursoAberto && (
+        <div
+          onClick={() => setTrilhaAberta(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(4,6,15,0.85)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px 16px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(145deg, #0D1225 0%, #111827 100%)',
+              border: `1px solid ${cursoAberto.color}35`,
+              borderRadius: 20,
+              width: '100%', maxWidth: 640,
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              padding: '32px 28px',
+              position: 'relative',
+              animation: 'modal-in 0.22s ease',
+              boxShadow: `0 0 60px ${cursoAberto.color}18, 0 30px 80px rgba(0,0,0,0.5)`,
+            }}
+          >
+            {/* Fechar */}
+            <button
+              onClick={() => setTrilhaAberta(null)}
+              style={{
+                position: 'absolute', top: 16, right: 16,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, width: 36, height: 36,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#6B7A9E',
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            {/* Header */}
+            <div style={{ marginBottom: 24, paddingRight: 40 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: cursoAberto.color, fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.12em', marginBottom: 8 }}>
+                TRILHA COMPLETA
+              </div>
+              <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 22, fontWeight: 800, color: '#E8EEFF', marginBottom: 8 }}>
+                {cursoAberto.title}
+              </h2>
+              <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.65 }}>
+                {cursoAberto.description}
+              </p>
+            </div>
+
+            <div style={{ height: 1, background: `${cursoAberto.color}20`, marginBottom: 24 }} />
+
+            {/* Fases e módulos */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {cursoAberto.fases.map((fase, fi) => (
+                <div key={fase.id}>
+                  {/* Fase header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <div style={{
+                      background: `${LEVEL_COLORS[fase.level]}18`,
+                      border: `1px solid ${LEVEL_COLORS[fase.level]}35`,
+                      borderRadius: 6, padding: '3px 10px',
+                      fontSize: 10, fontWeight: 700,
+                      color: LEVEL_COLORS[fase.level],
+                      fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.08em',
+                    }}>
+                      {LEVEL_LABELS[fase.level]}
+                    </div>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, color: '#C5CCEE' }}>
+                      Fase {fi + 1} — {fase.title}
+                    </div>
+                  </div>
+
+                  {/* Módulos */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 4 }}>
+                    {fase.modules.map((mod, mi) => (
+                      <div
+                        key={mod.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          padding: '10px 14px',
+                          background: 'rgba(255,255,255,0.02)',
+                          border: '1px solid rgba(255,255,255,0.05)',
+                          borderRadius: 8,
+                        }}
+                      >
+                        <div style={{
+                          width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                          background: `${cursoAberto.color}15`,
+                          border: `1px solid ${cursoAberto.color}25`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, fontWeight: 700,
+                          color: cursoAberto.color,
+                        }}>
+                          {mi + 1}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#C5CCEE', lineHeight: 1.3 }}>
+                            {mod.title}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <span style={{ fontSize: 10, color: '#4A5680', fontFamily: 'Space Grotesk, sans-serif' }}>
+                            {mod.duration}
+                          </span>
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4,
+                            background: 'rgba(59,91,219,0.1)', color: '#7B9FFF',
+                            fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.06em',
+                          }}>
+                            {TYPE_LABELS[mod.type]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${cursoAberto.color}18` }}>
+              <Link href="/cadastro" style={{ textDecoration: 'none' }} onClick={() => setTrilhaAberta(null)}>
+                <button style={{
+                  width: '100%',
+                  background: `linear-gradient(135deg, ${cursoAberto.color} 0%, ${cursoAberto.color}CC 100%)`,
+                  border: 'none', borderRadius: 10, padding: '13px 20px',
+                  color: '#fff', fontWeight: 700, fontSize: 15,
+                  fontFamily: 'Space Grotesk, sans-serif', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  Começar essa trilha — é grátis
+                  <ArrowRight size={16} strokeWidth={2.5} />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <footer style={{
@@ -470,9 +775,21 @@ export default function Home() {
             Sirius Academy
           </span>
         </div>
-        <span style={{ fontSize: 12, color: '#4A5270' }}>
-          Feito para profissionais que não param de evoluir.
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <Link href="/termos" style={{ fontSize: 12, color: '#4A5270', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#6B7A9E')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#4A5270')}>
+            Termos de Uso
+          </Link>
+          <Link href="/privacidade" style={{ fontSize: 12, color: '#4A5270', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#6B7A9E')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#4A5270')}>
+            Política de Privacidade
+          </Link>
+          <span style={{ fontSize: 12, color: '#4A5270' }}>
+            Feito para profissionais que não param de evoluir.
+          </span>
+        </div>
       </footer>
 
     </main>

@@ -1,0 +1,87 @@
+name: campaign-monitor-auto
+version: "1.0.0"
+description: >
+  Monitoramento automático de campanhas publicadas pelo app. Disparado via n8n webhook
+  após publicação. Coleta dados em 4 janelas de tempo (24h, 48h, 7 dias, 30 dias)
+  e gera insights comparativos automáticos.
+
+trigger:
+  webhook: "POST /webhooks/post-published"
+  payload_required: [post_id, platform, brand_id, campaign_id, published_at]
+
+steps:
+  - id: register-campaign
+    agent: campaign-monitor
+    action: Registrar post na fila de monitoramento com timestamps dos checkpoints
+    elicit: false
+    output: monitoring_schedule
+
+  - id: checkpoint-24h
+    agent: social-scraper
+    action: Coletar métricas 24h após publicação
+    elicit: false
+    scheduled_at: "published_at + 24h"
+    depends_on: register-campaign
+    data_points: [likes, comments, shares, saves, reach, impressions, video_views]
+    output: metrics_24h
+
+  - id: checkpoint-48h
+    agent: social-scraper
+    action: Coletar métricas 48h após publicação
+    elicit: false
+    scheduled_at: "published_at + 48h"
+    depends_on: checkpoint-24h
+    output: metrics_48h
+
+  - id: checkpoint-7d
+    agent: social-scraper
+    action: Coletar métricas 7 dias após publicação
+    elicit: false
+    scheduled_at: "published_at + 7d"
+    depends_on: checkpoint-48h
+    output: metrics_7d
+
+  - id: checkpoint-30d
+    agent: social-scraper
+    action: Coletar métricas 30 dias após publicação (snapshot final)
+    elicit: false
+    scheduled_at: "published_at + 30d"
+    depends_on: checkpoint-7d
+    output: metrics_30d
+
+  - id: analyze-performance
+    agent: insights-analyst
+    action: Analisar curva de performance, comparar com média histórica da marca
+    elicit: false
+    depends_on: metrics_7d
+    output: performance_analysis
+
+  - id: sentiment-analysis
+    agent: insights-analyst
+    action: Analisar sentimento dos comentários (positivo/neutro/negativo)
+    elicit: false
+    depends_on: checkpoint-48h
+    output: sentiment_report
+
+  - id: generate-campaign-insight
+    agent: insights-analyst
+    action: Gerar insight específico sobre essa campanha com recomendações para próximas
+    elicit: false
+    depends_on: [performance_analysis, sentiment_report]
+    output: campaign_insight
+
+  - id: notify-user
+    agent: campaign-monitor
+    action: Notificar usuário quando campanha supera ou fica abaixo da média histórica
+    elicit: false
+    depends_on: campaign_insight
+    conditions:
+      notify_if_above: "engagement_rate > historical_avg * 1.5"
+      notify_if_below: "engagement_rate < historical_avg * 0.5"
+    output: notification
+
+outputs:
+  - campaign_report: "reports/campaigns/{campaign_id}-performance.json"
+  - insights: "reports/campaigns/{campaign_id}-insights.md"
+
+credits_cost: 2  # por campanha monitorada

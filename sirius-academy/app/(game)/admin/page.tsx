@@ -8,7 +8,7 @@ import { getLevelInfo } from '@/lib/game-data'
 import { AvatarIcon, InitialsAvatar, type AvatarId } from '@/components/Avatars'
 import {
   Users, Activity, BookOpen, ChevronDown, ChevronUp,
-  Search, Award, ShoppingCart, DollarSign, TrendingUp, BarChart2,
+  Search, Award, ShoppingCart, DollarSign, TrendingUp, BarChart2, Package,
 } from 'lucide-react'
 
 // ── Só Breno acessa ──────────────────────────────────────────
@@ -393,6 +393,84 @@ function SalesTab({ leads, purchases }: { leads: CheckoutLead[]; purchases: Purc
         </div>
       </div>
 
+      {/* ── Breakdown por produto ── */}
+      {purchases.length > 0 && (
+        <div style={{ marginTop: 40, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7A9E', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '0.09em', textTransform: 'uppercase' as const, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Package size={13} strokeWidth={2} />
+            Análise por Produto
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+            {(() => {
+              // Agrupar por produto_tipo + curso_id
+              const map = new Map<string, { label: string; paid: number; pending: number; revenue: number; leads: number }>()
+
+              leads.forEach(l => {
+                const key = l.produto_tipo === 'genialidade' ? 'genialidade' : `curso:${l.curso_id}`
+                const label = l.produto_tipo === 'genialidade' ? 'Zona de Genialidade' : `Curso: ${l.curso_id ?? '-'}`
+                if (!map.has(key)) map.set(key, { label, paid: 0, pending: 0, revenue: 0, leads: 0 })
+                map.get(key)!.leads += 1
+              })
+
+              purchases.forEach(p => {
+                const key = p.produto_tipo === 'genialidade' ? 'genialidade' : `curso:${p.curso_id}`
+                const label = p.produto_tipo === 'genialidade' ? 'Zona de Genialidade' : `Curso: ${p.curso_id ?? '-'}`
+                if (!map.has(key)) map.set(key, { label, paid: 0, pending: 0, revenue: 0, leads: 0 })
+                const entry = map.get(key)!
+                if (p.status === 'pago') { entry.paid += 1; entry.revenue += Number(p.valor) }
+                else if (p.status === 'pendente') entry.pending += 1
+              })
+
+              return Array.from(map.values()).map(prod => (
+                <div key={prod.label} style={{
+                  background: 'rgba(8,12,24,0.7)',
+                  border: '1px solid rgba(59,91,219,0.14)',
+                  borderRadius: 12, padding: '18px 20px',
+                }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, color: '#E8EEFF', marginBottom: 14 }}>
+                    {prod.label}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {[
+                      { label: 'Leads', value: prod.leads, color: '#3B5BDB' },
+                      { label: 'Pagos', value: prod.paid, color: '#10b981' },
+                      { label: 'Pendentes', value: prod.pending, color: '#f59e0b' },
+                      { label: 'Receita', value: fmt(prod.revenue), color: '#0ea5e9' },
+                    ].map(m => (
+                      <div key={m.label}>
+                        <div style={{ fontSize: 10, color: '#6B7A9E', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', marginBottom: 3 }}>
+                          {m.label.toUpperCase()}
+                        </div>
+                        <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 17, color: m.color }}>
+                          {m.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {prod.leads > 0 && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 10, color: '#6B7A9E' }}>
+                        <span>Conversão</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                          {prod.leads > 0 ? Math.round((prod.paid / prod.leads) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div style={{ background: 'var(--border)', borderRadius: 3, height: 4, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 3,
+                          background: 'linear-gradient(90deg, #3B5BDB, #10b981)',
+                          width: `${prod.leads > 0 ? Math.round((prod.paid / prod.leads) * 100) : 0}%`,
+                        }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Compras sem lead (pagamentos diretos) */}
       {purchases.filter(p => !leads.some(l => l.user_id === p.user_id && l.produto_tipo === p.produto_tipo)).length > 0 && (
         <div style={{ marginTop: 32 }}>
@@ -428,7 +506,10 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [notAdmin, setNotAdmin] = useState(false)
   const [rlsBlocked, setRlsBlocked] = useState(false)
-  const [activeTab, setActiveTab] = useState<'alunos' | 'vendas'>('alunos')
+  const [activeTab, setActiveTab] = useState<'alunos' | 'vendas'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#vendas') return 'vendas'
+    return 'alunos'
+  })
   const [leads, setLeads] = useState<CheckoutLead[]>([])
   const [purchases, setPurchases] = useState<Purchase[]>([])
 

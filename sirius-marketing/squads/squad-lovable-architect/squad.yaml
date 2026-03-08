@@ -1,0 +1,102 @@
+name: squad-lovable-architect
+version: "1.0.0"
+description: >
+  Gerador de prompts otimizados para Lovable.dev. Conduz uma entrevista estruturada
+  com o usuário e gera um prompt completo, detalhado e seguindo o branding da marca,
+  que o Lovable entende e executa perfeitamente. Especialidade: apps e sites que a
+  Lovable precisa construir para clientes de marketing.
+
+agents:
+  - requirements-interviewer
+  - prompt-architect
+  - lovable-reviewer
+
+tasks:
+  - lovable-interview
+  - generate-lovable-prompt
+  - review-lovable-prompt
+
+workflows:
+  - lovable-prompt-generator
+
+entry_point: requirements-interviewer
+
+lovable_prompt_best_practices:
+  structure:
+    - Visão geral clara em 1 parágrafo
+    - Público-alvo definido
+    - Funcionalidades principais (lista numerada)
+    - Design e branding (cores, estilo, referências)
+    - Fluxos específicos (login, checkout, formulários)
+    - Integrações necessárias (WhatsApp, pagamento, etc.)
+    - Exemplos de referência (sites/apps similares)
+  rules:
+    - Ser específico — Lovable executa literalmente o que está no prompt
+    - Incluir exemplos concretos ("botão verde, texto branco, canto arredondado")
+    - Definir fluxos passo a passo para features complexas
+    - Mencionar ferramentas nativas a usar (Supabase, Stripe, etc.)
+    - Não usar linguagem vaga ("moderno", "bonito") — usar referências específicas
+
+interview_sections:
+  - id: vision
+    label: "Visao Geral"
+    questions:
+      - "O que esse app/site vai fazer? (descreva em 2 frases para um leigo)"
+      - "Qual é o nome do projeto?"
+      - "Qual o principal problema que resolve?"
+    ghost_text: "Ex: 'Um app para profissionais de marketing agendarem posts nas redes sociais automaticamente, com IA sugerindo os melhores horários...'"
+
+  - id: audience
+    label: "Publico-Alvo"
+    questions:
+      - "Quem vai usar isso? (idade, profissão, nível técnico)"
+      - "Qual o principal objetivo do usuário ao abrir o app?"
+    ghost_text: "Ex: 'Donos de pequenas empresas, 30-45 anos, pouco conhecimento técnico, querem praticidade...'"
+
+  - id: features
+    label: "Funcionalidades"
+    questions:
+      - "Quais são as 5 coisas principais que o app precisa fazer?"
+      - "Tem alguma funcionalidade especial ou diferenciada?"
+      - "O que NÃO precisa ter nessa primeira versão?"
+    ghost_text: "Ex: '1. Login com email, 2. Dashboard com métricas, 3. Agendamento de posts, 4. Biblioteca de assets, 5. Relatórios...'"
+
+  - id: design
+    label: "Design e Branding"
+    questions:
+      - "Qual a paleta de cores? (pode usar a Brand Memory ativa)"
+      - "Qual estilo visual? (minimalista, bold, clean, colorido, dark mode)"
+      - "Tem referências de apps/sites que admira o design?"
+      - "Usa logo? Qual estilo de tipografia?"
+    ghost_text: "Ex: 'Cores da marca: #1A1A2E e #E94560, estilo dark mode elegante, referência: Linear.app e Notion...'"
+
+  - id: flows
+    label: "Fluxos Especificos"
+    questions:
+      - "Precisa de login? (email, Google, magic link)"
+      - "Tem sistema de pagamento? (checkout, assinatura, créditos)"
+      - "Precisa de botão para WhatsApp?"
+      - "Tem formulários importantes? Quais campos?"
+      - "Existe área administrativa separada?"
+    ghost_text: "Ex: 'Login com Google, checkout via Stripe para plano mensal, botão flutuante de WhatsApp no rodapé...'"
+
+  - id: integrations
+    label: "Integracoes"
+    questions:
+      - "Precisa de banco de dados? (Supabase recomendado)"
+      - "Integrações com APIs externas? (redes sociais, email, etc.)"
+      - "Precisa de autenticação de terceiros?"
+      - "Tem n8n ou outras automações para conectar?"
+    ghost_text: "Ex: 'Supabase para banco e auth, integração com Instagram API, webhook para n8n...'"
+
+  - id: references
+    label: "Referencias"
+    questions:
+      - "Tem 2-3 sites ou apps que gosta visualmente e funcionalmente?"
+      - "Tem alguma funcionalidade específica que viu em outro app e quer replicar?"
+    ghost_text: "Ex: 'Visual do Linear.app, funcionalidade de agendamento do Later.com, onboarding do Notion...'"
+
+credits:
+  lovable-interview: 2
+  generate-lovable-prompt: 2
+  lovable-prompt-generator: 4

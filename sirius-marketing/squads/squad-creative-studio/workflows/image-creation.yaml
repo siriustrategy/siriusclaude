@@ -1,0 +1,103 @@
+name: image-creation
+version: "1.0.0"
+description: >
+  Workflow completo de criação de imagem. Do briefing ao asset final validado pela
+  identidade de marca, com opção de remix e geração de variações por formato.
+
+steps:
+  - id: load-brand-context
+    agent: image-director
+    action: Carregar Brand Memory da marca ativa (paleta, estilo, logo se ativo)
+    elicit: false
+    output: brand_context
+
+  - id: capture-briefing
+    agent: image-director
+    action: Capturar briefing do usuário (o que quer gerar, para qual uso, referências)
+    elicit: true
+    depends_on: load-brand-context
+    prompts:
+      - "O que você quer gerar? (produto, pessoa, cenário, conceito)"
+      - "Para qual uso? (feed, stories, banner, thumbnail, anúncio)"
+      - "Alguma referência de estilo ou imagem similar?"
+      - "Quer incluir o logo? [sim/não]"
+    output: creative_briefing
+
+  - id: engine-selection
+    agent: image-director
+    action: Apresentar opções de engine com preview do tipo de resultado de cada um
+    elicit: true
+    depends_on: capture-briefing
+    options:
+      - "1. Flux (Nano Banana) — fotorrealismo, pessoas, produtos"
+      - "2. Seaart — ilustrações, arte digital, personagens"
+      - "3. Kling — vídeo/animação suave"
+      - "4. Sora — vídeo realista e complexo"
+    output: selected_engine
+
+  - id: build-prompt
+    agent: prompt-engineer
+    action: Construir prompt otimizado incorporando Brand Memory + briefing + engine selecionado
+    elicit: false
+    depends_on: [creative_briefing, selected_engine, brand_context]
+    output: optimized_prompt
+
+  - id: generate-image
+    agent: image-director
+    action: Enviar prompt para o engine selecionado e aguardar resultado
+    elicit: false
+    depends_on: [build-prompt, selected_engine]
+    output: generated_asset
+
+  - id: brand-police-check
+    agent: brand-police
+    action: Validar asset gerado contra Brand Memory (Brand Score)
+    elicit: false
+    depends_on: generate-image
+    output: brand_validation
+
+  - id: auto-adjust-if-needed
+    agent: prompt-engineer
+    action: Se Brand Score < 80, ajustar prompt e regenerar (máx 2 tentativas)
+    elicit: false
+    depends_on: brand-police-check
+    condition: "brand_validation.score < 80"
+    max_iterations: 2
+    output: adjusted_asset
+
+  - id: user-review
+    agent: image-director
+    action: Apresentar resultado ao usuário com Brand Score e opções (aprovar/remix/descartar)
+    elicit: true
+    depends_on: [generate-image, brand-police-check]
+    options:
+      - "1. Aprovar e salvar na biblioteca"
+      - "2. Remix (ajustes pontuais)"
+      - "3. Gerar variações de formato (feed/stories/banner)"
+      - "4. Tentar novamente com novo prompt"
+      - "5. Descartar"
+    output: user_decision
+
+  - id: generate-format-variants
+    agent: image-director
+    action: Adaptar imagem aprovada para os formatos selecionados mantendo consistência visual
+    elicit: true
+    depends_on: user-review
+    condition: "user_decision == 'generate_variants'"
+    params:
+      formats: [1:1_feed, 9:16_stories, 16:9_banner, 1:1_thumbnail]
+    output: format_variants
+
+  - id: save-to-library
+    agent: prompt-engineer
+    action: Salvar asset na biblioteca + prompt na Prompt Library se score >= 85
+    elicit: false
+    depends_on: user-review
+    condition: "user_decision == 'approve'"
+    output: saved_asset
+
+outputs:
+  - asset_file: "library/assets/{brand_id}/{date}/{asset_id}.{format}"
+  - prompt_saved: "library/prompts/{brand_id}/{prompt_id}.json"
+
+credits_cost: 5  # geração base, +3 por variante de formato

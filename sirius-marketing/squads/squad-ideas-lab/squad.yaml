@@ -1,0 +1,46 @@
+name: squad-ideas-lab
+version: "1.0.0"
+description: >
+  Laboratório de ideias orientado por IA. Gera ideias ranqueadas por potencial através
+  de perguntas específicas por área, incorporando contexto da marca, tendências do mercado,
+  SEO e pesquisa de concorrentes. As melhores ideias alimentam diretamente os outros módulos.
+
+agents:
+  - idea-generator
+  - seo-specialist
+  - research-analyst
+  - competitor-analyst
+
+tasks:
+  - generate-ideas
+  - seo-research
+  - competitor-analysis
+  - idea-ranking
+  - idea-to-brief
+
+workflows:
+  - ideas-pipeline
+  - competitor-mood-analysis
+
+entry_point: idea-generator
+
+idea_categories:
+  content: "Ideias para posts, vídeos, reels, stories"
+  campaign: "Ideias para campanhas completas (lançamento, sazonais, awareness)"
+  product: "Ideias para produtos, serviços ou features"
+  engagement: "Ideias para aumentar engajamento e comunidade"
+  collab: "Ideias para colaborações com influenciadores ou marcas"
+
+ranking_criteria:
+  viral_potential: 0-10
+  brand_fit: 0-10
+  execution_simplicity: 0-10
+  seo_opportunity: 0-10
+  trend_alignment: 0-10
+  final_score: weighted_average
+
+credits:
+  generate-ideas: 3
+  competitor-analysis: 5
+  seo-research: 3
+  ideas-pipeline: 8

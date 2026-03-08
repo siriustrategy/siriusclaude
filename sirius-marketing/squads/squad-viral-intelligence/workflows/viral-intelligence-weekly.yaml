@@ -1,0 +1,72 @@
+name: viral-intelligence-weekly
+version: "1.0.0"
+description: >
+  Workflow semanal completo de inteligência viral. Coleta trends, analisa o porquê
+  viralizaram, prediz o que vem por aí, e entrega briefings práticos para a marca.
+  Executado automaticamente toda segunda-feira ou sob demanda.
+
+trigger:
+  automatic: "toda segunda-feira às 08:00"
+  manual: "*viral-weekly"
+
+steps:
+  - id: collect-viral-content
+    agent: trend-hunter
+    action: Coletar top 20 conteúdos virais da semana (YouTube + TikTok + Instagram)
+    elicit: false
+    params:
+      period: week
+      platforms: [youtube, tiktok, instagram]
+      limit: 20
+    output: viral_content_list
+
+  - id: analyze-why-viral
+    agent: viral-analyst
+    action: Para cada conteúdo, analisar o porquê viralizou usando o viral anatomy framework
+    elicit: false
+    depends_on: collect-viral-content
+    parallel: true  # análises em paralelo
+    output: viral_analysis_list
+
+  - id: predict-upcoming-trends
+    agent: trend-predictor
+    action: Identificar trends emergentes e eventos futuros relevantes para as próximas 2 semanas
+    elicit: false
+    depends_on: collect-viral-content
+    output: upcoming_trends
+
+  - id: filter-by-brand-relevance
+    agent: trend-adapter
+    action: Filtrar e ranquear trends por relevância para a marca ativa
+    elicit: false
+    depends_on: [viral_analysis_list, upcoming_trends]
+    params:
+      brand_id: active_brand
+    output: ranked_trends
+
+  - id: generate-brand-briefs
+    agent: trend-adapter
+    action: Gerar briefing criativo para top 5 trends mais relevantes para a marca
+    elicit: false
+    depends_on: ranked_trends
+    output: creative_briefs
+
+  - id: generate-report
+    agent: trend-hunter
+    action: Compilar relatório semanal com dashboard visual de trends + análises + briefings
+    elicit: false
+    depends_on: [viral_analysis_list, upcoming_trends, creative_briefs]
+    output: weekly_report
+
+  - id: notify-user
+    agent: trend-hunter
+    action: Notificar usuário que o relatório semanal está pronto
+    elicit: false
+    depends_on: generate-report
+    output: notification_sent
+
+outputs:
+  - weekly_report_file: "reports/viral-intelligence/week-{YYYY-WW}.md"
+  - creative_briefs_file: "reports/viral-intelligence/briefs-week-{YYYY-WW}.json"
+
+credits_cost: 5

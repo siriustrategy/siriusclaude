@@ -5,28 +5,246 @@
 
 metadata:
   version: "1.0.0"
-  last_updated: "2026-01-01"
+  last_updated: "2026-03-03"
   maintainer: "squad-creator"
-  total_squads: 0
-  total_agents: 0
-  total_tasks: 0
-  total_workflows: 0
-  total_templates: 0
-  total_checklists: 0
-  total_data_files: 0
+  total_squads: 4
+  total_agents: 38
+  total_tasks: 53
+  total_workflows: 13
+  total_templates: 22
+  total_checklists: 14
+  total_data_files: 36
 
-# Squads serão adicionados via *refresh-registry
-squads: {}
+squads:
+  squad-creator:
+    path: "squads/squad-creator/"
+    version: "3.0.0"
+    domain: "meta_frameworks"
+    purpose: "Meta-squad para criar squads de agentes baseados em elite minds reais. Orchestrator squad-chief com triage e routing. Mind cloning via @oalanicolas. Process design via @pedro-valerio."
+    keywords:
+      - squad
+      - squad-creator
+      - mind-cloning
+      - dna-extraction
+      - agent-creation
+      - workflow-design
+      - elite-minds
+      - meta-framework
+      - aios
+      - orchestrator
+    agents: 3
+    tasks: 42
+    workflows: 9
+    templates: 17
+    checklists: 14
+    agent_names:
+      - squad-chief
+      - oalanicolas
+      - pedro-valerio
+    highlights:
+      - "Squad meta-framework para criar qualquer squad em qualquer dominio"
+      - "Mind cloning com 46 checkpoints de fidelidade (Voice + Thinking DNA)"
+      - "Process design com veto conditions e fluxo unidirecional"
+      - "4/4 smoke tests passando — squad de referencia do ecossistema"
+    example_use: "Criar um squad de advogados especializados em contratos digitais"
+    quality_reference: true
 
-# Índice será populado automaticamente
-domain_index: {}
+  squadsiteslp:
+    path: "squads/squadsiteslp/"
+    version: "1.0.0"
+    domain: "technical"
+    purpose: "Squad completo para criacao de sites e landing pages premium — estetica moderna/Apple, animacoes sofisticadas, SEO Google + AI, persuasao e conversao, deploy automatico via GitHub conectado a hosting. Zero AI-look."
+    keywords:
+      - sites
+      - landing-pages
+      - lp
+      - web-design
+      - css
+      - animacoes
+      - seo
+      - google-seo
+      - ai-seo
+      - geo
+      - conversao
+      - cro
+      - copy
+      - persuasao
+      - deploy
+      - vercel
+      - netlify
+      - github
+      - next-js
+      - typescript
+      - supabase
+      - anti-ai-look
+      - premium-web
+      - motion-design
+    agents: 19
+    tasks: 0
+    workflows: 3
+    templates: 0
+    checklists: 0
+    agent_names:
+      - squadsiteslp-chief
+      - steve-schoger
+      - josh-comeau
+      - emil-kowalski
+      - adam-argyle
+      - ahmad-shadeed
+      - kevin-powell
+      - maxime-heckel
+      - rand-fishkin
+      - kevin-indig
+      - brian-dean
+      - lily-ray
+      - joanna-wiebe
+      - oli-gardner
+      - peep-laja
+      - guillermo-rauch
+      - lee-robinson
+      - theo-browne
+      - matt-biilmann
+    highlights:
+      - "19 agents baseados em elite minds reais cobrindo 4 modulos: Design, SEO, Copy, Deploy"
+      - "Workflow de intake (PRD) obrigatorio antes de qualquer execucao — zero sites sem briefing"
+      - "Anti-AI look como principio central — CSS artesanal, animacoes cinematograficas"
+      - "SEO para Google E para IAs (ChatGPT, Perplexity, AI Overview)"
+      - "Deploy automatico: GitHub → Vercel → dominio customizado com um push"
+    example_use: "Criar landing page premium para empresa de consultoria com deploy automatico no Vercel"
 
-# Referencias de qualidade (exemplos)
-quality_references: []
+  zona-genialidade:
+    path: "squads/zona-genialidade/"
+    version: "1.0.0"
+    domain: "people_psychology"
+    purpose: "Squad que identifica a zona de genialidade do usuario atraves de assessment comportamental unificado, analise multi-framework autonoma e entrega Blueprint completo com squad recomendado e plano de monetizacao."
+    keywords:
+      - zona-genialidade
+      - assessment
+      - perfil
+      - talentos
+      - genialidade
+      - kolbe
+      - clifton
+      - hormozi
+      - sullivan
+      - hogshead
+      - monetizacao
+      - blueprint
+      - autoconhecimento
+      - fortalezas
+    agents: 8
+    tasks: 5
+    workflows: 0
+    templates: 0
+    checklists: 0
+    agent_names:
+      - zona-genialidade-chief
+      - gay-hendricks
+      - roger-hamilton
+      - sally-hogshead
+      - kathy-kolbe
+      - don-clifton
+      - dan-sullivan
+      - alex-hormozi
+    highlights:
+      - "Assessment unificado de 30 minutos combinando 6 frameworks (Kolbe, Clifton, Hormozi, etc.)"
+      - "Analise multi-framework autonoma sem intervencao humana entre etapas"
+      - "Entrega Blueprint completo com squad recomendado para o perfil identificado"
+    example_use: "Descobrir a zona de genialidade de um profissional e identificar como monetiza-la"
 
-# Convenções de nomenclatura
+domain_index:
+  # meta_frameworks
+  meta_frameworks: ["squad-creator"]
+  mind-cloning: ["squad-creator"]
+  agent-creation: ["squad-creator"]
+  squad: ["squad-creator"]
+  elite-minds: ["squad-creator", "squadsiteslp"]
+
+  # technical — web
+  technical: ["squadsiteslp"]
+  sites: ["squadsiteslp"]
+  landing-pages: ["squadsiteslp"]
+  lp: ["squadsiteslp"]
+  web-design: ["squadsiteslp"]
+  css: ["squadsiteslp"]
+  deploy: ["squadsiteslp"]
+  vercel: ["squadsiteslp"]
+  seo: ["squadsiteslp"]
+  conversao: ["squadsiteslp"]
+  copy: ["squadsiteslp"]
+
+  # people_psychology
+  people_psychology: ["zona-genialidade"]
+  assessment: ["zona-genialidade"]
+  talentos: ["zona-genialidade"]
+  genialidade: ["zona-genialidade"]
+  autoconhecimento: ["zona-genialidade"]
+
+  squad-sirius-proposals:
+    path: "squads/squad-sirius-proposals/"
+    version: "1.0.0"
+    domain: "sales_proposals"
+    purpose: "Squad especializado em criar propostas comerciais completas para a Sirius Strategy — desde a inteligência do cliente (pesquisa online) até a entrega de deck Google Slides + script + ROI + contrato + follow-up. Modelo MRR: implementação + fee mensal."
+    keywords:
+      - propostas
+      - proposta-comercial
+      - vendas
+      - sales
+      - mrr
+      - deck
+      - apresentacao
+      - pitch
+      - pricing
+      - custos-infra
+      - oferta
+      - planos
+      - google-slides
+      - sirius
+      - branding
+      - hub-solucoes
+    agents: 8
+    tasks: 6
+    workflows: 1
+    templates: 5
+    checklists: 0
+    agent_names:
+      - sirius-proposals-chief
+      - maister
+      - blair-enns
+      - hormozi
+      - corey-quinn
+      - patrick-campbell
+      - klaff
+      - nancy-duarte
+    highlights:
+      - "8 agentes baseados em elite minds reais: Maister, Blair Enns, Hormozi, Corey Quinn, Patrick Campbell, Oren Klaff, Nancy Duarte"
+      - "Workflow completo em 9 fases: intake → pesquisa → estratégia → planos → custos → pricing → deck → script → materiais"
+      - "Cálculo real de custos de infra (Supabase, VPS, APIs) em 3 cenários de escala"
+      - "9 materiais gerados por proposta: deck, script, one-pager, ROI, cronograma, contrato, email, objeções, case study"
+    example_use: "Criar proposta comercial para empresa de logística de 150 funcionários interessada em agente WhatsApp + CRM"
+
+gaps:
+  - domain: "finance"
+    description: "Gestao de investimentos, analise financeira, contabilidade"
+  - domain: "health"
+    description: "Saude, bem-estar, medicina preventiva"
+  - domain: "legal"
+    description: "Juridico, contratos, compliance"
+  - domain: "marketing"
+    description: "Marketing digital, growth, ads"
+  - domain: "product_management"
+    description: "Gestao de produto, roadmap, priorizacao"
+  - domain: "data_science"
+    description: "Analise de dados, ML, visualizacao"
+
+quality_references:
+  - squad: "squad-creator"
+    reason: "Squad meta-framework de referencia — padroes AIOS v3.0"
+
 conventions:
   squad_folder: "kebab-case"
   agent_files: "kebab-case.md"
   task_files: "kebab-case.md"
+  workflow_files: "wf-kebab-case.md"
   config_name: "must match folder"
+  readme: "README.md obrigatorio"

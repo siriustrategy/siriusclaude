@@ -1,0 +1,28 @@
+{
+  "name": "sirius-animations",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "preview": "remotion studio src/index.ts",
+    "render:sirius": "remotion render src/index.ts SiriusAgentActivated out/sirius-agent-activated.mp4",
+    "render:mappy": "remotion render src/index.ts MappyPinDrop out/mappy-pin-drop.mp4",
+    "render:stats": "remotion render src/index.ts StatsReveal out/stats-reveal.mp4",
+    "render:all": "npm run render:sirius && npm run render:mappy && npm run render:stats"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@remotion/cli": "^4.0.434",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.434"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

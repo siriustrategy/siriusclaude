@@ -1,0 +1,111 @@
+squad:
+  name: squad-sirius-proposals
+  version: "1.0.0"
+  domain: "sales_proposals"
+  description: "Squad especializado em criar propostas comerciais completas para a Sirius Strategy — desde a inteligência do cliente até a apresentação final com branding espacial."
+
+  purpose: |
+    Transformar um briefing de cliente em uma proposta comercial completa:
+    3 planos escalonáveis (básico ao premium), deck Google Slides com branding Sirius,
+    cálculo real de custos e MRR, e todos os materiais de apoio para fechar o contrato.
+
+  activation: "@squad-sirius-proposals"
+  chief: "sirius-proposals-chief"
+
+  agents:
+    - id: sirius-proposals-chief
+      file: agents/sirius-proposals-chief.md
+      tier: orchestrator
+      role: "Conduz o workflow completo, coleta intake, coordena agentes e entrega final"
+
+    - id: maister
+      file: agents/maister.md
+      tier: 0
+      role: "Pesquisa o cliente (site, redes, stack tecnológico, dores, maturidade digital)"
+      based_on: "David Maister — The Trusted Advisor"
+
+    - id: blair-enns
+      file: agents/blair-enns.md
+      tier: 1
+      role: "Posiciona a Sirius, mapeia quais serviços fazem sentido para o cliente"
+      based_on: "Blair Enns — Win Without Pitching"
+
+    - id: hormozi
+      file: agents/hormozi.md
+      tier: 1
+      role: "Monta os 3 planos com Value Stack, combinações de serviços, bônus"
+      based_on: "Alex Hormozi — $100M Offers"
+
+    - id: corey-quinn
+      file: agents/corey-quinn.md
+      tier: 2
+      role: "Calcula custo real do projeto: infra (Supabase, VPS, APIs), tempo, escala"
+      based_on: "Corey Quinn — The Duckbill Group / Cloud Cost Optimization"
+
+    - id: patrick-campbell
+      file: agents/patrick-campbell.md
+      tier: 2
+      role: "Define precificação MRR, margens, modelo de assinatura e benchmarks de mercado"
+      based_on: "Patrick Campbell — ProfitWell / Paddle"
+
+    - id: klaff
+      file: agents/klaff.md
+      tier: 2
+      role: "Escreve o script de apresentação slide a slide, framing e manejo de objeções"
+      based_on: "Oren Klaff — Pitch Anything / Flip the Script"
+
+    - id: nancy-duarte
+      file: agents/nancy-duarte.md
+      tier: 2
+      role: "Estrutura o deck (storytelling, flow visual), guia de design Sirius"
+      based_on: "Nancy Duarte — Resonate / Slide:ology"
+
+  workflows:
+    - wf-create-proposal.md
+
+  tasks:
+    - intake-client.md
+    - research-client.md
+    - build-offer-plans.md
+    - calculate-project-costs.md
+    - create-presentation.md
+    - generate-materials.md
+
+  templates:
+    - proposal-deck-structure.md
+    - onepager-tmpl.md
+    - roi-spreadsheet-tmpl.md
+    - contract-tmpl.md
+    - followup-email-tmpl.md
+    - objection-handlers-tmpl.md
+    - case-study-tmpl.md
+    - pitch-script-tmpl.md
+
+  data:
+    - sirius-services-catalog.md
+    - sirius-branding.md
+    - pricing-reference.md
+    - infrastructure-costs-reference.md
+
+  business_model:
+    type: "implementation + mrr"
+    implementation: "Taxa única por projeto/solução"
+    mrr: "Fee mensal para manter sistemas rodando"
+    expansion: "Novos serviços somam ao fee mensal (soluções complementares)"
+
+  sirius_branding:
+    theme: "Espacial — Sirius é a estrela mais brilhante do céu"
+    colors:
+      primary: "#0A0E1A"      # Azul escuro / espaço
+      secondary: "#1B2B5E"    # Azul médio
+      accent: "#4A90D9"       # Azul claro / estrela
+      neutral_dark: "#111111" # Preto
+      neutral_light: "#FFFFFF" # Branco
+    tone: "Premium, confiante, futurista — mas acessível e direto"
+    keywords: ["estratégia", "inteligência", "automação", "parceria", "crescimento"]
+
+  output_format:
+    presentation: "Google Slides"
+    supporting_docs: "Google Docs / PDF"
+    spreadsheets: "Google Sheets"
+    delivery: "Pasta Google Drive por cliente"

@@ -53,6 +53,7 @@ ALTER TABLE academy_checkout_leads ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS academy_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE NOT NULL,
+  email TEXT,
   display_name TEXT,
   avatar_id TEXT DEFAULT 'wolf',
   xp INTEGER DEFAULT 0 NOT NULL,
@@ -62,6 +63,9 @@ CREATE TABLE IF NOT EXISTS academy_profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Se a tabela já existe, adicionar coluna email:
+-- ALTER TABLE academy_profiles ADD COLUMN IF NOT EXISTS email TEXT;
 
 -- ============================================================================
 -- PROGRESSO DOS MÓDULOS

@@ -9,7 +9,7 @@ import { AvatarIcon, InitialsAvatar, type AvatarId } from '@/components/Avatars'
 import OnboardingModal from '@/components/OnboardingModal'
 import {
   LayoutDashboard, User, LogOut, TrendingUp, BarChart2, Megaphone,
-  BookOpen, ShieldCheck, Sparkles, Lock, Zap, Menu, X,
+  BookOpen, ShieldCheck, Sparkles, Zap, Menu, X, DollarSign,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
@@ -71,8 +71,28 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
   const loadProfile = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/login'); return }
-    const { data } = await supabase.from('academy_profiles').select('*').eq('id', session.user.id).single()
-    if (!data) { router.push('/login'); return }
+
+    let data = null
+    // Tenta até 3x — dá tempo do callback criar o perfil (OAuth)
+    for (let i = 0; i < 3; i++) {
+      const res = await supabase.from('academy_profiles').select('*').eq('id', session.user.id).single()
+      if (res.data) { data = res.data; break }
+      if (i < 2) await new Promise(r => setTimeout(r, 800))
+    }
+
+    if (!data) {
+      // Perfil não existe — cria agora (fallback para OAuth)
+      const email = session.user.email || ''
+      const base = email.split('@')[0].replace(/[^a-z0-9_]/gi, '_').toLowerCase()
+      const username = `${base}_${Math.floor(Math.random() * 9000) + 1000}`
+      await supabase.from('academy_profiles').insert({
+        id: session.user.id, username, email,
+        xp: 0, level: 1, title: 'Iniciante', onboarding_complete: false,
+      })
+      const res = await supabase.from('academy_profiles').select('*').eq('id', session.user.id).single()
+      if (!res.data) { router.push('/login'); return }
+      data = res.data
+    }
     setProfile(data)
     if (!data.onboarding_complete) setShowOnboarding(true)
     if (session.user.email === 'breno.nobre@gruporiomais.com.br') setIsAdmin(true)
@@ -239,7 +259,15 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
               }}>
                 <ShieldCheck size={15} color={pathname === '/admin' ? '#f59e0b' : 'var(--text-secondary)'} strokeWidth={2} />
               </div>
-              <span>Painel de Alunos</span>
+              <span>Alunos</span>
+            </div>
+          </Link>
+          <Link href="/admin#vendas" style={{ textDecoration: 'none' }}>
+            <div className="nav-pill">
+              <div className="nav-icon" style={{ background: 'var(--muted-bg)', border: '1px solid var(--border)' }}>
+                <DollarSign size={15} color="var(--text-secondary)" strokeWidth={2} />
+              </div>
+              <span>Vendas</span>
             </div>
           </Link>
         </>
@@ -260,12 +288,9 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             background: pathname.startsWith('/genialidade') ? 'rgba(124,58,237,0.18)' : 'var(--muted-bg)',
             border: `1px solid ${pathname.startsWith('/genialidade') ? 'rgba(124,58,237,0.3)' : 'var(--border)'}`,
           }}>
-            {isAdmin
-              ? <Sparkles size={15} color={pathname.startsWith('/genialidade') ? '#7C3AED' : 'var(--text-secondary)'} strokeWidth={2} />
-              : <Lock size={15} color="var(--text-muted)" strokeWidth={2} />
-            }
+            <Sparkles size={15} color={pathname.startsWith('/genialidade') ? '#7C3AED' : 'var(--text-secondary)'} strokeWidth={2} />
           </div>
-          <span style={{ color: isAdmin ? undefined : 'var(--text-muted)' }}>Zona de Genio</span>
+          <span>Zona de Genialidade</span>
         </div>
       </Link>
 

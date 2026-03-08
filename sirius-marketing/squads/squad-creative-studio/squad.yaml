@@ -1,0 +1,56 @@
+name: squad-creative-studio
+version: "1.0.0"
+description: >
+  Estúdio criativo de IA para geração de imagens, personagens consistentes, remixes de
+  assets e animações. Todo output passa pelo Brand Police antes de ser entregue.
+  Suporta múltiplos engines de geração: Flux (Nano Banana), Kling, Seaart, Sora.
+
+agents:
+  - prompt-engineer
+  - image-director
+  - character-designer
+  - asset-remixer
+
+tasks:
+  - generate-image
+  - create-character
+  - remix-asset
+  - generate-format-variants
+  - create-animation
+
+workflows:
+  - image-creation
+  - character-creation
+  - asset-remix
+
+entry_point: image-director
+
+supported_engines:
+  flux_nano_banana:
+    type: image
+    best_for: ["fotorrealismo", "pessoas", "produtos"]
+    cost_per_gen: 5_credits
+  kling:
+    type: video
+    best_for: ["animações suaves", "movimento de câmera", "curtas cinematic"]
+    cost_per_gen: 20_credits
+  seaart:
+    type: image
+    best_for: ["ilustrações", "anime", "arte digital", "fantasia"]
+    cost_per_gen: 5_credits
+  sora:
+    type: video
+    best_for: ["vídeos realistas", "cenas complexas", "narrativa visual"]
+    cost_per_gen: 25_credits
+
+brand_police_integration:
+  mandatory: true
+  blocks_on_score_below: 50
+  auto_adjust: true  # tenta ajustar prompt automaticamente se score < 80
+
+credits:
+  generate-image: 5
+  create-character: 8
+  remix-asset: 5
+  generate-format-variants: 3
+  create-animation: 20

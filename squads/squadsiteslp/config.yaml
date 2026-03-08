@@ -1,0 +1,61 @@
+name: squadsiteslp
+version: 1.0.0
+tested: false
+updated_at: "2026-03-02"
+short-title: Sites & Landing Pages
+description: >-
+  Squad completo para criacao de sites e landing pages premium — estetica moderna/Apple,
+  animacoes sofisticadas, SEO Google + AI, persuasao e conversao, deploy automatico via
+  GitHub conectado a hosting. Zero AI-look. Workflow intake estruturado (PRD) antes de
+  qualquer execucao. 18 agents baseados em elite minds reais + 1 orchestrator.
+  Modulos: Design & Craft | SEO & Visibilidade | Persuasao & Conversao | Deploy & Infrastructure.
+author: Squad Creator — AIOS
+entry_agent: squadsiteslp-chief
+slashPrefix: squadsiteslp
+
+settings:
+  activation:
+    show_ecosystem_report: false
+    show_greeting: true
+    show_quick_commands: true
+
+modules:
+  - id: M1
+    name: Design & Craft
+    description: "Estetica premium, CSS craft, animacoes nao-padrao, anti-Lovable"
+    tier_0: steve-schoger
+    tier_1: [josh-comeau, emil-kowalski, adam-argyle]
+    tier_2: [ahmad-shadeed, kevin-powell, maxime-heckel]
+
+  - id: M2
+    name: SEO & Visibilidade
+    description: "Google SEO + AI SEO (GEO) — rankear no Google e nas IAs"
+    tier_0: [rand-fishkin, kevin-indig]
+    tier_1: brian-dean
+    tier_2: lily-ray
+
+  - id: M3
+    name: Persuasao & Conversao
+    description: "Copy, estrutura de LP, CRO — botoes e ofertas nos lugares certos"
+    tier_1: [joanna-wiebe, oli-gardner]
+    tier_2: peep-laja
+
+  - id: M4
+    name: Deploy & Infrastructure
+    description: "GitHub + Vercel/Netlify + backend — site no ar com um comando"
+    tier_0: guillermo-rauch
+    tier_1: [lee-robinson, theo-browne]
+    tier_2: matt-biilmann
+
+workflows:
+  - wf-site-intake.md       # SEMPRE executa primeiro — PRD estruturado
+  - wf-create-site.md       # Orquestra design → SEO → copy → deploy
+  - wf-deploy-pipeline.md   # GitHub → preview → producao
+
+quality_standards:
+  anti_ai_look: true
+  no_lovable_patterns: true
+  no_apple_emojis: true
+  no_stock_icons: true
+  professional_modern: true
+  intake_required: true     # BLOCKER: nenhum site sem intake completo

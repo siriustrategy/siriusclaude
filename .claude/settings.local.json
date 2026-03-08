@@ -5,7 +5,13 @@
       "WebFetch(domain:api.github.com)",
       "WebFetch(domain:registry.npmjs.org)",
       "WebFetch(domain:pypi.org)",
-      "WebFetch(domain:files.pythonhosted.org)"
+      "WebFetch(domain:files.pythonhosted.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:fonts.googleapis.com)",
+      "WebFetch(domain:fonts.gstatic.com)",
+      "WebFetch(domain:wapvqkjmrtzsmcnrxlju.supabase.co)",
+      "WebFetch(domain:generativelanguage.googleapis.com)",
+      "WebFetch(domain:eu-central-1-1.aws.cloud2.influxdata.com)"
     ]
   },
   "hooks": {

@@ -1,0 +1,69 @@
+name: squad-analytics
+version: "1.0.0"
+description: >
+  Inteligência de dados das redes sociais. Monitora campanhas criadas pelo app,
+  scraping de perfis próprios e públicos no Instagram e TikTok, análise de performance
+  e geração de insights acionáveis. Funciona via Playwright (perfis públicos) e
+  APIs oficiais (perfil próprio). Monitoramento automático via n8n webhooks.
+
+agents:
+  - social-scraper
+  - campaign-monitor
+  - insights-analyst
+
+tasks:
+  - scrape-own-profile
+  - scrape-public-profile
+  - monitor-campaign
+  - generate-insights-report
+  - analyze-post-performance
+
+workflows:
+  - campaign-monitor-auto
+  - profile-deep-analysis
+  - weekly-insights-report
+
+entry_point: social-scraper
+
+data_collection:
+  own_profile:
+    method: "Instagram Graph API + TikTok API"
+    data_points:
+      - Seguidores (total, crescimento, taxa de crescimento)
+      - Alcance total e por período
+      - Impressões
+      - Posts: curtidas, comentários, compartilhamentos, salvamentos, visualizações
+      - Stories: views, respostas, saídas
+      - Reels: plays, completion rate, compartilhamentos
+      - Crescimento de seguidores dia a dia
+      - Dados demográficos do público (idade, gênero, localização)
+      - Melhores horários de postagem
+      - Top posts por engajamento
+      - Hashtags com melhor performance
+
+  public_profile:
+    method: "Playwright (scraping navegador)"
+    data_points:
+      - Total de seguidores
+      - Frequência de posts
+      - Top posts (mais curtidos/comentados visíveis)
+      - Tipos de conteúdo predominantes
+      - Hashtags mais usadas
+      - Engajamento médio estimado
+
+  campaign_monitoring:
+    trigger: "n8n webhook após publicação"
+    monitoring_window: "24h, 48h, 7 dias, 30 dias após publicação"
+    data_tracked:
+      - Curtidas, comentários, compartilhamentos, salvamentos (Instagram)
+      - Views, likes, comentários, compartilhamentos (TikTok)
+      - Taxa de crescimento de engajamento por hora (primeiras 24h)
+      - Sentimento dos comentários (positivo/negativo/neutro)
+      - Hashtag performance
+      - Cliques em link (se bio ou story link)
+
+credits:
+  scrape-own-profile: 0  # próprio perfil é gratuito
+  scrape-public-profile: 8
+  monitor-campaign: 2  # por campanha monitorada
+  generate-insights-report: 5

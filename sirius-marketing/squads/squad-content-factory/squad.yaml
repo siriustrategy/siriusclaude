@@ -1,0 +1,46 @@
+name: squad-content-factory
+version: "1.0.0"
+description: >
+  Fábrica de conteúdo textual e estrutural. Gera copies com múltiplos tons e variações A/B,
+  storyboards para vídeos curtos, calendários editoriais completos e briefs de campanha.
+  Todo output aplica Brand Voice Profile e passa por Brand Police.
+
+agents:
+  - copywriter
+  - storyboard-director
+  - calendar-strategist
+  - campaign-architect
+
+tasks:
+  - write-copy
+  - create-storyboard
+  - generate-calendar
+  - build-campaign-brief
+  - create-presentation-deck
+
+workflows:
+  - copy-creation
+  - storyboard-creation
+  - content-calendar
+  - brief-to-campaign
+
+entry_point: copywriter
+
+content_objectives:
+  - vender: "CTA direto, urgência, benefícios claros, prova social"
+  - engajar: "Pergunta, provocação, humor, curiosidade, trending"
+  - educar: "Valor, didático, estruturado, autoridade"
+  - entreter: "Storytelling, humor, criatividade, surpresa"
+  - inspirar: "Aspiração, transformação, emoção, pertencimento"
+
+brand_voice_integration:
+  always_load: true
+  apply_to: [copy, hooks, ctas, captions, descriptions]
+  validate_against: brand-police
+
+credits:
+  write-copy: 3
+  create-storyboard: 10
+  generate-calendar: 8
+  build-campaign-brief: 5
+  create-presentation-deck: 12

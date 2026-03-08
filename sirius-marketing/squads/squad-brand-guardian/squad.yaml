@@ -1,0 +1,39 @@
+name: squad-brand-guardian
+version: "1.0.0"
+description: >
+  Guarda, constrói e valida a identidade de marca. Gerencia até 3 marcas por conta.
+  Toda geração do sistema passa pelo Brand Police antes de ser entregue ao usuário.
+
+agents:
+  - brand-analyst
+  - brand-voice-trainer
+  - brand-police
+
+tasks:
+  - brand-onboarding
+  - brand-check
+  - brand-voice-setup
+  - brand-logo-manager
+
+workflows:
+  - brand-setup
+  - brand-validation
+
+entry_point: brand-analyst
+
+context:
+  multi_brand: true
+  max_brands: 3
+  brand_context_file: ".brand-memory/{brand_id}/memory.json"
+  always_load_active_brand: true
+
+integrations:
+  - creative-studio
+  - content-factory
+  - ideas-lab
+  - viral-intelligence
+
+credits:
+  brand-onboarding: 0
+  brand-check: 0
+  brand-voice-setup: 2

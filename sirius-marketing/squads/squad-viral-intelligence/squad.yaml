@@ -1,0 +1,55 @@
+name: squad-viral-intelligence
+version: "1.0.0"
+description: >
+  Especialistas em conteúdo viral. Monitoram o que está explodindo em YouTube, TikTok e
+  Instagram (diário/semanal/mensal), analisam o porquê viralizou, rastreiam e preveem
+  tendências culturais, e traduzem tudo em oportunidades práticas para a marca do usuário.
+
+agents:
+  - trend-hunter
+  - viral-analyst
+  - trend-predictor
+  - trend-adapter
+
+tasks:
+  - fetch-viral-content
+  - analyze-why-viral
+  - predict-trends
+  - adapt-trend-to-brand
+  - generate-trend-report
+
+workflows:
+  - viral-intelligence-daily
+  - viral-intelligence-weekly
+  - trend-adaptation
+
+entry_point: trend-hunter
+
+data_sources:
+  youtube:
+    - Trending videos (por país, por categoria)
+    - YouTube Shorts virais
+    - Comentários mais engajados
+  tiktok:
+    - For You Page trends
+    - Trending sounds/músicas
+    - Hashtags em crescimento
+    - Duets e Stitch virais
+  instagram:
+    - Reels com maior alcance
+    - Posts virais por nicho
+    - Stories trends
+    - Hashtags emergentes
+
+trend_categories:
+  - cultural: "eventos, comportamentos, memes, vibe cultural"
+  - music: "músicas virais, danças, sounds"
+  - event: "Copa do Mundo, eleições, datas comemorativas, eventos globais"
+  - behavior: "challenges, formatos de post que estão pegando"
+  - aesthetic: "estilos visuais que estão em alta"
+  - niche: "trends específicas do nicho da marca"
+
+credits:
+  fetch-viral-content: 3
+  generate-trend-report: 5
+  adapt-trend-to-brand: 2

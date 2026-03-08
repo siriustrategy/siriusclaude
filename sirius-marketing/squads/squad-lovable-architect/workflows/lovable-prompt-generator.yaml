@@ -1,0 +1,114 @@
+name: lovable-prompt-generator
+version: "1.0.0"
+description: >
+  Workflow completo de geração de prompt para Lovable. Da entrevista ao prompt final
+  otimizado, pronto para colar no Lovable.dev e obter resultados profissionais.
+
+steps:
+  - id: load-brand-context
+    agent: requirements-interviewer
+    action: Carregar Brand Memory ativa para pré-preencher seção de design
+    elicit: false
+    output: brand_context
+
+  - id: section-vision
+    agent: requirements-interviewer
+    action: Seção 1 — Visao Geral (nome, o que faz, problema que resolve)
+    elicit: true
+    depends_on: load-brand-context
+    progress: "1/6"
+    ghost_texts:
+      vision: "Ex: 'Um dashboard para profissionais de marketing acompanharem todas as métricas das redes sociais em um só lugar, com relatórios automáticos semanais...'"
+    output: section_vision
+
+  - id: section-audience
+    agent: requirements-interviewer
+    action: Seção 2 — Publico-Alvo
+    elicit: true
+    depends_on: section-vision
+    progress: "2/6"
+    optional: true
+    ghost_texts:
+      audience: "Ex: 'Gestores de marketing de pequenas empresas, 28-40 anos, trabalham com equipe enxuta e precisam de praticidade...'"
+    output: section_audience
+
+  - id: section-features
+    agent: requirements-interviewer
+    action: Seção 3 — Funcionalidades (o que o app faz, o que fica de fora)
+    elicit: true
+    depends_on: section-vision
+    progress: "3/6"
+    ghost_texts:
+      features: "Ex: '1. Painel com métricas de Instagram e TikTok, 2. Agendador de posts, 3. Biblioteca de assets, 4. Relatório semanal automático...'"
+      out_of_scope: "Ex: 'Não precisa de: app mobile nativo, pagamentos, chat interno...'"
+    output: section_features
+
+  - id: section-design
+    agent: requirements-interviewer
+    action: Seção 4 — Design e Branding (pré-preenchido com Brand Memory)
+    elicit: true
+    depends_on: section-vision
+    progress: "4/6"
+    pre_fill_from: brand_context
+    ghost_texts:
+      style: "Ex: 'Dark mode, minimalista, referência: Linear.app — clean e sofisticado...'"
+      references: "Ex: 'Linear.app pelo layout, Notion pela tipografia limpa, Framer pelo visual premium...'"
+    output: section_design
+
+  - id: section-flows
+    agent: requirements-interviewer
+    action: Seção 5 — Fluxos (login, checkout, WhatsApp, formulários)
+    elicit: true
+    depends_on: section-features
+    progress: "5/6"
+    optional: true
+    ghost_texts:
+      auth: "Ex: 'Login com Google e email, primeiro acesso vai para tela de onboarding de 3 passos...'"
+      checkout: "Ex: 'Plano mensal R$97 via Stripe, cancelamento a qualquer momento, sem fidelidade...'"
+    output: section_flows
+
+  - id: section-integrations
+    agent: requirements-interviewer
+    action: Seção 6 — Integracoes (banco de dados, APIs, automacoes)
+    elicit: true
+    depends_on: section-features
+    progress: "6/6"
+    optional: true
+    ghost_texts:
+      integrations: "Ex: 'Supabase para banco e auth, Instagram Graph API, webhook para n8n, Stripe para pagamentos...'"
+    output: section_integrations
+
+  - id: preview-interview
+    agent: requirements-interviewer
+    action: Mostrar resumo de todas as seções preenchidas para validação antes de gerar
+    elicit: true
+    depends_on: [section_vision, section_features, section_design]
+    prompt: "Revise o que coletamos. Está correto? Quer editar alguma seção antes de gerar o prompt?"
+    output: interview_approved
+
+  - id: generate-prompt
+    agent: prompt-architect
+    action: Gerar prompt Lovable completo e otimizado
+    elicit: false
+    depends_on: interview_approved
+    output: lovable_prompt
+
+  - id: quality-check
+    agent: prompt-architect
+    action: Validar prompt contra checklist de boas práticas Lovable
+    elicit: false
+    depends_on: generate-prompt
+    output: quality_report
+
+  - id: deliver-prompt
+    agent: prompt-architect
+    action: Apresentar prompt final com quality score, botão copiar e sugestões de melhoria
+    elicit: true
+    depends_on: [generate-prompt, quality-check]
+    prompt: "Seu prompt está pronto! Quality Score: {score}/100. Copie e cole no Lovable.dev"
+    output: prompt_delivered
+
+outputs:
+  - prompt_file: "outputs/lovable-prompts/{project_name}-{date}.md"
+
+credits_cost: 4
