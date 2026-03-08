@@ -77,7 +77,7 @@ export default function ViralPage() {
   const [expandedTrend, setExpandedTrend] = useState<string | null>(null)
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '28px 36px' }}>
 
       {/* Header */}
       <motion.div
@@ -87,14 +87,14 @@ export default function ViralPage() {
         transition={{ duration: 0.4 }}
       >
         <div style={{
-          width: 42, height: 42, borderRadius: 12,
+          width: 48, height: 48, borderRadius: 14,
           background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <Flame size={20} color="#06b6d4" strokeWidth={2} />
         </div>
         <div>
-          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 24, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
             Viral Intelligence
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

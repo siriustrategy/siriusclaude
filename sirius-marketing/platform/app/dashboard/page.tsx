@@ -63,7 +63,7 @@ const scheduledPosts = [
 
 export default function DashboardPage() {
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 1040, margin: '0 auto' }}>
+    <div style={{ padding: '28px 36px' }}>
 
       {/* Greeting */}
       <motion.div
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         </div>
         <h1 style={{
           fontFamily: 'Space Grotesk, sans-serif',
-          fontSize: 28, fontWeight: 700, marginBottom: 6, lineHeight: 1.2, color: '#E8EEFF',
+          fontSize: 36, fontWeight: 700, marginBottom: 6, lineHeight: 1.2, color: '#E8EEFF',
         }}>
           Olá, <span style={{ color: '#5B7BFF' }}>{displayName}</span>! O que vamos criar hoje?
         </h1>
@@ -92,27 +92,27 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <motion.div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         {stats.map((stat) => (
-          <div key={stat.label} className="glass-card" style={{ padding: '18px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div key={stat.label} className="glass-card" style={{ padding: '24px 28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
+                width: 40, height: 40, borderRadius: 10,
                 background: `${stat.color}15`, border: `1px solid ${stat.color}25`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Zap size={14} color={stat.color} strokeWidth={2} />
+                <Zap size={18} color={stat.color} strokeWidth={2} />
               </div>
-              <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 {stat.label}
               </span>
             </div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{stat.sub}</div>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>{stat.sub}</div>
           </div>
         ))}
       </motion.div>
@@ -140,10 +140,10 @@ export default function DashboardPage() {
                 </span>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#06b6d4', display: 'inline-block', opacity: 0.8 }} />
               </div>
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: '#E8EEFF', marginBottom: 3 }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 18, color: '#E8EEFF', marginBottom: 4 }}>
                 {urgentAction.title}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{urgentAction.description}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{urgentAction.description}</div>
             </div>
             <div style={{
               background: '#06b6d4', borderRadius: 8, padding: '9px 20px',
@@ -174,26 +174,26 @@ export default function DashboardPage() {
               <Link key={i} href={action.href} style={{ textDecoration: 'none' }}>
                 <motion.div
                   className="glass-card"
-                  style={{ padding: '18px 20px', height: '100%', cursor: 'pointer' }}
+                  style={{ padding: '22px 24px', height: '100%', cursor: 'pointer' }}
                   whileHover={{ borderColor: `${action.color}40`, y: -2 }}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 + i * 0.07 }}
                 >
                   <div style={{
-                    width: 38, height: 38, borderRadius: 10,
+                    width: 46, height: 46, borderRadius: 12,
                     background: `${action.color}15`, border: `1px solid ${action.color}25`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
                   }}>
-                    <Icon size={18} color={action.color} strokeWidth={1.8} />
+                    <Icon size={22} color={action.color} strokeWidth={1.8} />
                   </div>
-                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, color: '#E8EEFF', marginBottom: 6, lineHeight: 1.3 }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: '#E8EEFF', marginBottom: 8, lineHeight: 1.3 }}>
                     {action.title}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
                     {action.description}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600, color: action.color, fontFamily: 'Space Grotesk, sans-serif' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: action.color, fontFamily: 'Space Grotesk, sans-serif' }}>
                     {action.cta} <ArrowRight size={12} />
                   </div>
                 </motion.div>

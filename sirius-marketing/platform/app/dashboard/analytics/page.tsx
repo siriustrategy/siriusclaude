@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
   const maxReach = Math.max(...activePage.weeklyData.map(d => d.reach))
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 1040, margin: '0 auto' }}>
+    <div style={{ padding: '28px 36px' }}>
 
       {/* Header */}
       <motion.div
@@ -133,14 +133,14 @@ export default function AnalyticsPage() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 48, height: 48, borderRadius: 14,
             background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <BarChart2 size={20} color="#10b981" strokeWidth={2} />
           </div>
           <div>
-            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
+            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 24, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
               Analytics
             </h1>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif' }}>
@@ -225,7 +225,7 @@ export default function AnalyticsPage() {
       {/* KPIs 6-grid */}
       <motion.div
         key={activePage.id}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -240,20 +240,20 @@ export default function AnalyticsPage() {
         ].map((kpi) => {
           const Icon = kpi.icon
           return (
-            <div key={kpi.label} className="glass-card" style={{ padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <div key={kpi.label} className="glass-card" style={{ padding: '20px 22px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <div style={{
-                  width: 28, height: 28, borderRadius: 7,
+                  width: 34, height: 34, borderRadius: 9,
                   background: `${kpi.color}15`, border: `1px solid ${kpi.color}25`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <Icon size={13} color={kpi.color} strokeWidth={2} />
+                  <Icon size={16} color={kpi.color} strokeWidth={2} />
                 </div>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
                   {kpi.label}
                 </span>
               </div>
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 22, fontWeight: 700, color: '#E8EEFF', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 30, fontWeight: 700, color: '#E8EEFF', marginBottom: 6, lineHeight: 1 }}>
                 {kpi.value}
               </div>
               <Delta value={kpi.delta} up={kpi.up} />
@@ -277,12 +277,12 @@ export default function AnalyticsPage() {
               Alcance diário — {activePage.handle}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 90 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 140 }}>
             {activePage.weeklyData.map((d) => (
-              <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <div style={{
-                  width: '100%', borderRadius: '3px 3px 0 0',
-                  height: `${(d.reach / maxReach) * 72}px`,
+                  width: '100%', borderRadius: '4px 4px 0 0',
+                  height: `${(d.reach / maxReach) * 114}px`,
                   background: `linear-gradient(180deg, ${activePage.color}, ${activePage.color}55)`,
                 }} />
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif' }}>{d.day}</span>

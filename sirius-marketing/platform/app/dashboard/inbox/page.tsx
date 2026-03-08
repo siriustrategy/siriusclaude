@@ -223,7 +223,7 @@ export default function InboxPage() {
   const totalReplies = rules.reduce((sum, r) => sum + r.repliesCount, 0)
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 1040, margin: '0 auto' }}>
+    <div style={{ padding: '28px 36px' }}>
 
       {/* Header */}
       <motion.div
@@ -234,14 +234,14 @@ export default function InboxPage() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 48, height: 48, borderRadius: 14,
             background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <MessageCircle size={20} color="#a855f7" strokeWidth={2} />
           </div>
           <div>
-            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
+            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 24, fontWeight: 700, color: '#E8EEFF', marginBottom: 2 }}>
               Instagram Agent
             </h1>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif' }}>
