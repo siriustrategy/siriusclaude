@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+const ACADEMY_URL = 'https://sirius-academy-production.up.railway.app/'
+
 type NotifType = 'operational' | 'academy' | 'achievement' | 'alert'
 
 interface Notification {
@@ -37,7 +39,7 @@ const mockNotifications: Notification[] = [
     read: false,
     cta: { label: 'Fazer disparo agora', href: '/dashboard/distribution' },
     showAcademyBtn: true,
-    academyHref: 'https://academy.siriusstrategy.com',
+    academyHref: 'https://sirius-academy-production.up.railway.app/',
   },
   {
     id: '2',
@@ -60,7 +62,7 @@ const mockNotifications: Notification[] = [
     time: '1h',
     read: false,
     showAcademyBtn: true,
-    academyHref: 'https://academy.siriusstrategy.com',
+    academyHref: 'https://sirius-academy-production.up.railway.app/',
     cta: { label: 'Ver diagnóstico', href: '/dashboard/analytics' },
   },
   {
@@ -84,7 +86,7 @@ const mockNotifications: Notification[] = [
     read: true,
     cta: { label: 'Recarregar créditos', href: '/dashboard/settings' },
     showAcademyBtn: true,
-    academyHref: 'https://academy.siriusstrategy.com',
+    academyHref: 'https://sirius-academy-production.up.railway.app/',
     freeForAcademy: true,
   },
   {
@@ -223,7 +225,7 @@ function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string
                 </Link>
               )}
               {n.showAcademyBtn && (
-                <a href={n.academyHref ?? 'https://academy.siriusstrategy.com'} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <a href={n.academyHref ?? 'https://sirius-academy-production.up.railway.app/'} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                   <button style={{
                     background: 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(59,91,219,0.2))',
                     border: '1px solid rgba(124,58,237,0.35)',
@@ -398,7 +400,7 @@ export default function NotificationBell() {
 
             {/* Academy promo banner */}
             <a
-              href="https://academy.siriusstrategy.com"
+              href="https://sirius-academy-production.up.railway.app/"
               target="_blank"
               rel="noopener noreferrer"
               style={{ textDecoration: 'none' }}
