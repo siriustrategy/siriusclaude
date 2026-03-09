@@ -53,8 +53,8 @@ export default function PerfilPage() {
   const totalModules = PHASES.reduce((acc, p) => acc + p.modules.length, 0)
 
   return (
-    <div style={{ padding: '40px', maxWidth: 700, margin: '0 auto' }}>
-      <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 32 }}>
+    <div style={{ padding: '40px 48px' }}>
+      <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, marginBottom: 32 }}>
         Seu Perfil
       </h1>
 
@@ -62,7 +62,7 @@ export default function PerfilPage() {
       <div className="glass-card" style={{
         padding: '36px',
         marginBottom: 24,
-        background: 'linear-gradient(135deg, rgba(59,91,219,0.08) 0%, rgba(10,10,20,0.9) 100%)',
+        background: 'linear-gradient(135deg, rgba(59,91,219,0.08) 0%, var(--bg-elevated) 100%)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 28 }}>
           {/* Avatar com botão de trocar */}
@@ -77,7 +77,7 @@ export default function PerfilPage() {
               style={{
                 position: 'absolute', bottom: -4, right: -4,
                 width: 26, height: 26, borderRadius: '50%',
-                background: '#3B5BDB', border: '2px solid #0a0a14',
+                background: '#3B5BDB', border: '2px solid var(--card-bg)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
@@ -90,7 +90,7 @@ export default function PerfilPage() {
           <div>
             <div style={{
               fontFamily: 'Space Grotesk, sans-serif',
-              fontSize: 22, fontWeight: 700, color: '#E8EEFF', marginBottom: 4,
+              fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4,
             }}>
               {profile.display_name || profile.username}
             </div>
@@ -110,7 +110,7 @@ export default function PerfilPage() {
                 style={{
                   background: 'transparent', border: '1px solid rgba(59,91,219,0.3)',
                   borderRadius: 8, padding: '5px 12px',
-                  color: '#6B7A9E', fontSize: 12, cursor: 'pointer',
+                  color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
                   fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600,
                 }}
               >
@@ -123,7 +123,7 @@ export default function PerfilPage() {
         {/* Avatar picker */}
         {showAvatarPicker && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, color: '#6B7A9E', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', marginBottom: 12 }}>
               ESCOLHA SEU AVATAR
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
@@ -135,8 +135,8 @@ export default function PerfilPage() {
                     onClick={() => handleAvatarChange(avatar.id)}
                     disabled={savingAvatar}
                     style={{
-                      background: isSelected ? `${avatar.color}18` : 'rgba(10,10,20,0.6)',
-                      border: `2px solid ${isSelected ? avatar.color : 'rgba(12,21,102,0.5)'}`,
+                      background: isSelected ? `${avatar.color}18` : 'var(--progress-track)',
+                      border: `2px solid ${isSelected ? avatar.color : 'var(--border)'}`,
                       borderRadius: 12, padding: '12px 8px',
                       cursor: savingAvatar ? 'wait' : 'pointer',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
@@ -171,7 +171,7 @@ export default function PerfilPage() {
               {profile.xp} XP
             </span>
           </div>
-          <div style={{ background: 'rgba(12,21,102,0.6)', borderRadius: 6, height: 10, overflow: 'hidden', marginBottom: 8 }}>
+          <div style={{ background: 'var(--progress-track)', borderRadius: 6, height: 10, overflow: 'hidden', marginBottom: 8 }}>
             <div style={{
               height: '100%', borderRadius: 6,
               background: `linear-gradient(90deg, #3B5BDB, #7C3AED)`,
@@ -181,7 +181,7 @@ export default function PerfilPage() {
             }} />
           </div>
           {profile.level < 5 ? (
-            <div style={{ color: '#6B7A9E', fontSize: 13 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
               Faltam {xpInfo.needed - xpInfo.current} XP para Nível {profile.level + 1}
             </div>
           ) : (
@@ -198,14 +198,14 @@ export default function PerfilPage() {
           <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 900, color: '#3B5BDB', marginBottom: 4 }}>
             {completedCount}
           </div>
-          <div style={{ color: '#6B7A9E', fontSize: 14 }}>Módulos completados</div>
-          <div style={{ color: '#6B7A9E', fontSize: 12, marginTop: 4 }}>de {totalModules} totais</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Módulos completados</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 4 }}>de {totalModules} totais</div>
         </div>
         <div className="glass-card" style={{ padding: '20px 24px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 900, color: '#7C3AED', marginBottom: 4 }}>
             {Math.round((completedCount / totalModules) * 100)}%
           </div>
-          <div style={{ color: '#6B7A9E', fontSize: 14 }}>Progresso total</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Progresso total</div>
         </div>
       </div>
 
@@ -225,8 +225,8 @@ export default function PerfilPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: reached ? `${lvl.color}20` : 'rgba(12,21,102,0.4)',
-                    border: `2px solid ${reached ? lvl.color : 'rgba(12,21,102,0.6)'}`,
+                    background: reached ? `${lvl.color}20` : 'var(--progress-track)',
+                    border: `2px solid ${reached ? lvl.color : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 14, fontWeight: 700,
                     color: reached ? lvl.color : '#6B7A9E',
@@ -238,7 +238,7 @@ export default function PerfilPage() {
                   {i < LEVELS.length - 1 && (
                     <div style={{
                       width: 2, height: 32,
-                      background: reached ? `${lvl.color}40` : 'rgba(12,21,102,0.4)',
+                      background: reached ? `${lvl.color}40` : 'var(--border)',
                     }} />
                   )}
                 </div>
@@ -247,7 +247,7 @@ export default function PerfilPage() {
                 <div style={{ paddingBottom: i < LEVELS.length - 1 ? 24 : 0 }}>
                   <div style={{
                     fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15,
-                    color: reached ? '#E8EEFF' : '#6B7A9E',
+                    color: reached ? 'var(--text-primary)' : 'var(--text-secondary)',
                     display: 'flex', alignItems: 'center', gap: 8,
                   }}>
                     {lvl.title}
@@ -261,7 +261,7 @@ export default function PerfilPage() {
                       </span>
                     )}
                   </div>
-                  <div style={{ color: '#6B7A9E', fontSize: 13, marginTop: 2 }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>
                     {lvl.min === 0 ? 'Início' : `${lvl.min} XP`} — {lvl.max >= 99999 ? 'Mestre' : `${lvl.max} XP`}
                   </div>
                 </div>

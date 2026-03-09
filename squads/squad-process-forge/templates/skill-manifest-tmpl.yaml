@@ -1,0 +1,252 @@
+# Skill Manifest — {{PROCESS_NAME}}
+# Gerado por Process Forge Squad | Versão 1.0
+# Para uso por: IAs, skills, agentes Claude
+# NÃO modificar manualmente — regenerar via process-forge-chief
+
+manifest:
+  process:
+    name: "{{PROCESS_NAME}}"
+    domain: "{{DOMAIN}}"
+    version: "1.0"
+    created_at: "{{DATE}}"
+    executor: "{{EXECUTOR_TYPE}}"  # ai | human | hybrid | automation
+    idempotent: true  # verificar sempre se ação já foi executada
+
+  # ─────────────────────────────────────────────────────────
+  # CONTEXTO GLOBAL (disponível para todos os steps)
+  # ─────────────────────────────────────────────────────────
+  context:
+    company_context:
+      tone: "{{TONE_OF_VOICE}}"
+      business_rules:
+        - "{{BUSINESS_RULE_1}}"
+        - "{{BUSINESS_RULE_2}}"
+      escalation_default_role: "{{DEFAULT_ESCALATION_ROLE}}"
+      max_autonomous_decision: "{{MAX_AUTONOMOUS_THRESHOLD}}"  # limite até onde IA decide sozinha
+
+    process_inputs:
+      required:
+        - name: "{{INPUT_FIELD_1}}"
+          type: "{{TYPE_1}}"  # string | number | boolean | date
+          description: "{{DESCRIPTION_1}}"
+        - name: "{{INPUT_FIELD_2}}"
+          type: "{{TYPE_2}}"
+          description: "{{DESCRIPTION_2}}"
+      optional:
+        - name: "{{OPTIONAL_FIELD_1}}"
+          type: "{{TYPE_OPT_1}}"
+          description: "{{DESC_OPT_1}}"
+          default: "{{DEFAULT_1}}"
+
+  # ─────────────────────────────────────────────────────────
+  # PHASES + STEPS
+  # ─────────────────────────────────────────────────────────
+  phases:
+    # ── PHASE 1 ──────────────────────────────────────────
+    - id: "phase_1"
+      name: "{{PHASE_1_NAME}}"
+      executor: "{{PHASE_1_EXECUTOR}}"  # ai | human | hybrid | automation
+
+      trigger:
+        condition: "{{PHASE_1_TRIGGER_CONDITION}}"
+        data_required:
+          - "{{TRIGGER_DATA_1}}"
+          - "{{TRIGGER_DATA_2}}"
+
+      steps:
+        - id: "step_1_1"
+          name: "{{STEP_1_1_NAME}}"
+          phase_id: "phase_1"
+
+          # Verificação de idempotência — executar ANTES da ação
+          already_executed_check:
+            field: "{{EXECUTED_FLAG_FIELD}}"
+            expected_value: null  # null = não executado ainda
+            if_already_executed: "skip_and_log"  # skip_and_log | error | continue
+
+          # Ação principal
+          action:
+            type: "{{ACTION_TYPE}}"  # send_message | api_call | data_update | decision | escalate | wait
+            channel: "{{CHANNEL}}"   # se send_message: whatsapp | email | sms | call
+            template_id: "{{TEMPLATE_ID}}"  # referência aos templates abaixo
+            api_endpoint: "{{API_ENDPOINT}}"  # se api_call
+            params:
+              "{{PARAM_1}}": "{{{{CONTEXT_FIELD_1}}}}"  # {{context.campo}} para dinâmicos
+              "{{PARAM_2}}": "{{{{CONTEXT_FIELD_2}}}}"
+
+          # Heurísticas determinísticas
+          heuristics:
+            - id: "H001"
+              condition: "SE {{FIELD_1}} {{OPERATOR_1}} {{VALUE_1}}"
+              # Operadores: = | != | > | < | >= | <= | contains | in | is_null | is_not_null
+              action: "ENTÃO {{ACTION_1}}"
+              else: "SENÃO {{ACTION_ELSE_1}}"
+
+            - id: "H002"
+              condition: "SE {{FIELD_2}} {{OPERATOR_2}} {{VALUE_2}}"
+              action: "ENTÃO {{ACTION_2}}"
+              else: "SENÃO {{ACTION_ELSE_2}}"
+
+          # Escalation para humano (se necessário neste step)
+          human_escalation:
+            trigger: "{{ESCALATION_CONDITION}}"  # condição objetiva
+            escalate_to: "{{ESCALATION_ROLE}}"
+            data_to_pass:
+              - "{{DATA_FIELD_1}}"
+              - "{{DATA_FIELD_2}}"
+            max_wait_hours: 0
+            if_no_response: "{{NO_RESPONSE_ACTION}}"  # escalate_further | auto_execute | halt
+
+          # Output schema (OBRIGATÓRIO — define o que este step produz)
+          output:
+            type: object
+            fields:
+              - name: "{{OUTPUT_FIELD_1}}"
+                type: "boolean"  # string | boolean | number | enum | timestamp
+                required: true
+              - name: "{{OUTPUT_FIELD_2}}"
+                type: "enum"
+                values: ["{{VALUE_A}}", "{{VALUE_B}}", "{{VALUE_C}}"]
+                required: false
+
+          # Critério de conclusão verificável
+          completion_criteria:
+            condition: "{{COMPLETION_CONDITION}}"  # ex: "contacted_d1 = true AND (responded = true OR 24h_elapsed = true)"
+
+          # Veto conditions deste step
+          veto_conditions:
+            - condition: "{{VETO_CONDITION_1}}"
+              action: "halt"  # halt | escalate | skip | retry
+              message: "{{VETO_MESSAGE_1}}"
+            - condition: "{{VETO_CONDITION_2}}"
+              action: "escalate"
+              message: "{{VETO_MESSAGE_2}}"
+
+    # ── PHASE 2 ──────────────────────────────────────────
+    - id: "phase_2"
+      name: "{{PHASE_2_NAME}}"
+      executor: "{{PHASE_2_EXECUTOR}}"
+
+      trigger:
+        condition: "{{PHASE_2_TRIGGER_CONDITION}}"
+        data_required:
+          - "{{PHASE_2_TRIGGER_DATA}}"
+
+      steps:
+        - id: "step_2_1"
+          name: "{{STEP_2_1_NAME}}"
+          phase_id: "phase_2"
+
+          already_executed_check:
+            field: "{{STEP_2_1_FLAG}}"
+            expected_value: null
+
+          action:
+            type: "{{ACTION_TYPE_2}}"
+            channel: "{{CHANNEL_2}}"
+            template_id: "{{TEMPLATE_ID_2}}"
+            params:
+              "{{PARAM_3}}": "{{{{CONTEXT_FIELD_3}}}}"
+
+          heuristics:
+            - id: "H003"
+              condition: "SE {{FIELD_3}} {{OPERATOR_3}} {{VALUE_3}}"
+              action: "ENTÃO {{ACTION_3}}"
+              else: "SENÃO {{ACTION_ELSE_3}}"
+
+          output:
+            type: object
+            fields:
+              - name: "{{OUTPUT_FIELD_3}}"
+                type: "boolean"
+                required: true
+
+          completion_criteria:
+            condition: "{{PHASE_2_COMPLETION}}"
+
+          veto_conditions:
+            - condition: "{{PHASE_2_VETO}}"
+              action: "halt"
+              message: "{{PHASE_2_VETO_MSG}}"
+
+  # ─────────────────────────────────────────────────────────
+  # TEMPLATES DE COMUNICAÇÃO
+  # ─────────────────────────────────────────────────────────
+  templates:
+    - id: "{{TEMPLATE_ID}}"
+      type: "{{TEMPLATE_TYPE}}"  # whatsapp | email | sms | call_script
+      variables:
+        - "{{context.VARIABLE_1}}"
+        - "{{context.VARIABLE_2}}"
+      subject: "{{EMAIL_SUBJECT}}"  # se email
+      content: |
+        {{TEMPLATE_CONTENT_WITH_{{VARIABLES}}}}
+
+    - id: "{{TEMPLATE_ID_2}}"
+      type: "{{TEMPLATE_TYPE_2}}"
+      variables:
+        - "{{context.VARIABLE_3}}"
+      content: |
+        {{TEMPLATE_CONTENT_2}}
+
+  # ─────────────────────────────────────────────────────────
+  # ESCALATION MATRIX
+  # ─────────────────────────────────────────────────────────
+  escalation_matrix:
+    - level: 1
+      trigger: "{{ESCALATION_L1_TRIGGER}}"
+      role: "{{ESCALATION_L1_ROLE}}"
+      channel: "{{ESCALATION_L1_CHANNEL}}"
+      sla_hours: 0
+      data_required:
+        - "{{ESCALATION_L1_DATA_1}}"
+        - "{{ESCALATION_L1_DATA_2}}"
+
+    - level: 2
+      trigger: "{{ESCALATION_L2_TRIGGER}}"  # ex: L1 não respondeu no SLA
+      role: "{{ESCALATION_L2_ROLE}}"
+      channel: "{{ESCALATION_L2_CHANNEL}}"
+      sla_hours: 0
+
+  # ─────────────────────────────────────────────────────────
+  # ERROR HANDLING GLOBAL
+  # ─────────────────────────────────────────────────────────
+  error_handling:
+    on_missing_required_input:
+      action: "halt"
+      notify: "{{NOTIFY_ROLE}}"
+      message: "Processo não pode iniciar: campo obrigatório ausente: {{missing_field}}"
+
+    on_api_failure:
+      action: "retry"
+      max_retries: 3
+      retry_interval_minutes: 5
+      after_max_retries: "escalate"
+      escalate_to: "{{ERROR_ESCALATION_ROLE}}"
+
+    on_template_send_failure:
+      action: "retry_once_then_alternate"
+      alternate_channel: "{{ALTERNATE_CHANNEL}}"
+      max_retries: 1
+
+    on_timeout:
+      action: "escalate"
+      timeout_hours: 24
+      escalate_to: "{{TIMEOUT_ESCALATION_ROLE}}"
+      message: "Timeout em step {{step_id}}: sem resposta em {{timeout_hours}}h"
+
+    on_unknown_response:
+      action: "log_and_escalate"
+      escalate_to: "{{UNKNOWN_ESCALATION_ROLE}}"
+      message: "Resposta não mapeada em step {{step_id}}: {{raw_response}}"
+
+  # ─────────────────────────────────────────────────────────
+  # COMPATIBILIDADE INPUT/OUTPUT (verificação automática)
+  # ─────────────────────────────────────────────────────────
+  compatibility_check:
+    - pair: "step_1_1 → step_1_2"
+      status: "OK"  # OK | VETO
+      note: ""
+    - pair: "step_1_N → step_2_1"
+      status: "OK"
+      note: ""

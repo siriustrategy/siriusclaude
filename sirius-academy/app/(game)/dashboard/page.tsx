@@ -119,17 +119,17 @@ export default function DashboardPage() {
   const quote = motivationalQuotes[new Date().getDate() % motivationalQuotes.length]
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 980, margin: '0 auto' }}>
+    <div style={{ padding: '40px 48px' }}>
 
       {/* ── Greeting ── */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <span className="section-label">MEU PAINEL</span>
         </div>
-        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 28, fontWeight: 700, marginBottom: 6, lineHeight: 1.2 }}>
+        <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 700, marginBottom: 6, lineHeight: 1.2 }}>
           Olá, <span style={{ color: '#3B5BDB' }}>{displayName}</span>! Bem-vindo de volta.
         </h1>
-        <p style={{ color: '#6B7A9E', fontSize: 14, fontStyle: 'italic' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontStyle: 'italic' }}>
           "{quote}"
         </p>
       </div>
@@ -163,10 +163,10 @@ export default function DashboardPage() {
               <div style={{ fontSize: 10, fontWeight: 700, color: '#3B5BDB', letterSpacing: '0.1em', marginBottom: 4, fontFamily: 'Space Grotesk, sans-serif' }}>
                 CONTINUAR DE ONDE PAROU
               </div>
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: '#E8EEFF', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {nextItem.mod.title}
               </div>
-              <div style={{ fontSize: 13, color: '#6B7A9E' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 Fase {nextItem.phase.id} — {nextItem.phase.title}
               </div>
             </div>
@@ -193,20 +193,20 @@ export default function DashboardPage() {
           { label: 'Nível', value: `${profile?.level ?? 1} — ${profile?.title ?? 'Iniciante'}`, Icon: Award, color: levelInfo?.color ?? '#6B7A9E' },
           { label: 'Módulos', value: `${totalCompleted}/${totalModules}`, Icon: Layers, color: '#10b981' },
         ].map(stat => (
-          <div key={stat.label} className="glass-card" style={{ padding: '18px 20px' }}>
+          <div key={stat.label} className="glass-card" style={{ padding: '24px 28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <div style={{
-                width: 34, height: 34, borderRadius: 8,
+                width: 40, height: 40, borderRadius: 8,
                 background: `${stat.color}15`, border: `1px solid ${stat.color}25`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <stat.Icon size={16} color={stat.color} strokeWidth={1.8} />
+                <stat.Icon size={20} color={stat.color} strokeWidth={1.8} />
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 {stat.label}
               </div>
             </div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 20, fontWeight: 700, color: stat.color }}>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 30, fontWeight: 700, color: stat.color }}>
               {stat.value}
             </div>
           </div>
@@ -240,10 +240,10 @@ export default function DashboardPage() {
             <div style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', letterSpacing: '0.1em', marginBottom: 4, fontFamily: 'Space Grotesk, sans-serif' }}>
               ZONA DE GENIALIDADE
             </div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: '#E8EEFF', marginBottom: 3 }}>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', marginBottom: 3 }}>
               {hasBlueprint ? 'Meu Blueprint de Gênio' : 'Descobrir minha Zona de Gênio'}
             </div>
-            <div style={{ fontSize: 13, color: '#6B7A9E' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               {isAdmin
                 ? hasBlueprint
                   ? '7 frameworks analisados — Blueprint disponível'
@@ -299,7 +299,7 @@ export default function DashboardPage() {
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, color: '#E8EEFF' }}>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
                       {area.title}
                     </span>
                     {finished && <span className="section-label green">COMPLETO ✓</span>}
@@ -309,13 +309,13 @@ export default function DashboardPage() {
                       </span>
                     )}
                     {!started && (
-                      <span className="section-label" style={{ color: '#6B7A9E', borderColor: 'rgba(107,122,158,0.2)', background: 'rgba(107,122,158,0.06)' }}>
+                      <span className="section-label" style={{ color: 'var(--text-secondary)', borderColor: 'rgba(107,122,158,0.2)', background: 'rgba(107,122,158,0.06)' }}>
                         COMEÇAR
                       </span>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, background: 'rgba(12,21,102,0.5)', borderRadius: 3, height: 4, overflow: 'hidden' }}>
+                    <div style={{ flex: 1, background: 'var(--progress-track)', borderRadius: 3, height: 4, overflow: 'hidden' }}>
                       <div style={{
                         height: '100%', borderRadius: 3,
                         background: `linear-gradient(90deg, ${area.color}, ${area.color}bb)`,
@@ -323,11 +323,11 @@ export default function DashboardPage() {
                         transition: 'width 0.8s ease',
                       }} />
                     </div>
-                    <span style={{ fontSize: 11, color: '#6B7A9E', fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}>
                       {prog.percent}%
                     </span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#6B7A9E', marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
                     {prog.done}/{prog.total} módulos
                   </div>
                 </div>
@@ -360,10 +360,10 @@ export default function DashboardPage() {
                 }}>
                   <Star size={16} color={phase.color} strokeWidth={1.8} />
                 </div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: '#E8EEFF', marginBottom: 4, lineHeight: 1.3 }}>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', marginBottom: 4, lineHeight: 1.3 }}>
                   {phase.title}
                 </div>
-                <div style={{ fontSize: 11, color: '#6B7A9E', marginBottom: 10, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.4 }}>
                   {phase.modules.length} módulos
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                     ? <CheckCircle2 size={13} color="#10b981" strokeWidth={2} />
                     : <div style={{ width: 13, height: 13, borderRadius: '50%', border: `2px solid ${phase.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
                   }
-                  <span style={{ fontSize: 10, color: done ? '#10b981' : '#6B7A9E', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600 }}>
+                  <span style={{ fontSize: 10, color: done ? '#10b981' : 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600 }}>
                     {done ? 'Completo' : `${prog.done}/${prog.total} módulos`}
                   </span>
                 </div>
@@ -396,7 +396,7 @@ export default function DashboardPage() {
           return (
             <div className="glass-card" style={{ padding: '24px', textAlign: 'center' }}>
               <Lock size={28} color="#6B7A9E" strokeWidth={1.5} style={{ marginBottom: 10 }} />
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, color: '#6B7A9E', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, color: 'var(--text-secondary)', marginBottom: 6 }}>
                 Ainda sem certificados
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -418,7 +418,7 @@ export default function DashboardPage() {
               }}>
                 <CheckCircle2 size={22} color={phase.color} strokeWidth={1.8} />
                 <div>
-                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: '#E8EEFF' }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
                     {phase.title}
                   </div>
                   <div style={{ fontSize: 11, color: phase.color, fontWeight: 600 }}>

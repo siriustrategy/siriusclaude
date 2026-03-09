@@ -38,7 +38,7 @@ export default function EspecializacoesPage() {
   }
 
   return (
-    <div style={{ padding: '40px 48px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '40px 48px' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 40 }}>
@@ -143,7 +143,7 @@ function CursoCard({ curso, isAdmin }: { curso: CursoDef; isAdmin: boolean }) {
               {curso.tag}
             </span>
             {isFullyLocked && (
-              <span className="section-label" style={{ color: '#6B7A9E', borderColor: 'rgba(107,122,158,0.2)', background: 'rgba(107,122,158,0.06)' }}>
+              <span className="section-label" style={{ color: 'var(--text-secondary)', borderColor: 'rgba(107,122,158,0.2)', background: 'rgba(107,122,158,0.06)' }}>
                 PREMIUM
               </span>
             )}

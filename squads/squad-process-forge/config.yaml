@@ -1,0 +1,116 @@
+squad:
+  name: Process Forge
+  id: squad-process-forge
+  version: 1.0.0
+  description: >
+    Squad especializado em transformar contexto bruto em processos completos,
+    prontos para humanos executarem, IAs seguirem autonomamente e n8n automatizar.
+    Output triplo: Playbook Humano + Skill Manifest + n8n Handoff Package.
+
+  philosophy: >
+    Todo processo deve ser impossível de executar errado.
+    Output de cada task = input perfeito da próxima.
+    Ambiguidade zero para IAs. Fluxo unidirecional. Nada volta.
+
+  activation: "@process-forge"
+  orchestrator: process-forge-chief
+
+agents:
+  - id: process-forge-chief
+    file: agents/process-forge-chief.md
+    tier: 0
+    role: Orquestrador — elicita contexto, coordena squad, entrega output final
+
+  - id: context-analyst
+    file: agents/context-analyst.md
+    tier: 1
+    role: Diagnóstico — mapeia empresa, domínio, gargalos, 5 camadas do processo
+
+  - id: playbook-architect
+    file: agents/playbook-architect.md
+    tier: 1
+    role: Playbook Humano — régua, scripts, tom de voz, objeções, branding
+
+  - id: ai-workflow-engineer
+    file: agents/ai-workflow-engineer.md
+    tier: 1
+    role: Skill Manifest — transforma processo em YAML executável por IAs/skills
+
+  - id: process-validator
+    file: agents/process-validator.md
+    tier: 1
+    role: Validação — 8 veto conditions, bloqueia processo incompleto ou ambíguo
+
+  - id: n8n-packager
+    file: agents/n8n-packager.md
+    tier: 2
+    role: n8n Handoff — gera package estruturado para as skills n8n existentes
+
+tasks:
+  - id: elicit-process-context
+    file: tasks/elicit-process-context.md
+    description: 12 perguntas que extraem tudo do usuário antes de montar qualquer coisa
+
+  - id: map-process-layers
+    file: tasks/map-process-layers.md
+    description: Mapeia o processo nas 5 camadas (estratégica → automação)
+
+  - id: create-playbook
+    file: tasks/create-playbook.md
+    description: Playbook humano completo com régua, scripts, tom de voz, objeções
+
+  - id: create-skill-manifest
+    file: tasks/create-skill-manifest.md
+    description: YAML estruturado para IAs/skills executarem o processo autonomamente
+
+  - id: create-n8n-handoff
+    file: tasks/create-n8n-handoff.md
+    description: Package estruturado para alimentar as 7 skills n8n instaladas
+
+  - id: validate-process
+    file: tasks/validate-process.md
+    description: 8 veto conditions que bloqueiam processo incompleto ou ambíguo
+
+templates:
+  - id: playbook-tmpl
+    file: templates/playbook-tmpl.md
+    description: Template de playbook humano com todas as seções obrigatórias
+
+  - id: skill-manifest-tmpl
+    file: templates/skill-manifest-tmpl.yaml
+    description: Template YAML para skill manifest executável por IA
+
+  - id: n8n-handoff-tmpl
+    file: templates/n8n-handoff-tmpl.md
+    description: Template de handoff para as skills n8n
+
+workflows:
+  - id: wf-forge-process
+    file: workflows/wf-forge-process.yaml
+    description: Workflow principal — do contexto bruto ao output triplo completo
+    phases: 5
+
+outputs:
+  human_playbook:
+    format: markdown
+    filename: "playbook-{process-name}.md"
+    audience: time, lideranças
+
+  skill_manifest:
+    format: yaml
+    filename: "manifest-{process-name}.yaml"
+    audience: IAs, skills, Claude
+
+  n8n_handoff:
+    format: markdown
+    filename: "n8n-handoff-{process-name}.md"
+    audience: skills n8n instaladas (n8n-workflow-patterns, n8n-node-configuration, etc.)
+
+n8n_skills_available:
+  - n8n-workflow-patterns
+  - n8n-node-configuration
+  - n8n-code-javascript
+  - n8n-code-python
+  - n8n-expression-syntax
+  - n8n-mcp-tools-expert
+  - n8n-validation-expert

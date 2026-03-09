@@ -9,8 +9,9 @@ import { FadeInSection, StaggerSection, StaggerItem } from '@/components/animati
 import StarfieldCanvas from '@/components/StarfieldCanvas'
 import {
   Megaphone, TrendingUp, BarChart2, ArrowRight,
-  BookOpen, Zap, Award, ChevronRight, ChevronDown, ChevronUp, X,
+  BookOpen, Zap, Award, ChevronRight, ChevronDown, ChevronUp, X, Sun, Moon,
 } from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
 
 // ── Sirius Logo ───────────────────────────────────────────────
 function SiriusLogo({ size = 44 }: { size?: number }) {
@@ -147,6 +148,7 @@ const DIFFERENTIALS = [
 // ── Page ──────────────────────────────────────────────────────
 export default function Home() {
   const router = useRouter()
+  const { theme, toggleTheme } = useTheme()
   const [checking, setChecking] = useState(true)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [trilhaAberta, setTrilhaAberta] = useState<string | null>(null)
@@ -192,8 +194,8 @@ export default function Home() {
       {/* ── Navbar ── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(5,7,16,0.85)',
-        borderBottom: '1px solid rgba(59,91,219,0.12)',
+        background: 'var(--nav-bg)',
+        borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(16px)',
         padding: '0 48px',
         height: 64,
@@ -202,12 +204,26 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <SiriusLogo size={32} />
           <div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 14, color: '#E8EEFF', letterSpacing: '0.06em', lineHeight: 1.1 }}>SIRIUS</div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 500, fontSize: 9, color: '#6B7A9E', letterSpacing: '0.16em' }}>ACADEMY</div>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', letterSpacing: '0.06em', lineHeight: 1.1 }}>SIRIUS</div>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 500, fontSize: 9, color: 'var(--text-secondary)', letterSpacing: '0.16em' }}>ACADEMY</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/login" style={{ textDecoration: 'none', color: '#6B7A9E', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, padding: '8px 16px' }}>
+          <button
+            onClick={toggleTheme}
+            style={{
+              background: 'var(--muted-bg)', border: '1px solid var(--border)',
+              borderRadius: 8, width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            {theme === 'dark'
+              ? <Sun size={16} color="var(--text-secondary)" strokeWidth={2} />
+              : <Moon size={16} color="var(--text-secondary)" strokeWidth={2} />
+            }
+          </button>
+          <Link href="/login" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 14, padding: '8px 16px' }}>
             Entrar
           </Link>
           <Link href="/cadastro" style={{ textDecoration: 'none' }}>
@@ -283,7 +299,7 @@ export default function Home() {
 
         {/* Subtitle */}
         <p className="hero-item hero-item-2" style={{
-          color: '#8B9CC8',
+          color: 'var(--text-secondary)',
           fontSize: 'clamp(16px, 2vw, 20px)',
           maxWidth: 580,
           lineHeight: 1.65,
@@ -292,7 +308,7 @@ export default function Home() {
           A plataforma de aprendizado de IA feita para profissionais de todas as áreas de uma empresa que querem resultados reais — não só teoria.
         </p>
         <p className="hero-item hero-item-3" style={{
-          color: '#6B7A9E',
+          color: 'var(--text-secondary)',
           fontSize: 15,
           maxWidth: 480,
           lineHeight: 1.6,
@@ -313,7 +329,7 @@ export default function Home() {
             <button style={{
               background: 'transparent',
               border: '1px solid rgba(59,91,219,0.35)',
-              color: '#C5CCEE',
+              color: 'var(--text-primary)',
               fontFamily: 'Space Grotesk, sans-serif',
               fontWeight: 600,
               borderRadius: 8, padding: '15px 32px',
@@ -341,7 +357,7 @@ export default function Home() {
               <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 900, color: '#3B5BDB', lineHeight: 1 }}>
                 {stat.value}
               </div>
-              <div style={{ color: '#6B7A9E', fontSize: 13, marginTop: 6 }}>{stat.label}</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6 }}>{stat.label}</div>
             </StaggerItem>
           ))}
         </StaggerSection>
@@ -354,10 +370,10 @@ export default function Home() {
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.02em' }}>
             A IA já está no seu setor.<br />A questão é: quem vai usá-la primeiro?
           </h2>
-          <p style={{ color: '#8B9CC8', fontSize: 17, lineHeight: 1.75, maxWidth: 680, margin: '0 auto 20px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 17, lineHeight: 1.75, maxWidth: 680, margin: '0 auto 20px' }}>
             Profissionais que dominam IA não trabalham mais — trabalham melhor. Eles fazem em 30 minutos o que antes levava o dia inteiro. Criam campanhas melhores, abordam mais prospects, analisam dados mais rápido.
           </p>
-          <p style={{ color: '#6B7A9E', fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: '0 auto' }}>
             A Sirius Academy existe para que sua equipe não fique para trás. Cada módulo foi construído para gerar resultado prático imediato — não para parecer sofisticado.
           </p>
         </FadeInSection>
@@ -370,7 +386,7 @@ export default function Home() {
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
             Aprenda IA na sua área de atuação
           </h2>
-          <p style={{ color: '#6B7A9E', fontSize: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
             Conteúdo específico para a realidade do seu trabalho — não cursos genéricos.
           </p>
         </div>
@@ -390,7 +406,7 @@ export default function Home() {
                   <area.Icon size={22} color={area.color} strokeWidth={1.8} />
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 19, color: '#E8EEFF' }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 19, color: 'var(--text-primary)' }}>
                     {area.title}
                   </div>
                   <div style={{ fontSize: 12, color: area.color, fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif' }}>
@@ -399,7 +415,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.65, marginBottom: 20 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.65, marginBottom: 20 }}>
                 {area.desc}
               </p>
 
@@ -440,7 +456,7 @@ export default function Home() {
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
             Do primeiro acesso ao resultado real
           </h2>
-          <p style={{ color: '#6B7A9E', fontSize: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
             Simples, direto e construído para quem tem pouco tempo.
           </p>
         </div>
@@ -462,10 +478,10 @@ export default function Home() {
                 }}>
                   {step.n}
                 </div>
-                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 18, marginBottom: 10, color: '#E8EEFF' }}>
+                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 18, marginBottom: 10, color: 'var(--text-primary)' }}>
                   {step.title}
                 </h3>
-                <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.65, margin: 0 }}>
                   {step.desc}
                 </p>
               </div>
@@ -489,10 +505,10 @@ export default function Home() {
                 <d.Icon size={18} color={d.color} strokeWidth={1.8} />
               </div>
               <div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, color: '#E8EEFF', marginBottom: 4 }}>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', marginBottom: 4 }}>
                   {d.label}
                 </div>
-                <div style={{ fontSize: 12, color: '#6B7A9E', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   {d.sub}
                 </div>
               </div>
@@ -509,7 +525,7 @@ export default function Home() {
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
             Ficou alguma dúvida?
           </h2>
-          <p style={{ color: '#6B7A9E', fontSize: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
             As perguntas mais comuns de quem está chegando agora.
           </p>
         </FadeInSection>
@@ -539,7 +555,7 @@ export default function Home() {
                 >
                   <span style={{
                     fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15,
-                    color: isOpen ? '#E8EEFF' : '#C5CCEE',
+                    color: isOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
                     lineHeight: 1.4,
                   }}>
                     {item.q}
@@ -562,7 +578,7 @@ export default function Home() {
                 {isOpen && (
                   <div style={{ padding: '0 24px 20px' }}>
                     <div style={{ height: 1, background: 'rgba(59,91,219,0.12)', marginBottom: 16 }} />
-                    <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.75, margin: 0 }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.75, margin: 0 }}>
                       {item.a}
                     </p>
                   </div>
@@ -599,7 +615,7 @@ export default function Home() {
             Comece hoje.<br />Aplique amanhã.
           </h2>
 
-          <p style={{ color: '#8B9CC8', fontSize: 16, lineHeight: 1.65, marginBottom: 36 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.65, marginBottom: 36 }}>
             Crie sua conta grátis, escolha sua área e complete o primeiro módulo em menos de 10 minutos.
           </p>
 
@@ -610,7 +626,7 @@ export default function Home() {
             </button>
           </Link>
 
-          <div style={{ marginTop: 20, color: '#6B7A9E', fontSize: 13 }}>
+          <div style={{ marginTop: 20, color: 'var(--text-secondary)', fontSize: 13 }}>
             Sem cartão de crédito · Acesso imediato
           </div>
         </div>
@@ -653,7 +669,7 @@ export default function Home() {
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 8, width: 36, height: 36,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#6B7A9E',
+                cursor: 'pointer', color: 'var(--text-secondary)',
               }}
             >
               <X size={16} />
@@ -667,7 +683,7 @@ export default function Home() {
               <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 22, fontWeight: 800, color: '#E8EEFF', marginBottom: 8 }}>
                 {cursoAberto.title}
               </h2>
-              <p style={{ color: '#8B9CC8', fontSize: 14, lineHeight: 1.65 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.65 }}>
                 {cursoAberto.description}
               </p>
             </div>
@@ -771,22 +787,22 @@ export default function Home() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <SiriusLogo size={22} />
-          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: '#6B7A9E' }}>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-secondary)' }}>
             Sirius Academy
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <Link href="/termos" style={{ fontSize: 12, color: '#4A5270', textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#6B7A9E')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#4A5270')}>
+          <Link href="/termos" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
             Termos de Uso
           </Link>
-          <Link href="/privacidade" style={{ fontSize: 12, color: '#4A5270', textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#6B7A9E')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#4A5270')}>
+          <Link href="/privacidade" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
             Política de Privacidade
           </Link>
-          <span style={{ fontSize: 12, color: '#4A5270' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             Feito para profissionais que não param de evoluir.
           </span>
         </div>

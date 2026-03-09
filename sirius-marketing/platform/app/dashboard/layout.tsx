@@ -19,9 +19,11 @@ import {
   X,
   Zap,
   MessageCircle,
+  Users,
 } from 'lucide-react'
 import BrandSelector from '@/components/ui/brand-selector'
 import CreditBadge from '@/components/ui/credit-badge'
+import NotificationBell from '@/components/ui/notifications'
 
 const Starfield = dynamic(() => import('@/components/ui/starfield'), { ssr: false })
 
@@ -64,6 +66,7 @@ const navItems = [
   { href: '/dashboard/content',     label: 'Content Factory',   icon: FileText,        color: '#3B5BDB' },
   { href: '/dashboard/ideas',       label: 'Ideas Lab',         icon: Lightbulb,       color: '#f59e0b' },
   { href: '/dashboard/analytics',   label: 'Analytics',         icon: BarChart2,       color: '#10b981' },
+  { href: '/dashboard/leads',        label: 'Lead Intelligence', icon: Users,           color: '#10b981' },
   { href: '/dashboard/inbox',       label: 'Instagram Agent',   icon: MessageCircle,   color: '#a855f7' },
   { href: '/dashboard/distribution',label: 'Distribution',      icon: Send,            color: '#7C3AED' },
   { href: '/dashboard/lovable',     label: 'Lovable Architect', icon: Code2,           color: '#06b6d4' },
@@ -226,6 +229,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <CreditBadge />
+              <NotificationBell />
               <button
                 onClick={() => setSidebarOpen(v => !v)}
                 style={{
@@ -352,6 +356,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <BrandSelector />
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <CreditBadge />
+              <NotificationBell />
               <div style={{
                 width: 34, height: 34,
                 borderRadius: '50%',

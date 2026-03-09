@@ -1,0 +1,209 @@
+name: wf-forge-process
+version: "1.0"
+description: >
+  Workflow principal do Process Forge Squad.
+  Do contexto bruto ao output triplo completo:
+  Playbook Humano + Skill Manifest + n8n Handoff Package.
+trigger: "Usuário solicita criação de processo via *forge {processo}"
+orchestrator: process-forge-chief
+flow: unidirecional  # nada volta
+max_veto_iterations: 3
+
+---
+
+phases:
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 1: CONTEXT
+  # ═══════════════════════════════════════════════════════════
+  - id: phase_1
+    name: "Elicitação e Diagnóstico"
+    description: "Extrair contexto completo e mapear o processo nas 5 camadas"
+    agents: [process-forge-chief, context-analyst]
+    tasks: [elicit-process-context, map-process-layers]
+
+    checkpoint:
+      name: "CP1 — Contexto Aprovado"
+      gate: human_approval
+      what_to_show: |
+        Sumário do contexto extraído:
+        - Processo: {name}
+        - Fases identificadas: {N}
+        - Constraint principal: {constraint}
+        - Executores: {lista}
+        - n8n necessário: {sim/não}
+      approval_question: "Contexto correto? Posso avançar para criar os artefatos?"
+      if_rejected: "Voltar para elicit-process-context com feedback do usuário"
+      if_approved: "Avançar para Phase 2"
+
+    veto_conditions:
+      - "Contexto JSON incompleto (perguntas obrigatórias sem resposta) → não avançar"
+      - "Usuário não aprovou sumário → coletar feedback e re-elicitar"
+
+    outputs:
+      - file: "context-{process-name}.json"
+        from: elicit-process-context
+        to: [context-analyst]
+      - file: "layers-{process-name}.yaml"
+        from: map-process-layers
+        to: [playbook-architect, ai-workflow-engineer]
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 2: CREATION (PARALELA)
+  # ═══════════════════════════════════════════════════════════
+  - id: phase_2
+    name: "Criação dos Artefatos"
+    description: "Playbook e Skill Manifest criados em paralelo"
+    agents: [playbook-architect, ai-workflow-engineer]
+    tasks: [create-playbook, create-skill-manifest]
+    execution: parallel  # rodam ao mesmo tempo
+
+    note: |
+      playbook-architect usa layers 1-3 (operacional/humano)
+      ai-workflow-engineer usa layers 4-5 (IA-ready/automação)
+      Podem rodar em paralelo pois não dependem um do outro
+
+    veto_conditions:
+      - "playbook-architect termina com step de comunicação sem script → não avançar"
+      - "ai-workflow-engineer termina com heurística subjetiva → não avançar"
+
+    outputs:
+      - file: "playbook-{process-name}.md"
+        from: playbook-architect
+        to: [process-validator]
+      - file: "manifest-{process-name}.yaml"
+        from: ai-workflow-engineer
+        to: [process-validator, n8n-packager]
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 3: N8N HANDOFF (condicional)
+  # ═══════════════════════════════════════════════════════════
+  - id: phase_3
+    name: "n8n Handoff Package"
+    description: "Gerar briefing para as skills n8n (só se n8n_needed = true)"
+    agents: [n8n-packager]
+    tasks: [create-n8n-handoff]
+    condition: "context.automation.n8n_needed = true"
+    skip_if: "context.automation.n8n_needed = false"
+
+    inputs:
+      - "manifest-{process-name}.yaml" (from phase_2)
+      - "layers-{process-name}.yaml" camada 5 (from phase_1)
+
+    veto_conditions:
+      - "Trigger sem dados mapeados → não avançar"
+      - "Integração sem credencial identificada → não avançar"
+
+    outputs:
+      - file: "n8n-handoff-{process-name}.md"
+        from: n8n-packager
+        to: [process-validator]
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 4: VALIDATION
+  # ═══════════════════════════════════════════════════════════
+  - id: phase_4
+    name: "Validação — 8 Veto Conditions"
+    description: "process-validator aplica todas as veto conditions"
+    agents: [process-validator]
+    tasks: [validate-process]
+    max_iterations: 3  # máximo de ciclos de veto/correção
+
+    inputs:
+      - "playbook-{process-name}.md"
+      - "manifest-{process-name}.yaml"
+      - "n8n-handoff-{process-name}.md" (se existir)
+
+    on_veto:
+      action: "devolver artefatos com vetos para agentes responsáveis"
+      counter: "veto_iteration += 1"
+      if_max_iterations_reached: "escalar para usuário com lista de problemas persistentes"
+
+    on_pass:
+      action: "avançar para phase_5"
+
+    outputs:
+      - file: "validation-report-{process-name}.md"
+        from: process-validator
+        to: [process-forge-chief]
+
+  # ═══════════════════════════════════════════════════════════
+  # PHASE 5: DELIVERY
+  # ═══════════════════════════════════════════════════════════
+  - id: phase_5
+    name: "Entrega Final"
+    description: "process-forge-chief apresenta output triplo ao usuário"
+    agents: [process-forge-chief]
+    tasks: []
+
+    delivery_format: |
+      # ✅ Processo Criado: {nome}
+
+      ## O que foi gerado
+
+      ### 1. Playbook Humano
+      📄 `playbook-{nome}.md`
+      → Para: time, lideranças
+      → Contém: {N} fases, scripts completos, régua, escalation guide
+
+      ### 2. Skill Manifest
+      🤖 `manifest-{nome}.yaml`
+      → Para: IAs, skills, Claude
+      → Contém: {N} steps, {N} heurísticas, output schemas, templates
+
+      ### 3. n8n Handoff Package
+      ⚡ `n8n-handoff-{nome}.md`
+      → Para: suas skills n8n instaladas
+      → Contém: {pattern}, {N} triggers, {N} nodes, expressões mapeadas
+
+      ## Como usar o n8n Handoff
+      Passe o arquivo para as skills:
+      - `n8n-workflow-patterns` → para escolher a arquitetura
+      - `n8n-mcp-tools-expert` → para criar o workflow via MCP
+      - `n8n-node-configuration` → para configurar cada node
+      - `n8n-validation-expert` → para validar após criar
+
+      ## Próximos passos sugeridos
+      1. Revisar o playbook com o time antes de ativar
+      2. Testar o skill manifest com 1 caso real antes de escalar
+      3. Criar o workflow n8n com as skills e testar em staging
+      4. Ativar produção após teste
+
+---
+
+# HANDOFF SCHEMA ENTRE PHASES
+
+# Phase 1 → Phase 2
+phase_1_to_phase_2:
+  context_json:
+    required_fields: [name, objective, trigger, tone, executors, n8n_needed, timeline]
+  layers_yaml:
+    required_layers: [1, 2, 3]
+    optional_layers: [4, 5]  # obrigatórios se n8n_needed = true
+
+# Phase 2 → Phase 3 e 4
+phase_2_to_phase_3_4:
+  playbook_md:
+    required_sections: [1, 2, 3, 4, 5, 6, 7]
+  manifest_yaml:
+    required_sections: [process, context, phases, templates, escalation_matrix, error_handling]
+
+# Phase 3 → Phase 4
+phase_3_to_phase_4:
+  n8n_handoff_md:
+    required_sections: [pattern, triggers, nodes, expressions, integrations, mcp_structure, validation_checklist]
+
+---
+
+# TRACKING
+
+tracking:
+  log_file: "process-forge-log-{process-name}.md"
+  log_events:
+    - "phase_started"
+    - "checkpoint_reached"
+    - "human_approval_given"
+    - "veto_triggered"
+    - "veto_resolved"
+    - "phase_completed"
+    - "workflow_completed"

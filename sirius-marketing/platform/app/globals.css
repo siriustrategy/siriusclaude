@@ -482,4 +482,83 @@ body > * { position: relative; z-index: 1; }
     color: #93c5fd;
   }
 
+  /* ── Academy notification (gradiente roxo/azul Sirius) ── */
+  .notif-academy {
+    background: linear-gradient(135deg, rgba(124,58,237,0.10) 0%, rgba(59,91,219,0.10) 100%);
+    border: 1px solid rgba(124,58,237,0.22);
+    border-radius: 12px;
+  }
+  .notif-academy-banner {
+    background: linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(59,91,219,0.15) 100%);
+    border: 1px solid rgba(124,58,237,0.28);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .notif-academy-banner:hover {
+    background: linear-gradient(135deg, rgba(124,58,237,0.25) 0%, rgba(59,91,219,0.22) 100%);
+    border-color: rgba(124,58,237,0.42);
+  }
+  .notif-academy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(90deg, rgba(124,58,237,0.3), rgba(59,91,219,0.25));
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: #c084fc;
+    letter-spacing: 0.06em;
+  }
+  .btn-academy {
+    background: linear-gradient(90deg, rgba(124,58,237,0.25), rgba(59,91,219,0.2));
+    border: 1px solid rgba(124,58,237,0.35);
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: #c084fc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .btn-academy:hover {
+    background: linear-gradient(90deg, rgba(124,58,237,0.35), rgba(59,91,219,0.3));
+    border-color: rgba(124,58,237,0.5);
+  }
+
+  /* ── Free for Academy badge ── */
+  .badge-free-academy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: #34d399;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Lead score badges ── */
+  .score-hot    { background: rgba(37,211,102,0.12);  border: 1px solid rgba(37,211,102,0.3);  color: #25D366; }
+  .score-good   { background: rgba(6,182,212,0.12);   border: 1px solid rgba(6,182,212,0.3);   color: #06b6d4; }
+  .score-medium { background: rgba(245,158,11,0.12);  border: 1px solid rgba(245,158,11,0.3);  color: #f59e0b; }
+  .score-cold   { background: rgba(239,68,68,0.12);   border: 1px solid rgba(239,68,68,0.3);   color: #ef4444; }
+
+  /* ── Monitor freq badges ── */
+  .freq-30min  { background: rgba(37,211,102,0.1);  border: 1px solid rgba(37,211,102,0.25);  color: #25D366; }
+  .freq-6h     { background: rgba(6,182,212,0.1);   border: 1px solid rgba(6,182,212,0.25);   color: #06b6d4; }
+  .freq-24h    { background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.25);  color: #f59e0b; }
+  .freq-weekly { background: rgba(122,138,174,0.1); border: 1px solid rgba(122,138,174,0.2);  color: #7A8AAE; }
+
 }
