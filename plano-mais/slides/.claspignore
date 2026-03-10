@@ -1,0 +1,6 @@
+test-scope.js
+package.json
+package-lock.json
+node_modules/**
+COMO-USAR.md
+*.md
