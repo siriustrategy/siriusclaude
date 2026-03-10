@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Users, Search, Filter, Download, Upload, X, Phone, Mail, MapPin, Tag, MessageSquare, FileText, Clock, ChevronRight, AlertTriangle, Star, UserCheck } from 'lucide-react'
 import { Lead, FaseCobranca } from '@/types'
 import { formatCurrency, formatRelativeTime, getFaseBadge, getRiscoBadge, getAvatarColor } from '@/lib/utils'
@@ -295,6 +296,7 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 }
 
 export default function CRMPage() {
+  const router = useRouter()
   const [tabAtiva, setTabAtiva] = useState<string>('todos')
   const [busca, setBusca] = useState('')
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null)
