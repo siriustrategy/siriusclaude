@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':  'Dashboard',
@@ -17,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
 export default function Header() {
   const pathname = usePathname()
   const { perfil: usuario } = useAuth()
+  const { sidebarWidth } = useSidebar()
 
   const title = Object.entries(PAGE_TITLES).find(([key]) => pathname === key || pathname.startsWith(key + '/'))?.[1] || 'Plano Mais'
   const isGestor = usuario?.role === 'gestor'
@@ -25,7 +27,7 @@ export default function Header() {
   return (
     <header style={{
       position: 'fixed',
-      top: 0, left: 220, right: 0,
+      top: 0, left: sidebarWidth, right: 0,
       height: 60,
       background: 'var(--sidebar-bg)',
       borderBottom: '1px solid var(--sidebar-border)',
@@ -35,71 +37,20 @@ export default function Header() {
       padding: '0 28px',
       zIndex: 40,
       boxShadow: '0 1px 4px rgba(13,61,204,0.06)',
+      transition: 'left 0.2s cubic-bezier(0.22,1,0.36,1)',
     }}>
-
-      {/* Titulo da pagina */}
-      <div style={{
-        fontFamily: 'Space Grotesk, sans-serif',
-        fontWeight: 700,
-        fontSize: 16,
-        color: 'var(--text-primary)',
-        letterSpacing: '-0.01em',
-      }}>
+      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
         {title}
       </div>
-
-      {/* Direita: notificacoes + avatar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
-        {/* Badge de role */}
         <span className={`badge ${isGestor ? 'badge-blue' : 'badge-teal'}`}>
           {isGestor ? 'Gestor' : 'Atendente'}
         </span>
-
-        {/* Sino de notificacoes */}
-        <button
-          style={{
-            position: 'relative',
-            background: 'var(--muted-bg)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            width: 36, height: 36,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--text-secondary)',
-            transition: 'background 0.15s',
-          }}
-        >
+        <button style={{ position: 'relative', background: 'var(--muted-bg)', border: '1px solid var(--border)', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
           <Bell size={16} strokeWidth={2} />
-          {/* Badge de notificacoes nao lidas */}
-          <span
-            className="magenta-glow-pulse"
-            style={{
-              position: 'absolute',
-              top: 6, right: 6,
-              width: 8, height: 8,
-              background: 'var(--magenta)',
-              borderRadius: '50%',
-              border: '1.5px solid var(--sidebar-bg)',
-            }}
-          />
+          <span className="magenta-glow-pulse" style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: 'var(--magenta)', borderRadius: '50%', border: '1.5px solid var(--sidebar-bg)' }} />
         </button>
-
-        {/* Avatar com iniciais */}
-        <div
-          style={{
-            width: 34, height: 34,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0D3DCC 0%, #0BBFAA 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Space Grotesk, sans-serif',
-            fontWeight: 700,
-            fontSize: 12,
-            color: '#FFFFFF',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #0D3DCC 0%, #0BBFAA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, color: '#FFF', cursor: 'pointer', flexShrink: 0 }}>
           {initials}
         </div>
       </div>

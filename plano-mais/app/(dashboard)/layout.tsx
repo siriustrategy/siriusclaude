@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { SidebarProvider } from '@/contexts/SidebarContext'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
+import MainWrapper from '@/components/MainWrapper'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -11,15 +13,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <AuthProvider>
-      <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-        <Sidebar />
-        <Header />
-        <main style={{ marginLeft: 220, paddingTop: 60, minHeight: '100vh' }}>
-          <div style={{ padding: '28px 32px' }}>
-            {children}
-          </div>
-        </main>
-      </div>
+      <SidebarProvider>
+        <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+          <Sidebar />
+          <Header />
+          <MainWrapper>{children}</MainWrapper>
+        </div>
+      </SidebarProvider>
     </AuthProvider>
   )
 }
