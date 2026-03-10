@@ -167,8 +167,27 @@ export default function Sidebar() {
       }}>
 
         {/* Logo + toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', marginBottom: 18 }}>
-          {!collapsed && (
+        {collapsed ? (
+          // Modo recolhido: logo em cima, botão toggle abaixo
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+            <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+              <PlusLogo />
+            </Link>
+            <button
+              onClick={toggleCollapsed}
+              style={{
+                background: 'var(--surface-2)', border: '1px solid var(--border)',
+                borderRadius: 7, width: 32, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
+              }}
+              title="Expandir menu"
+            >
+              <ChevronRight size={13} color="var(--text-muted)" />
+            </button>
+          </div>
+        ) : (
+          // Modo expandido: logo e botão lado a lado
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
               <PlusLogo />
               <div>
@@ -176,24 +195,19 @@ export default function Sidebar() {
                 <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 500, fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.12em' }}>COBRANCA</div>
               </div>
             </Link>
-          )}
-          {collapsed && (
-            <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-              <PlusLogo />
-            </Link>
-          )}
-          <button
-            onClick={toggleCollapsed}
-            style={{
-              background: 'var(--surface-2)', border: '1px solid var(--border)',
-              borderRadius: 7, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
-            }}
-            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          >
-            {collapsed ? <ChevronRight size={13} color="var(--text-muted)" /> : <ChevronLeft size={13} color="var(--text-muted)" />}
-          </button>
-        </div>
+            <button
+              onClick={toggleCollapsed}
+              style={{
+                background: 'var(--surface-2)', border: '1px solid var(--border)',
+                borderRadius: 7, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
+              }}
+              title="Recolher menu"
+            >
+              <ChevronLeft size={13} color="var(--text-muted)" />
+            </button>
+          </div>
+        )}
 
         {/* Card do usuário */}
         {usuario && (
