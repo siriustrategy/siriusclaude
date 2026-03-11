@@ -1,0 +1,110 @@
+{
+  "name": "WF1 — Scheduler Diário de Cobrança",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "Cron — 08h dias úteis",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.id, l.nome, l.telefone, l.email, l.fase, l.dias_atraso, l.valor_divida, l.status, u.id as ultimo_contato_id, u.criado_em as ultimo_contato_em FROM leads l LEFT JOIN (\n  SELECT DISTINCT ON (lead_id) lead_id, id, criado_em\n  FROM mensagens\n  ORDER BY lead_id, criado_em DESC\n) u ON u.lead_id = l.id WHERE l.status NOT IN ('pago', 'cancelado') AND l.ativo = true ORDER BY l.dias_atraso DESC",
+        "additionalFields": {}
+      },
+      "id": "buscar-leads",
+      "name": "Supabase — Buscar Leads Ativos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [420, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Motor de Cobrança — Filtro Anti-Abuso\nconst FASES_REGUA = ['pre','mes1','mes2','mes3','mes4','mes5','pos'];\nconst DESCONTO_POR_FASE = { pre:0, mes1:0, mes2:0, mes3:5, mes4:15, mes5:20, pos:0 };\nconst CANAIS_POR_FASE = {\n  pre:  ['whatsapp'],\n  mes1: ['whatsapp','sms'],\n  mes2: ['whatsapp','sms','email'],\n  mes3: ['whatsapp','sms','email'],\n  mes4: ['whatsapp','sms','email','ligacao'],\n  mes5: ['whatsapp','sms','email','ligacao'],\n  pos:  ['ligacao'],\n};\nconst INTERVALO_DIAS = { pre:7, mes1:5, mes2:4, mes3:3, mes4:2, mes5:1, pos:7 };\n\nconst leads = $input.all();\nconst horaAtual = new Date().getHours();\n\n// Anti-abuse: só processar 8h-20h\nif (horaAtual < 8 || horaAtual >= 20) {\n  return [{ json: { status: 'fora_horario', leads: [], total: 0 } }];\n}\n\nconst leadsParaContato = [];\n\nfor (const item of leads) {\n  const lead = item.json;\n  const fase = lead.fase || 'mes1';\n  \n  // Anti-abuse: verificar se último contato foi recente\n  const ultimoContato = lead.ultimo_contato_em ? new Date(lead.ultimo_contato_em) : null;\n  const diasSemContato = ultimoContato \n    ? Math.floor((Date.now() - ultimoContato.getTime()) / (1000*60*60*24))\n    : 999;\n  \n  const intervaloPorFase = INTERVALO_DIAS[fase] || 3;\n  if (diasSemContato < intervaloPorFase) continue; // muito recente\n  \n  // Fase 'pos' — só manual\n  if (fase === 'pos') continue;\n  \n  const canal = (CANAIS_POR_FASE[fase] || ['whatsapp'])[0];\n  const desconto = DESCONTO_POR_FASE[fase];\n  const nome = lead.nome.split(' ')[0];\n  const valor = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(lead.valor_divida);\n  \n  let mensagem = '';\n  if (desconto > 0) {\n    const valorDesc = lead.valor_divida * (1 - desconto/100);\n    const vf = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(valorDesc);\n    mensagem = `Olá ${nome}! Oferta especial: regularize com ${desconto}% de desconto. De ${valor} por apenas ${vf}. Acesse: {{checkout_url}}`;\n  } else {\n    mensagem = `Olá ${nome}! Sua mensalidade de ${valor} está em aberto há ${lead.dias_atraso} dias. Regularize agora: {{checkout_url}}`;\n  }\n  \n  const prioridade = ['mes5','mes4'].includes(fase) ? 'urgente' : fase === 'pre' ? 'baixa' : 'normal';\n  \n  leadsParaContato.push({\n    ...lead,\n    canal,\n    mensagem,\n    desconto,\n    prioridade,\n    fase,\n  });\n}\n\n// Ordenar: urgentes primeiro\nleadsParaContato.sort((a,b) => {\n  const p = {urgente:0, normal:1, baixa:2};\n  return p[a.prioridade] - p[b.prioridade] || b.dias_atraso - a.dias_atraso;\n});\n\nreturn leadsParaContato.map(l => ({ json: l }));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "filtrar-scheduler",
+      "name": "Filtrar e Priorizar Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sua-instancia.n8n.cloud/webhook/wf2-disparo",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "lead", "value": "={{ $json }}" },
+            { "name": "scheduledAt", "value": "={{ $now.toISO() }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-wf2",
+      "name": "Disparar WF2 — Disparo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "scheduler_logs",
+        "columns": "data_execucao, total_processados, status",
+        "additionalFields": {}
+      },
+      "id": "log-execucao",
+      "name": "Log de Execução",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — 08h dias úteis": {
+      "main": [[{ "node": "Supabase — Buscar Leads Ativos", "type": "main", "index": 0 }]]
+    },
+    "Supabase — Buscar Leads Ativos": {
+      "main": [[{ "node": "Filtrar e Priorizar Leads", "type": "main", "index": 0 }]]
+    },
+    "Filtrar e Priorizar Leads": {
+      "main": [[{ "node": "Disparar WF2 — Disparo", "type": "main", "index": 0 }]]
+    },
+    "Disparar WF2 — Disparo": {
+      "main": [[{ "node": "Log de Execução", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "last",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": ["plano-mais", "cobranca", "scheduler"]
+}

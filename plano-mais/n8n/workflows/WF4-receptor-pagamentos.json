@@ -1,0 +1,193 @@
+{
+  "name": "WF4 — Receptor de Pagamentos (Webhook)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf4-pagamento-confirmado",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-pagamento",
+      "name": "Webhook — Pagamento Confirmado",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "wf4-pagamento-confirmado"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalizar payload de diferentes provedores de pagamento\n// Compatível com: Asaas, Pagar.me, MercadoPago, EFI (Gerencianet)\nconst body = $json;\n\nlet leadId, valor, metodo, status, transacaoId, provedor;\n\n// Detectar provedor pelo payload\nif (body.payment) {\n  // Asaas\n  provedor = 'asaas';\n  leadId = body.payment.externalReference || body.payment.description?.match(/lead:([a-z0-9-]+)/)?.[1];\n  valor = body.payment.value;\n  metodo = body.payment.billingType?.toLowerCase();\n  status = body.payment.status;\n  transacaoId = body.payment.id;\n} else if (body.current_status) {\n  // Pagar.me\n  provedor = 'pagarme';\n  leadId = body.metadata?.lead_id;\n  valor = (body.amount || 0) / 100;\n  metodo = body.payment_method;\n  status = body.current_status === 'paid' ? 'CONFIRMED' : body.current_status;\n  transacaoId = body.id;\n} else if (body.action?.includes('payment')) {\n  // MercadoPago\n  provedor = 'mercadopago';\n  leadId = body.data?.metadata?.lead_id;\n  valor = body.data?.transaction_amount;\n  metodo = body.data?.payment_method_id;\n  status = body.data?.status === 'approved' ? 'CONFIRMED' : body.data?.status;\n  transacaoId = body.data?.id?.toString();\n}\n\n// Verificar se pagamento foi confirmado\nconst confirmado = ['CONFIRMED', 'RECEIVED', 'paid', 'approved'].includes(status);\n\nreturn [{\n  json: {\n    leadId,\n    valor,\n    metodo: metodo || 'desconhecido',\n    status,\n    transacaoId,\n    provedor,\n    confirmado,\n    timestamp: new Date().toISOString(),\n  }\n}];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "normalizar-pagamento",
+      "name": "Normalizar Payload do Provedor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.confirmado }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "check-confirmado",
+      "name": "Pagamento Confirmado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pagamentos (lead_id, valor, metodo, status, transacao_id, provedor, criado_em) VALUES ($1, $2, $3, 'confirmado', $4, $5, NOW()) ON CONFLICT (transacao_id) DO NOTHING RETURNING id",
+        "additionalFields": {
+          "queryParams": "={{ [$json.leadId, $json.valor, $json.metodo, $json.transacaoId, $json.provedor] }}"
+        }
+      },
+      "id": "registrar-pagamento",
+      "name": "Registrar Pagamento no Banco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [860, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE leads SET status = 'pago', fase = 'pre', data_pagamento = NOW(), updated_at = NOW() WHERE id = $1 RETURNING nome, telefone, email, valor_divida",
+        "additionalFields": {
+          "queryParams": "={{ [$json.leadId] }}"
+        }
+      },
+      "id": "atualizar-lead-pago",
+      "name": "Atualizar Lead — Status Pago",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Montar mensagem de confirmação para o cliente\nconst lead = $input.first().json;\nconst pagamento = $('Normalizar Payload do Provedor').first().json;\n\nconst valorPago = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(pagamento.valor || 0);\nconst nome = (lead.nome || '').split(' ')[0];\n\nconst mensagem = `Parabéns, ${nome}! Seu pagamento de ${valorPago} foi confirmado. Seus benefícios Plano Mais estão ativos. Obrigado por regularizar! Qualquer dúvida, estamos aqui.`;\n\nreturn [{\n  json: {\n    telefone: lead.telefone,\n    email: lead.email,\n    nome: lead.nome,\n    mensagem,\n    valorPago,\n    leadId: pagamento.leadId,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "preparar-confirmacao",
+      "name": "Preparar Mensagem Confirmação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.telefone }}" },
+            { "name": "message", "value": "={{ $json.mensagem }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "confirmar-whatsapp",
+      "name": "Confirmar via WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 120]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversas SET status = 'encerrada', updated_at = NOW() WHERE lead_id = $1 AND status IN ('bot', 'aberta', 'fila')",
+        "additionalFields": {
+          "queryParams": "={{ [$json.leadId] }}"
+        }
+      },
+      "id": "encerrar-conversa",
+      "name": "Encerrar Conversa Ativa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1520, 280],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true, \"status\": \"processed\" }"
+      },
+      "id": "resposta-ok",
+      "name": "Resposta 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1740, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true, \"status\": \"ignored\" }"
+      },
+      "id": "resposta-ignorado",
+      "name": "Resposta — Ignorado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [860, 440]
+    }
+  ],
+  "connections": {
+    "Webhook — Pagamento Confirmado": {
+      "main": [[{ "node": "Normalizar Payload do Provedor", "type": "main", "index": 0 }]]
+    },
+    "Normalizar Payload do Provedor": {
+      "main": [[{ "node": "Pagamento Confirmado?", "type": "main", "index": 0 }]]
+    },
+    "Pagamento Confirmado?": {
+      "true": [{ "node": "Registrar Pagamento no Banco", "type": "main", "index": 0 }],
+      "false": [{ "node": "Resposta — Ignorado", "type": "main", "index": 0 }]
+    },
+    "Registrar Pagamento no Banco": {
+      "main": [[{ "node": "Atualizar Lead — Status Pago", "type": "main", "index": 0 }]]
+    },
+    "Atualizar Lead — Status Pago": {
+      "main": [[{ "node": "Preparar Mensagem Confirmação", "type": "main", "index": 0 }]]
+    },
+    "Preparar Mensagem Confirmação": {
+      "main": [[{ "node": "Confirmar via WhatsApp", "type": "main", "index": 0 }], [{ "node": "Encerrar Conversa Ativa", "type": "main", "index": 0 }]]
+    },
+    "Confirmar via WhatsApp": {
+      "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
+    },
+    "Encerrar Conversa Ativa": {
+      "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "last",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": ["plano-mais", "pagamentos", "webhook"]
+}

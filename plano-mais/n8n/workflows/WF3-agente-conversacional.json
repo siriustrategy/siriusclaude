@@ -1,0 +1,253 @@
+{
+  "name": "WF3 — Agente Conversacional IA (WhatsApp)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf3-whatsapp-recebido",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-whatsapp",
+      "name": "Webhook — Mensagem Recebida",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "wf3-whatsapp-recebido"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalizar payload do Z-API / Evolution API\nconst body = $json.body || $json;\nconst phone = (body.phone || body.from || '').replace(/\\D/g, '');\nconst text = body.text?.message || body.message?.conversation || body.message?.extendedTextMessage?.text || '';\nconst messageId = body.messageId || body.key?.id || Date.now().toString();\n\nreturn [{\n  json: {\n    phone,\n    text: text.trim(),\n    messageId,\n    timestamp: new Date().toISOString(),\n  }\n}];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "normalizar-payload",
+      "name": "Normalizar Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.*, c.id as conversa_id, c.status as conversa_status, c.atribuida_a FROM leads l LEFT JOIN conversas c ON c.lead_id = l.id AND c.status IN ('bot','aberta') WHERE REGEXP_REPLACE(l.telefone, '\\D', '', 'g') = $1 LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ [$json.phone] }}"
+        }
+      },
+      "id": "buscar-lead",
+      "name": "Buscar Lead por Telefone",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.conversa_status }}",
+              "rightValue": "atendente",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ]
+        }
+      },
+      "id": "check-atendente",
+      "name": "Está com Atendente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.conteudo, m.tipo FROM mensagens m WHERE m.conversa_id = $1 ORDER BY m.criado_em DESC LIMIT 10",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id] }}"
+        }
+      },
+      "id": "buscar-historico",
+      "name": "Buscar Histórico da Conversa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Montar contexto para o agente IA\nconst lead = $('Buscar Lead por Telefone').first().json;\nconst historico = $input.all().map(m => m.json);\nconst mensagemAtual = $('Normalizar Payload').first().json.text;\n\nconst fase = lead.fase || 'mes1';\nconst DESCONTO = { pre:0, mes1:0, mes2:0, mes3:5, mes4:15, mes5:20, pos:0 };\nconst desconto = DESCONTO[fase] || 0;\nconst valor = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(lead.valor_divida || 0);\nconst valorDesconto = desconto > 0 \n  ? new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format((lead.valor_divida || 0) * (1 - desconto/100))\n  : null;\n\nconst histFormatado = historico\n  .reverse()\n  .map(m => `${m.tipo === 'bot' ? 'Assistente' : 'Cliente'}: ${m.conteudo}`)\n  .join('\\n');\n\nconst systemPrompt = `Você é o assistente de cobrança do Plano Mais, um plano de saúde acessível.\nSeu objetivo é ajudar o cliente a regularizar a situação de inadimplência de forma empática e objetiva.\n\nDados do cliente:\n- Nome: ${lead.nome}\n- Valor em aberto: ${valor}\n- Dias de atraso: ${lead.dias_atraso}\n- Fase de cobrança: ${fase}\n${desconto > 0 ? `- OFERTA ESPECIAL ATIVA: ${desconto}% de desconto — pague agora por apenas ${valorDesconto}` : ''}\n\nRegras:\n1. Sempre se identificar como assistente do Plano Mais\n2. Ser empático e nunca ameaçar\n3. Se o cliente quiser pagar, fornecer o link de checkout\n4. Se o cliente pedir para falar com atendente, transferir IMEDIATAMENTE (responda TRANSFERIR_ATENDENTE)\n5. Se não conseguir resolver em 3 trocas, transferir para atendente\n6. Nunca inventar valores ou descontos diferentes dos informados acima\n7. Responder em português, de forma curta e clara (max 3 parágrafos)\n\nHistórico:\n${histFormatado || '(Primeira mensagem)'}`;\n\nreturn [{\n  json: {\n    lead,\n    mensagemAtual,\n    systemPrompt,\n    conversa_id: lead.conversa_id,\n    checkout_url: `https://app.planomais.com.br/checkout/${lead.id}`,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "montar-contexto",
+      "name": "Montar Contexto para IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 180]
+    },
+    {
+      "parameters": {
+        "model": "claude-haiku-4-5-20251001",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "={{ $json.mensagemAtual }}"
+            }
+          ]
+        },
+        "system": "={{ $json.systemPrompt }}",
+        "options": {
+          "maxTokens": 512,
+          "temperature": 0.3
+        }
+      },
+      "id": "claude-haiku",
+      "name": "Claude Haiku — Gerar Resposta",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [1520, 180],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-api",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const resposta = $json.content?.[0]?.text || $json.text || '';\nconst transferir = resposta.includes('TRANSFERIR_ATENDENTE');\nconst respostaLimpa = resposta.replace('TRANSFERIR_ATENDENTE', '').trim();\n\nreturn [{\n  json: {\n    ...$('Montar Contexto para IA').first().json,\n    resposta_ia: respostaLimpa,\n    transferir,\n  }\n}];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "processar-resposta",
+      "name": "Processar Resposta IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1720, 180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.transferir }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "check-transferir",
+      "name": "Transferir para Atendente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1940, 180]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "conversas",
+        "columns": "status, updated_at",
+        "additionalFields": {
+          "whereClause": "id = '{{ $json.conversa_id }}'"
+        }
+      },
+      "id": "atualizar-fila",
+      "name": "Colocar na Fila — Atendente",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2160, 120],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.lead.telefone }}" },
+            { "name": "message", "value": "={{ $json.resposta_ia }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-resposta-wa",
+      "name": "Enviar Resposta WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { received: true } }}"
+      },
+      "id": "resposta-ok",
+      "name": "Resposta 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2380, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Mensagem Recebida": {
+      "main": [[{ "node": "Normalizar Payload", "type": "main", "index": 0 }]]
+    },
+    "Normalizar Payload": {
+      "main": [[{ "node": "Buscar Lead por Telefone", "type": "main", "index": 0 }]]
+    },
+    "Buscar Lead por Telefone": {
+      "main": [[{ "node": "Está com Atendente?", "type": "main", "index": 0 }]]
+    },
+    "Está com Atendente?": {
+      "true": [{ "node": "Buscar Histórico da Conversa", "type": "main", "index": 0 }],
+      "false": [{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]
+    },
+    "Buscar Histórico da Conversa": {
+      "main": [[{ "node": "Montar Contexto para IA", "type": "main", "index": 0 }]]
+    },
+    "Montar Contexto para IA": {
+      "main": [[{ "node": "Claude Haiku — Gerar Resposta", "type": "main", "index": 0 }]]
+    },
+    "Claude Haiku — Gerar Resposta": {
+      "main": [[{ "node": "Processar Resposta IA", "type": "main", "index": 0 }]]
+    },
+    "Processar Resposta IA": {
+      "main": [[{ "node": "Transferir para Atendente?", "type": "main", "index": 0 }]]
+    },
+    "Transferir para Atendente?": {
+      "true": [{ "node": "Colocar na Fila — Atendente", "type": "main", "index": 0 }],
+      "false": [{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]
+    },
+    "Colocar na Fila — Atendente": {
+      "main": [[{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]]
+    },
+    "Enviar Resposta WhatsApp": {
+      "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "last",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": ["plano-mais", "cobranca", "agente-ia", "whatsapp"]
+}

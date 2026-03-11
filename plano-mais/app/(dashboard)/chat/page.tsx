@@ -3,72 +3,60 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   Bot, UserCheck, BellRing, Search, Send, Phone,
-  Info, X, MoreVertical, AlertTriangle, CheckCheck, Check,
-  FileText, MessageSquare, Zap, ChevronDown, Users, Clock,
-  History, Tag,
+  Info, X, AlertTriangle, CheckCheck, Check,
+  FileText, MessageSquare, Zap, ChevronDown, Clock,
+  Paperclip, ArrowLeftRight, Headphones, Download, Mic, Square,
 } from 'lucide-react'
 import { getFaseBadge, getRiscoBadge, formatRelativeTime, getAvatarColor, formatCurrency } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 // ====================================================================
 // TIPOS
 // ====================================================================
 type TipoMsg = 'mensagem' | 'nota_interna'
-interface Msg { id: string; remetente: 'BOT' | 'LEAD' | 'ATENDENTE'; conteudo: string; hora: string; status?: string; tipo?: TipoMsg }
-interface Conversa { id: string; lead_id: string; nome: string; telefone: string; plano: string; fase: string; risco: string; tipo: 'BOT' | 'HUMANO' | 'MISTO'; status: 'aberta' | 'transferida'; prioridade: boolean; hora: string; nao_lidas: number; ultima_mensagem: string; ultima_msg_remetente: 'BOT' | 'LEAD' | 'ATENDENTE'; total_msgs: number }
+interface Msg { id: string; remetente: 'BOT' | 'LEAD' | 'ATENDENTE'; conteudo: string; hora: string; status?: string; tipo?: TipoMsg; arquivo_url?: string; arquivo_nome?: string }
+interface Conversa { id: string; lead_id: string; atendente_id: string | null; nome: string; telefone: string; plano: string; fase: string; risco: string; tipo: 'BOT' | 'HUMANO' | 'MISTO'; status: 'aberta' | 'transferida' | 'fechada'; prioridade: boolean; hora: string; nao_lidas: number; ultima_mensagem: string; ultima_msg_remetente: 'BOT' | 'LEAD' | 'ATENDENTE'; total_msgs: number }
 
 // ====================================================================
-// MOCK DATA
+// HELPERS — mapear Supabase → tipos locais
 // ====================================================================
-const mockConversas: Conversa[] = [
-  { id: 'c1', lead_id: '1', nome: 'Maria Santos', telefone: '(21) 99999-1111', plano: 'Plano Essencial', fase: 'mes1', risco: 'baixo', tipo: 'BOT', status: 'aberta', prioridade: false, hora: '10:34', nao_lidas: 1, total_msgs: 5, ultima_mensagem: 'Ok, vou verificar o link agora!', ultima_msg_remetente: 'LEAD' },
-  { id: 'c2', lead_id: '3', nome: 'Ana Costa', telefone: '(21) 97777-3333', plano: 'Plano Familiar', fase: 'mes4', risco: 'alto', tipo: 'HUMANO', status: 'aberta', prioridade: true, hora: '10:21', nao_lidas: 3, total_msgs: 6, ultima_mensagem: 'Não consigo pagar de uma vez...', ultima_msg_remetente: 'LEAD' },
-  { id: 'c3', lead_id: '5', nome: 'Fernanda Lima', telefone: '(21) 95555-5555', plano: 'Plano Familiar', fase: 'mes5', risco: 'alto', tipo: 'BOT', status: 'aberta', prioridade: false, hora: '09:58', nao_lidas: 0, total_msgs: 4, ultima_mensagem: 'Posso pensar um pouco?', ultima_msg_remetente: 'LEAD' },
-  { id: 'c4', lead_id: '4', nome: 'Carlos Pereira', telefone: '(21) 96666-4444', plano: 'Plano Essencial', fase: 'pre', risco: 'baixo', tipo: 'BOT', status: 'aberta', prioridade: false, hora: '08:15', nao_lidas: 0, total_msgs: 5, ultima_mensagem: 'Entendido, obrigado!', ultima_msg_remetente: 'LEAD' },
-  { id: 'c5', lead_id: '2', nome: 'João Oliveira', telefone: '(21) 98888-2222', plano: 'Plano Premium', fase: 'mes3', risco: 'medio', tipo: 'BOT', status: 'transferida', prioridade: false, hora: 'Ontem', nao_lidas: 0, total_msgs: 4, ultima_mensagem: 'Preciso falar com um atendente.', ultima_msg_remetente: 'LEAD' },
-  { id: 'c6', lead_id: '6', nome: 'Roberto Souza', telefone: '(21) 94444-6666', plano: 'Plano Premium', fase: 'mes2', risco: 'medio', tipo: 'BOT', status: 'transferida', prioridade: false, hora: 'Ontem', nao_lidas: 0, total_msgs: 3, ultima_mensagem: 'Quando posso falar com alguém?', ultima_msg_remetente: 'LEAD' },
-]
-
-const mockMensagens: Record<string, Msg[]> = {
-  c1: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'Olá, Maria! Notamos que seu Plano Essencial venceu há 15 dias. O valor em aberto é R$ 189,90. Clique no link abaixo para regularizar:', hora: '08:00' },
-    { id: 'm2', remetente: 'BOT', conteudo: 'https://pagar.planomais.com.br/r/maria-jan26', hora: '08:00' },
-    { id: 'm3', remetente: 'LEAD', conteudo: 'Oi! Quanto é o boleto mesmo?', hora: '10:30', status: 'lido' },
-    { id: 'm4', remetente: 'BOT', conteudo: 'Maria, o valor total é R$ 189,90. Você pode pagar via PIX, cartão ou boleto. O PIX é confirmado na hora!', hora: '10:31' },
-    { id: 'm5', remetente: 'LEAD', conteudo: 'Ok, vou verificar o link agora!', hora: '10:34', status: 'lido' },
-  ],
-  c2: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'Olá, Ana! Seu Plano Familiar está em aberto há 107 dias. Temos uma oferta de 15% de desconto disponível hoje! O valor fica R$ 1.147,50.', hora: '09:00' },
-    { id: 'm2', remetente: 'LEAD', conteudo: 'Nossa, tá caro assim. Sei lá né', hora: '09:45', status: 'lido' },
-    { id: 'm3', remetente: 'BOT', conteudo: 'Entendo, Ana. Além do desconto de 15%, você pode parcelar em até 3x sem juros. Assim fica R$ 382,50 por mês.', hora: '09:45' },
-    { id: 'm4', remetente: 'LEAD', conteudo: 'Não consigo pagar tudo de uma vez, tem como parcelar?', hora: '10:21', status: 'lido' },
-    { id: 'm5', remetente: 'LEAD', conteudo: 'Mas precisa ser um valor menor que esse ainda', hora: '10:21', status: 'lido' },
-    { id: 'm6', remetente: 'LEAD', conteudo: 'Será que tem desconto maior?', hora: '10:22', status: 'lido' },
-  ],
-  c3: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'Fernanda, seu plano está há 138 dias em atraso. Nossa melhor oferta: 20% de desconto + 3x. Valor: R$ 720,00 (3x de R$ 240,00).', hora: '09:50' },
-    { id: 'm2', remetente: 'LEAD', conteudo: 'Tô passando por um momento difícil financeiramente', hora: '09:55', status: 'lido' },
-    { id: 'm3', remetente: 'BOT', conteudo: 'Entendo, Fernanda. Você tem uma filha pequena e o plano cobre pediatria. Essa oferta de 20% é a melhor que podemos fazer.', hora: '09:56' },
-    { id: 'm4', remetente: 'LEAD', conteudo: 'Essa oferta de 20% está me ajudando bastante. Posso pensar um pouco?', hora: '09:58', status: 'lido' },
-  ],
-  c4: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'Boa tarde, Carlos! Seu Plano Essencial venceu há 5 dias. Aqui está o link para pagamento fácil:', hora: '08:00' },
-    { id: 'm2', remetente: 'BOT', conteudo: 'https://pagar.planomais.com.br/r/carlos-mar26', hora: '08:00' },
-    { id: 'm3', remetente: 'LEAD', conteudo: 'Vou pagar hoje à tarde', hora: '08:10', status: 'lido' },
-    { id: 'm4', remetente: 'BOT', conteudo: 'Ótimo, Carlos! O link fica ativo por 7 dias.', hora: '08:10' },
-    { id: 'm5', remetente: 'LEAD', conteudo: 'Entendido, obrigado!', hora: '08:15', status: 'lido' },
-  ],
-  c5: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'João, seu Plano Premium venceu há 75 dias. Desconto de 5% disponível (48h): R$ 569,81.', hora: '14:00' },
-    { id: 'm2', remetente: 'LEAD', conteudo: 'Quero falar com uma pessoa, não com robô', hora: '14:30', status: 'lido' },
-    { id: 'm3', remetente: 'BOT', conteudo: 'Entendo, João! Vou transferir você para um atendente agora.', hora: '14:30' },
-    { id: 'm4', remetente: 'LEAD', conteudo: 'Preciso falar com um atendente humano.', hora: '14:31', status: 'lido' },
-  ],
-  c6: [
-    { id: 'm1', remetente: 'BOT', conteudo: 'Roberto, seu plano está há 45 dias em atraso. Podemos ajudar!', hora: '13:00' },
-    { id: 'm2', remetente: 'LEAD', conteudo: 'Quero negociar minha dívida', hora: '13:20', status: 'lido' },
-    { id: 'm3', remetente: 'LEAD', conteudo: 'Quando posso falar com alguém?', hora: '13:21', status: 'lido' },
-  ],
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapConversa(d: any): Conversa {
+  const lead = d.lead || {}
+  return {
+    id: d.id,
+    lead_id: d.lead_id,
+    atendente_id: d.atendente_id || null,
+    nome: lead.nome || 'Lead',
+    telefone: lead.telefone || '',
+    plano: lead.plano || '',
+    fase: lead.fase_cobranca || 'mes1',
+    risco: 'baixo',
+    tipo: d.tipo || 'BOT',
+    status: d.status || 'aberta',
+    prioridade: d.prioridade || false,
+    hora: formatRelativeTime(d.updated_at || d.created_at),
+    nao_lidas: 0,
+    ultima_mensagem: d.ultima_msg_conteudo || '',
+    ultima_msg_remetente: (d.ultima_msg_remetente as 'BOT' | 'LEAD' | 'ATENDENTE') || 'BOT',
+    total_msgs: Number(d.total_msgs) || 0,
+  }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapMsg(d: any): Msg {
+  return {
+    id: d.id,
+    remetente: d.remetente as 'BOT' | 'LEAD' | 'ATENDENTE',
+    conteudo: d.conteudo,
+    hora: new Date(d.timestamp || d.criado_em || d.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    tipo: d.tipo === 'nota_interna' ? 'nota_interna' : 'mensagem',
+    arquivo_url: d.arquivo_url || undefined,
+    arquivo_nome: d.arquivo_nome || undefined,
+  }
+}
+
+const CONVERSA_VAZIA: Conversa = { id: '', lead_id: '', atendente_id: null, nome: '', telefone: '', plano: '', fase: 'mes1', risco: 'baixo', tipo: 'BOT', status: 'aberta', prioridade: false, hora: '', nao_lidas: 0, ultima_mensagem: '', ultima_msg_remetente: 'BOT', total_msgs: 0 }
 
 const RESPOSTAS_RAPIDAS = [
   { id: 'r1', titulo: 'Saudação inicial', texto: 'Olá! Aqui é [seu nome] da Plano Mais Assistencial. Como posso ajudar você hoje?' },
@@ -155,29 +143,160 @@ function InfoPanel({ conversa, onClose }: { conversa: Conversa; onClose: () => v
 // PÁGINA PRINCIPAL
 // ====================================================================
 export default function ChatPage() {
-  const [conversaAtiva, setConversaAtiva] = useState<Conversa>(mockConversas[1])
-  const [tabLista, setTabLista] = useState<'minhas' | 'fila' | 'historico'>('minhas')
+  const supabase = createClient()
+
+  const [userId, setUserId] = useState<string | null>(null)
+  const [conversas, setConversas] = useState<Conversa[]>([])
+  const [conversaAtiva, setConversaAtiva] = useState<Conversa>(CONVERSA_VAZIA)
+  const [msgs, setMsgs] = useState<Msg[]>([])
+  const [tabLista, setTabLista] = useState<'minhas' | 'fila' | 'historico'>('historico')
   const [mensagem, setMensagem] = useState('')
   const [tipoInput, setTipoInput] = useState<TipoMsg>('mensagem')
   const [showRapidas, setShowRapidas] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [respostas, setRespostas] = useState<{ id: string; titulo: string; texto: string }[]>([])
+  const [showTransferir, setShowTransferir] = useState(false)
+  const [atendentesOnline, setAtendentesOnline] = useState<{ id: string; nome: string }[]>([])
   const [busca, setBusca] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [uploadando, setUploadando] = useState(false)
+  const [uploadErro, setUploadErro] = useState<string | null>(null)
+  const [gravando, setGravando] = useState(false)
+  const [tempoGravacao, setTempoGravacao] = useState(0)
+  const [arquivoPreview, setArquivoPreview] = useState<{ blob: Blob; url: string; nome: string; tipo: 'imagem' | 'audio' | 'documento' } | null>(null)
+  const [legendaArquivo, setLegendaArquivo] = useState('')
   const chatRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Rolar para o fim das mensagens ao trocar de conversa
+  // Carregar user atual
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Carregar conversas do Supabase
+  useEffect(() => {
+    async function loadConversas() {
+      const { data } = await supabase
+        .from('conversas')
+        .select(`
+          id, lead_id, status, tipo, created_at, updated_at, atendente_id, prioridade,
+          ultima_msg_conteudo, ultima_msg_remetente, total_msgs,
+          lead:leads(nome, telefone, plano, fase_cobranca)
+        `)
+        .order('updated_at', { ascending: false })
+
+      if (data && data.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped = data.map((d: any) => mapConversa(d))
+        setConversas(mapped)
+        if (mapped.length > 0) setConversaAtiva(mapped[0])
+      }
+    }
+    loadConversas()
+
+    // Realtime — nova mensagem de LEAD atualiza o preview da lista
+    const chConversas = supabase
+      .channel('conversas-lista')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'conversas',
+      }, (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const upd = payload.new as any
+        setConversas(prev => {
+          const existe = prev.find(c => c.id === upd.id)
+          if (!existe) return prev
+          const atualizado = { ...existe,
+            status: upd.status || existe.status,
+            tipo: upd.tipo || existe.tipo,
+            prioridade: upd.prioridade ?? existe.prioridade,
+            ultima_mensagem: upd.ultima_msg_conteudo ?? existe.ultima_mensagem,
+            ultima_msg_remetente: upd.ultima_msg_remetente ?? existe.ultima_msg_remetente,
+            total_msgs: upd.total_msgs ?? existe.total_msgs,
+            atendente_id: upd.atendente_id ?? existe.atendente_id,
+            hora: formatRelativeTime(upd.updated_at || upd.created_at),
+          }
+          // Move para o topo (mais recente)
+          return [atualizado, ...prev.filter(c => c.id !== upd.id)]
+        })
+        // Sincroniza conversaAtiva se for a mesma
+        setConversaAtiva(prev => prev.id === upd.id
+          ? { ...prev, status: upd.status || prev.status, tipo: upd.tipo || prev.tipo, atendente_id: upd.atendente_id ?? prev.atendente_id }
+          : prev
+        )
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(chConversas) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Carregar respostas rápidas do banco
+  useEffect(() => {
+    supabase.from('respostas_rapidas')
+      .select('id, titulo, texto')
+      .eq('ativo', true)
+      .order('ordem', { ascending: true })
+      .then(({ data }) => { if (data) setRespostas(data) })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Carregar mensagens quando trocar de conversa + Realtime
+  useEffect(() => {
+    if (!conversaAtiva.id) return
+
+    async function loadMensagens() {
+      const { data, error } = await supabase
+        .from('mensagens')
+        .select('id, remetente, conteudo, tipo, timestamp, arquivo_url, arquivo_nome')
+        .eq('conversa_id', conversaAtiva.id)
+        .order('timestamp', { ascending: true })
+      if (error) console.error('[chat] loadMensagens error:', error)
+      if (data) setMsgs(data.map(mapMsg))
+    }
+    loadMensagens()
+
+    // Realtime — novas mensagens aparecem automaticamente
+    const channel = supabase
+      .channel(`chat-${conversaAtiva.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'mensagens',
+        filter: `conversa_id=eq.${conversaAtiva.id}`,
+      }, (payload) => {
+        setMsgs(prev => [...prev, mapMsg(payload.new)])
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [conversaAtiva.id])
+
+  // Rolar para o fim das mensagens
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
-  }, [conversaAtiva.id])
+  }, [msgs])
 
-  const msgs = mockMensagens[conversaAtiva.id] || []
-  const isHumano = conversaAtiva.tipo === 'HUMANO'
-  const isTransferida = conversaAtiva.status === 'transferida'
+  const isHumano = conversaAtiva.tipo === 'HUMANO' || conversaAtiva.tipo === 'MISTO'
+  const isMinhaConversa = conversaAtiva.atendente_id === userId
 
-  const minhas = mockConversas.filter(c => (c.tipo === 'HUMANO' || c.tipo === 'MISTO') && c.status === 'aberta')
-  const fila = mockConversas.filter(c => c.status === 'transferida')
-  const historico = mockConversas.filter(c => c.status === 'aberta' && c.tipo === 'BOT')
+  // Minhas = conversas ativas onde este atendente está assignado
+  const minhas = conversas.filter(c => c.atendente_id === userId && c.status !== 'fechada')
+  // Fila = sem atendente + precisam de atendimento humano (tipo != BOT) + não fechadas
+  const fila = conversas.filter(c => !c.atendente_id && c.tipo !== 'BOT' && c.status !== 'fechada')
+  // Histórico = BOT ainda ativo (sem atendente humano) + todas as encerradas
+  const historico = conversas.filter(c =>
+    (c.tipo === 'BOT' && c.status !== 'fechada') || c.status === 'fechada'
+  )
 
   const listaAtiva = tabLista === 'minhas' ? minhas : tabLista === 'fila' ? fila : historico
 
@@ -185,9 +304,206 @@ export default function ChatPage() {
     !busca || c.nome.toLowerCase().includes(busca.toLowerCase()) || c.telefone.includes(busca)
   )
 
-  function handleEnviar() {
-    if (!mensagem.trim() || !isHumano) return
+  // Nota interna: disponível em qualquer conversa aberta ou fechada
+  // Mensagem normal: só quando é minha conversa ativa
+  const podeEnviarMsg = isMinhaConversa && conversaAtiva.status !== 'fechada'
+  const podeEnviarNota = !!conversaAtiva.id
+
+  async function handleEnviar() {
+    const podeEnviar = tipoInput === 'nota_interna' ? podeEnviarNota : podeEnviarMsg
+    if (!mensagem.trim() || enviando || !podeEnviar) return
+    setEnviando(true)
+    const texto = mensagem.trim()
     setMensagem('')
+
+    // Chama API route que salva no banco E envia via WhatsApp
+    const res = await fetch('/api/enviar-mensagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversa_id: conversaAtiva.id, conteudo: texto, tipo: tipoInput }),
+    })
+    const json = await res.json()
+
+    if (res.ok && json.msg) {
+      setMsgs(prev => [...prev, mapMsg(json.msg)])
+      setConversas(prev => prev.map(c =>
+        c.id === conversaAtiva.id ? { ...c, ultima_mensagem: texto, ultima_msg_remetente: 'ATENDENTE', total_msgs: c.total_msgs + 1 } : c
+      ))
+    }
+    setEnviando(false)
+  }
+
+  async function handleAssumirConversa() {
+    if (!conversaAtiva.id || !userId) return
+    const { error } = await supabase
+      .from('conversas')
+      .update({ tipo: 'HUMANO', atendente_id: userId, status: 'aberta' })
+      .eq('id', conversaAtiva.id)
+    if (!error) {
+      const updated = { ...conversaAtiva, tipo: 'HUMANO' as const, atendente_id: userId, status: 'aberta' as const }
+      setConversaAtiva(updated)
+      setConversas(prev => prev.map(c => c.id === conversaAtiva.id ? updated : c))
+      setTabLista('minhas')
+    }
+  }
+
+  async function openTransferModal() {
+    const { data } = await supabase
+      .from('usuarios')
+      .select('id, nome')
+      .eq('status_online', 'online')
+      .neq('id', userId ?? '')
+    setAtendentesOnline(data || [])
+    setShowTransferir(true)
+  }
+
+  async function handleTransferirConversa(paraId: string | null) {
+    if (!conversaAtiva.id) return
+    if (paraId) {
+      // Transfere para atendente online específico → vai para o "Minhas" dele
+      await supabase.from('conversas')
+        .update({ atendente_id: paraId, tipo: 'HUMANO', status: 'aberta' })
+        .eq('id', conversaAtiva.id)
+      const updated = { ...conversaAtiva, atendente_id: paraId, tipo: 'HUMANO' as const, status: 'aberta' as const }
+      setConversaAtiva(updated)
+      setConversas(prev => prev.map(c => c.id === conversaAtiva.id ? updated : c))
+    } else {
+      // Nenhum online — vai para Fila (sem atendente, tipo mantém HUMANO para aparecer na fila)
+      await supabase.from('conversas')
+        .update({ atendente_id: null, tipo: 'HUMANO', status: 'aberta' })
+        .eq('id', conversaAtiva.id)
+      const updated = { ...conversaAtiva, atendente_id: null, tipo: 'HUMANO' as const, status: 'aberta' as const }
+      setConversaAtiva(updated)
+      setConversas(prev => prev.map(c => c.id === conversaAtiva.id ? updated : c))
+      setTabLista('fila')
+    }
+    setShowTransferir(false)
+  }
+
+  function handleUploadArquivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !conversaAtiva.id) return
+    e.target.value = ''
+    const tipo: 'imagem' | 'audio' | 'documento' = file.type.startsWith('audio/') ? 'audio'
+      : file.type.startsWith('image/') ? 'imagem'
+      : 'documento'
+    const url = URL.createObjectURL(file)
+    setArquivoPreview({ blob: file, url, nome: file.name, tipo })
+    setLegendaArquivo('')
+  }
+
+  async function handleToggleGravacao() {
+    if (gravando) {
+      // Para gravação
+      mediaRecorderRef.current?.stop()
+      return
+    }
+    setUploadErro(null)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      // Prioriza ogg/opus (Firefox) → aceito nativamente pelo WhatsApp como voz
+      // Fallback para webm/opus (Chrome) se ogg não for suportado
+      // Chrome só suporta webm, Firefox suporta ogg — preferimos ogg pois WhatsApp aceita nativamente
+      const mimePreferido = ['audio/ogg;codecs=opus', 'audio/ogg', 'audio/webm;codecs=opus', 'audio/webm']
+        .find(m => MediaRecorder.isTypeSupported(m)) ?? ''
+
+      const mr = new MediaRecorder(stream, mimePreferido ? { mimeType: mimePreferido } : undefined)
+      chunksRef.current = []
+
+      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        if (timerRef.current) clearInterval(timerRef.current)
+        setGravando(false)
+        setTempoGravacao(0)
+
+        const mimeType = mr.mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type: mimeType })
+        if (blob.size < 500) return
+
+        const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
+        const url = URL.createObjectURL(blob)
+        const nome = `audio_${Date.now()}.${ext}`
+        setArquivoPreview({ blob, url, nome, tipo: 'audio' })
+        setLegendaArquivo('')
+      }
+
+      mediaRecorderRef.current = mr
+      // Aguarda 300ms para o microfone estabilizar antes de iniciar contador e gravação efetiva
+      await new Promise(r => setTimeout(r, 300))
+      mr.start(250) // coleta a cada 250ms — evita perda de chunks e melhora duração no container
+      setGravando(true)
+      setTempoGravacao(0)
+      timerRef.current = setInterval(() => setTempoGravacao(t => t + 1), 1000)
+    } catch {
+      setUploadErro('Permissão de microfone negada ou não disponível.')
+    }
+  }
+
+  async function handleConfirmarArquivo() {
+    if (!arquivoPreview) return
+    const { blob, nome, tipo } = arquivoPreview
+    // Revogar object URL para liberar memória
+    URL.revokeObjectURL(arquivoPreview.url)
+    setArquivoPreview(null)
+    // Enviar com legenda (conteúdo da mensagem que acompanha)
+    await enviarArquivoBlobComLegenda(blob, nome, tipo, legendaArquivo.trim())
+    setLegendaArquivo('')
+  }
+
+  function handleCancelarArquivo() {
+    if (arquivoPreview) URL.revokeObjectURL(arquivoPreview.url)
+    setArquivoPreview(null)
+    setLegendaArquivo('')
+  }
+
+  async function enviarArquivoBlobComLegenda(blob: Blob, nome: string, tipo: string, legenda: string) {
+    if (!conversaAtiva.id) return
+    setUploadErro(null)
+    setUploadando(true)
+
+    // Usa o mime type real do blob para extensão e content-type corretos
+    const mimeReal = blob.type || 'application/octet-stream'
+    const ext = nome.split('.').pop() ?? (mimeReal.includes('ogg') ? 'ogg' : mimeReal.includes('mp4') ? 'mp4' : 'webm')
+    const nomeComExt = nome.includes('.') ? nome : `${nome}.${ext}`
+    const path = `${conversaAtiva.id}/${Date.now()}.${ext}`
+
+    const { data: upload, error: upErr } = await supabase.storage
+      .from('mensagens')
+      .upload(path, blob, { upsert: false, contentType: mimeReal })
+
+    if (upErr) {
+      console.error('Erro upload:', upErr)
+      setUploadErro(`Erro ao enviar: ${upErr.message}. Verifique se o bucket "mensagens" existe no Supabase Storage.`)
+      setUploadando(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('mensagens').getPublicUrl(upload.path)
+
+    const res = await fetch('/api/enviar-mensagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversa_id: conversaAtiva.id,
+        conteudo: legenda || nomeComExt,
+        tipo,
+        arquivo_url: publicUrl,
+        arquivo_nome: nomeComExt,
+      }),
+    })
+    const json = await res.json()
+    if (res.ok && json.msg) {
+      setMsgs(prev => [...prev, mapMsg(json.msg)])
+      setConversas(prev => prev.map(c =>
+        c.id === conversaAtiva.id ? { ...c, ultima_mensagem: legenda || nome, ultima_msg_remetente: 'ATENDENTE', total_msgs: c.total_msgs + 1 } : c
+      ))
+    } else {
+      setUploadErro(json.error || 'Erro ao registrar mensagem')
+    }
+    setUploadando(false)
   }
 
   const faseBadge = getFaseBadge(conversaAtiva.fase)
@@ -224,8 +540,12 @@ export default function ChatPage() {
                 {tab.label}
                 {tab.count > 0 && (
                   <span style={{
-                    background: tabLista === tab.key ? 'var(--accent)' : 'var(--surface-2)',
-                    color: tabLista === tab.key ? '#fff' : 'var(--text-muted)',
+                    background: tab.key === 'fila'
+                      ? (tabLista === 'fila' ? '#DC2626' : 'rgba(220,38,38,0.12)')
+                      : (tabLista === tab.key ? 'var(--accent)' : 'var(--surface-2)'),
+                    color: tab.key === 'fila'
+                      ? (tabLista === 'fila' ? '#fff' : '#DC2626')
+                      : (tabLista === tab.key ? '#fff' : 'var(--text-muted)'),
                     padding: '1px 6px', borderRadius: 100, fontSize: 10, fontWeight: 700,
                   }}>{tab.count}</span>
                 )}
@@ -297,8 +617,12 @@ export default function ChatPage() {
                     <div style={{ display: 'flex', gap: 4, marginBottom: 3, flexWrap: 'wrap' }}>
                       <span className={fBadge.className} style={{ fontSize: 9, padding: '1px 6px' }}>{fBadge.label}</span>
                       {c.prioridade && <span className="badge badge-magenta" style={{ fontSize: 9, padding: '1px 6px' }}>Urgente</span>}
-                      {c.tipo === 'HUMANO' && <span className="badge badge-teal" style={{ fontSize: 9, padding: '1px 6px' }}>Humano</span>}
-                      {c.status === 'transferida' && <span className="badge badge-orange" style={{ fontSize: 9, padding: '1px 6px' }}>Aguardando</span>}
+                      {c.status === 'fechada'
+                        ? <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(220,38,38,0.10)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.22)' }}>ENCERRADA</span>
+                        : c.tipo === 'BOT'
+                        ? <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(13,61,204,0.10)', color: '#0D3DCC', border: '1px solid rgba(13,61,204,0.22)' }}>BOT</span>
+                        : <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(11,191,170,0.10)', color: '#0BBFAA', border: '1px solid rgba(11,191,170,0.22)' }}>ATENDIMENTO</span>
+                      }
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 185, fontStyle: c.ultima_msg_remetente !== 'LEAD' ? 'italic' : 'normal' }}>
@@ -348,26 +672,55 @@ export default function ChatPage() {
               <Info size={13} />
               Info
             </button>
-            {isHumano ? (
-              <button className="btn-ghost" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                <Bot size={13} />
-                Devolver ao Bot
-              </button>
-            ) : !isTransferida ? (
-              <button className="btn-primary" style={{ fontSize: 12, padding: '7px 16px' }}>
+            {isMinhaConversa && conversaAtiva.status !== 'fechada' ? (
+              <>
+                <button className="btn-ghost" style={{ fontSize: 12, color: 'var(--text-secondary)' }}
+                  onClick={async () => {
+                    await supabase.from('conversas').update({ tipo: 'BOT', atendente_id: null }).eq('id', conversaAtiva.id)
+                    const updated = { ...conversaAtiva, tipo: 'BOT' as const, atendente_id: null }
+                    setConversaAtiva(updated)
+                    setConversas(prev => prev.map(c => c.id === conversaAtiva.id ? updated : c))
+                    setTabLista('historico')
+                  }}
+                >
+                  <Bot size={13} />
+                  Devolver ao Bot
+                </button>
+                <button className="btn-ghost" style={{ fontSize: 12, color: 'var(--text-secondary)' }}
+                  onClick={openTransferModal}
+                >
+                  <ArrowLeftRight size={13} />
+                  Transferir
+                </button>
+                <button className="btn-danger" style={{ fontSize: 12, padding: '7px 14px' }}
+                  onClick={async () => {
+                    const { error } = await supabase.from('conversas').update({
+                      status: 'fechada',
+                      tipo: 'BOT',
+                      atendente_id: null,
+                    }).eq('id', conversaAtiva.id)
+                    if (!error) {
+                      const updated = { ...conversaAtiva, status: 'fechada' as const, tipo: 'BOT' as const, atendente_id: null }
+                      setConversas(prev => prev.map(c => c.id === conversaAtiva.id ? updated : c))
+                      setConversaAtiva(updated)
+                      setTabLista('historico')
+                    }
+                  }}
+                >
+                  <X size={13} />
+                  Finalizar
+                </button>
+              </>
+            ) : (
+              // Assumir sempre disponível — funciona para BOT, de outro atendente, ou encerrada (reabre)
+              <button className="btn-primary" style={{ fontSize: 12, padding: '7px 16px' }}
+                onClick={handleAssumirConversa}
+                disabled={!conversaAtiva.id}
+              >
                 <UserCheck size={13} />
-                Assumir Conversa
-              </button>
-            ) : null}
-            {isHumano && (
-              <button className="btn-danger" style={{ fontSize: 12, padding: '7px 14px' }}>
-                <X size={13} />
-                Finalizar
+                {conversaAtiva.status === 'fechada' ? 'Reabrir Conversa' : 'Assumir Conversa'}
               </button>
             )}
-            <button className="btn-ghost" style={{ padding: '7px 9px' }}>
-              <MoreVertical size={14} />
-            </button>
           </div>
         </div>
 
@@ -377,30 +730,16 @@ export default function ChatPage() {
           {/* Chat area */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-            {/* Banner "Assumir Conversa" para conversas em fila */}
-            {isTransferida && (
-              <div style={{ padding: '20px 24px', background: 'rgba(13,61,204,0.06)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-                  <Avatar nome={conversaAtiva.nome} size={46} />
-                  <div>
-                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 16 }}>{conversaAtiva.nome}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                      <Clock size={12} />
-                      Aguardando atendente
-                      <span className={getFaseBadge(conversaAtiva.fase).className}>{getFaseBadge(conversaAtiva.fase).label}</span>
-                    </div>
-                  </div>
+            {/* Banner para conversas sem atendente (na fila) */}
+            {!isMinhaConversa && conversaAtiva.id && conversaAtiva.tipo === 'BOT' && (
+              <div style={{ padding: '12px 20px', background: 'rgba(13,61,204,0.05)', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Clock size={13} color="var(--accent)" />
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Bot ativo — assuma para responder ao cliente</span>
                 </div>
-                <button
-                  className="btn-primary"
-                  style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 14 }}
-                  onClick={() => {
-                    // Mock: assume conversa
-                    setConversaAtiva({ ...conversaAtiva, tipo: 'HUMANO', status: 'aberta' })
-                  }}
-                >
-                  <Zap size={16} />
-                  Assumir esta Conversa
+                <button className="btn-primary" style={{ fontSize: 12, padding: '6px 14px', flexShrink: 0 }} onClick={handleAssumirConversa}>
+                  <Zap size={12} />
+                  Assumir
                 </button>
               </div>
             )}
@@ -457,9 +796,51 @@ export default function ChatPage() {
                         boxShadow: isLead ? 'var(--card-shadow)' : 'none',
                         lineHeight: 1.5,
                         wordBreak: 'break-word',
+                        minWidth: msg.arquivo_url ? 180 : undefined,
                       }}>
-                        {msg.conteudo.startsWith('http') ? (
-                          <a href={msg.conteudo} style={{ color: isLead ? 'var(--accent)' : '#B8D4FF', fontSize: 12, textDecoration: 'underline' }}>
+                        {msg.arquivo_url ? (
+                          // Áudio
+                          msg.arquivo_url.match(/\.(mp3|ogg|mp4|aac|webm|wav)$/i) || msg.arquivo_nome?.match(/\.(mp3|ogg|mp4|aac|webm|wav)$/i) ? (
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                                <Headphones size={13} color={isLead ? 'var(--accent)' : '#fff'} />
+                                <span style={{ fontSize: 11, opacity: 0.8 }}>{msg.arquivo_nome || 'Áudio'}</span>
+                              </div>
+                              <audio controls src={msg.arquivo_url} style={{ width: '100%', height: 32 }} />
+                              {msg.conteudo && msg.conteudo !== msg.arquivo_nome && (
+                                <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>{msg.conteudo}</div>
+                              )}
+                            </div>
+                          // Imagem
+                          ) : msg.arquivo_url.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) || msg.arquivo_nome?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) || (msg.arquivo_nome && !msg.arquivo_nome.includes('.')) ? (
+                            <div>
+                              <img
+                                src={msg.arquivo_url}
+                                alt={msg.arquivo_nome || 'Imagem'}
+                                style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, display: 'block', cursor: 'pointer' }}
+                                onClick={() => window.open(msg.arquivo_url, '_blank')}
+                              />
+                              {msg.conteudo && msg.conteudo !== msg.arquivo_nome && (
+                                <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>{msg.conteudo}</div>
+                              )}
+                            </div>
+                          // Documento
+                          ) : (
+                            <div>
+                              <a href={msg.arquivo_url} target="_blank" rel="noreferrer"
+                                style={{ display: 'flex', alignItems: 'center', gap: 8, color: isLead ? 'var(--accent)' : '#fff', textDecoration: 'none' }}
+                              >
+                                <Download size={14} />
+                                <span style={{ fontSize: 12, textDecoration: 'underline' }}>{msg.arquivo_nome || 'Arquivo'}</span>
+                              </a>
+                              {msg.conteudo && msg.conteudo !== msg.arquivo_nome && (
+                                <div style={{ marginTop: 6, fontSize: 12, opacity: 0.85 }}>{msg.conteudo}</div>
+                              )}
+                            </div>
+                          )
+                        ) : msg.conteudo.startsWith('http') ? (
+                          <a href={msg.conteudo} target="_blank" rel="noreferrer"
+                            style={{ color: isLead ? 'var(--accent)' : '#B8D4FF', fontSize: 12, textDecoration: 'underline' }}>
                             {msg.conteudo}
                           </a>
                         ) : msg.conteudo}
@@ -531,7 +912,7 @@ export default function ChatPage() {
                       <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
                         RESPOSTAS RÁPIDAS
                       </div>
-                      {RESPOSTAS_RAPIDAS.map(r => (
+                      {(respostas.length > 0 ? respostas : []).map(r => (
                         <div
                           key={r.id}
                           onClick={() => { setMensagem(r.texto); setShowRapidas(false) }}
@@ -548,22 +929,140 @@ export default function ChatPage() {
                 </div>
               </div>
 
+              {/* Preview de arquivo/áudio antes de enviar */}
+              {arquivoPreview && (
+                <div style={{
+                  marginBottom: 10, padding: '12px 14px',
+                  background: 'var(--surface-2)', border: '1px solid var(--card-border)',
+                  borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1 }}>
+                      {/* Preview de imagem */}
+                      {arquivoPreview.tipo === 'imagem' && (
+                        <img
+                          src={arquivoPreview.url}
+                          alt={arquivoPreview.nome}
+                          style={{ maxHeight: 160, maxWidth: '100%', borderRadius: 8, display: 'block' }}
+                        />
+                      )}
+                      {/* Preview de áudio */}
+                      {arquivoPreview.tipo === 'audio' && (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                            <Headphones size={14} color="var(--accent)" />
+                            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Space Grotesk,sans-serif', fontWeight: 600 }}>{arquivoPreview.nome}</span>
+                          </div>
+                          <audio controls src={arquivoPreview.url} style={{ width: '100%', height: 32 }} />
+                        </div>
+                      )}
+                      {/* Preview de documento */}
+                      {arquivoPreview.tipo === 'documento' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--card-bg)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                          <FileText size={20} color="var(--accent)" />
+                          <div>
+                            <div style={{ fontSize: 12, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 600, color: 'var(--text-primary)' }}>{arquivoPreview.nome}</div>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{(arquivoPreview.blob.size / 1024).toFixed(0)} KB</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleCancelarArquivo}
+                      style={{ background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8, padding: 6, cursor: 'pointer', flexShrink: 0 }}
+                    >
+                      <X size={14} color="#DC2626" />
+                    </button>
+                  </div>
+                  {/* Legenda (opcional para todos os tipos) */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      className="input-field"
+                      placeholder={arquivoPreview.tipo === 'audio' ? 'Legenda opcional...' : 'Adicionar legenda...'}
+                      value={legendaArquivo}
+                      onChange={e => setLegendaArquivo(e.target.value)}
+                      style={{ flex: 1, fontSize: 12, height: 36 }}
+                      onKeyDown={e => { if (e.key === 'Enter') handleConfirmarArquivo() }}
+                    />
+                    <button
+                      className="btn-primary"
+                      onClick={handleConfirmarArquivo}
+                      disabled={uploadando}
+                      style={{ padding: '8px 16px', height: 36, fontSize: 12, flexShrink: 0 }}
+                    >
+                      {uploadando ? '...' : <><Send size={13} /> Enviar</>}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Erro de upload */}
+              {uploadErro && (
+                <div style={{ marginBottom: 8, padding: '8px 12px', background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <AlertTriangle size={13} color="#DC2626" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span style={{ fontSize: 12, color: '#DC2626', flex: 1 }}>{uploadErro}</span>
+                  <button onClick={() => setUploadErro(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <X size={13} color="#DC2626" />
+                  </button>
+                </div>
+              )}
+
               {/* Campo de texto + envio */}
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                {/* Botões de anexo e gravação — só para mensagens normais */}
+                {tipoInput !== 'nota_interna' && podeEnviarMsg && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.mp3,.ogg,.mp4,.aac"
+                      style={{ display: 'none' }}
+                      onChange={handleUploadArquivo}
+                    />
+                    <button
+                      className="btn-ghost"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadando || gravando}
+                      style={{ padding: '10px', flexShrink: 0, height: 44, borderRadius: 10 }}
+                      title="Enviar arquivo"
+                    >
+                      <Paperclip size={16} color={uploadando ? 'var(--text-muted)' : 'var(--text-secondary)'} />
+                    </button>
+                    <button
+                      onClick={handleToggleGravacao}
+                      disabled={uploadando}
+                      style={{
+                        padding: '10px', flexShrink: 0, height: 44, borderRadius: 10, cursor: 'pointer',
+                        background: gravando ? 'rgba(220,38,38,0.12)' : 'transparent',
+                        border: gravando ? '1px solid rgba(220,38,38,0.3)' : '1px solid transparent',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        color: gravando ? '#DC2626' : 'var(--text-secondary)',
+                      }}
+                      title={gravando ? 'Parar gravação' : 'Gravar áudio'}
+                    >
+                      {gravando ? <Square size={14} color="#DC2626" fill="#DC2626" /> : <Mic size={16} />}
+                      {gravando && (
+                        <span style={{ fontSize: 11, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, minWidth: 28 }}>
+                          {String(Math.floor(tempoGravacao / 60)).padStart(2, '0')}:{String(tempoGravacao % 60).padStart(2, '0')}
+                        </span>
+                      )}
+                    </button>
+                  </>
+                )}
                 <div style={{ flex: 1, position: 'relative' }}>
                   <textarea
                     className="input-field"
                     placeholder={
-                      !isHumano && !isTransferida
-                        ? 'Bot ativo — clique em Assumir Conversa para responder'
-                        : tipoInput === 'nota_interna'
+                      tipoInput === 'nota_interna'
                         ? 'Nota interna (visível apenas para a equipe)...'
+                        : !podeEnviarMsg
+                        ? conversaAtiva.status === 'fechada' ? 'Conversa encerrada — use Nota Interna para registrar' : 'Assuma a conversa para poder responder'
                         : 'Digite sua mensagem...'
                     }
-                    value={mensagem}
-                    onChange={e => setMensagem(e.target.value)}
-                    disabled={!isHumano && !isTransferida}
-                    style={{ resize: 'none', height: 44, opacity: (!isHumano && !isTransferida) ? 0.5 : 1, paddingRight: 12, lineHeight: 1.5, paddingTop: 10 }}
+                    disabled={(tipoInput === 'nota_interna' ? !podeEnviarNota : !podeEnviarMsg) || gravando || uploadando}
+                    value={gravando ? '● Gravando áudio...' : mensagem}
+                    onChange={e => { if (!gravando) setMensagem(e.target.value) }}
+                    style={{ resize: 'none', height: 44, paddingRight: 12, lineHeight: 1.5, paddingTop: 10, color: gravando ? '#DC2626' : undefined }}
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleEnviar() }
                     }}
@@ -572,15 +1071,15 @@ export default function ChatPage() {
                 <button
                   className="btn-primary"
                   onClick={handleEnviar}
-                  disabled={!isHumano || !mensagem.trim()}
+                  disabled={!mensagem.trim() || enviando || gravando || uploadando || (tipoInput === 'nota_interna' ? !podeEnviarNota : !podeEnviarMsg)}
                   style={{ padding: '10px 14px', flexShrink: 0, height: 44, borderRadius: 10 }}
                 >
                   <Send size={16} />
                 </button>
               </div>
-              {isHumano && (
+              {(podeEnviarMsg || (tipoInput === 'nota_interna' && podeEnviarNota)) && (
                 <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)' }}>
-                  Atendente · Enter para enviar · Shift+Enter para nova linha
+                  Enter para enviar · Shift+Enter para nova linha
                 </div>
               )}
             </div>
@@ -590,6 +1089,85 @@ export default function ChatPage() {
           {showInfo && <InfoPanel conversa={conversaAtiva} onClose={() => setShowInfo(false)} />}
         </div>
       </div>
+
+      {/* ============================================================
+          MODAL — Transferir Conversa
+          ============================================================ */}
+      {showTransferir && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setShowTransferir(false)}>
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+            borderRadius: 16, padding: '24px', minWidth: 320, maxWidth: 400,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 800, fontSize: 15 }}>Transferir Conversa</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>
+                  {atendentesOnline.length > 0
+                    ? `${atendentesOnline.length} atendente${atendentesOnline.length > 1 ? 's' : ''} online`
+                    : 'Nenhum atendente online — voltará para a fila'}
+                </div>
+              </div>
+              <button onClick={() => setShowTransferir(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={16} color="var(--text-muted)" />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {atendentesOnline.length === 0 ? (
+                <button className="btn-primary" style={{ justifyContent: 'center' }}
+                  onClick={() => handleTransferirConversa(null)}
+                >
+                  Enviar para a fila (Bot assume)
+                </button>
+              ) : (
+                <>
+                  {atendentesOnline.map(a => (
+                    <button key={a.id}
+                      onClick={() => handleTransferirConversa(a.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                        background: 'var(--surface-2)', border: '1px solid var(--border)',
+                        transition: 'background 0.1s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--card-hover)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 9,
+                        background: 'rgba(11,191,170,0.15)', border: '1px solid rgba(11,191,170,0.25)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, fontSize: 12, color: '#0BBFAA',
+                      }}>
+                        {a.nome.split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, fontSize: 13 }}>{a.nome}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0BBFAA' }} />
+                          <span style={{ fontSize: 11, color: '#0BBFAA', fontWeight: 600 }}>Online</span>
+                        </div>
+                      </div>
+                      <ArrowLeftRight size={14} color="var(--text-muted)" />
+                    </button>
+                  ))}
+                  <button className="btn-ghost" style={{ fontSize: 12, color: 'var(--text-muted)', justifyContent: 'center', marginTop: 4 }}
+                    onClick={() => handleTransferirConversa(null)}
+                  >
+                    Ou enviar para a fila
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

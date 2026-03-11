@@ -1,0 +1,218 @@
+{
+  "name": "WF2 — Disparo de Mensagem por Canal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf2-disparo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-entrada",
+      "name": "Webhook — Receber do WF1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "wf2-disparo"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gerar URL de checkout personalizada\nconst lead = $json.lead || $json;\nconst baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.planomais.com.br';\n\n// Token simples (em produção: assinar com JWT/HMAC no backend)\nconst tokenData = `${lead.id}-${Date.now()}`;\nconst token = Buffer.from(tokenData).toString('base64').replace(/[+/=]/g, '').slice(0, 32);\n\nconst checkoutUrl = `${baseUrl}/checkout/${token}`;\n\n// Substituir placeholder na mensagem\nconst mensagemFinal = (lead.mensagem || '').replace('{{checkout_url}}', checkoutUrl);\n\nreturn [{\n  json: {\n    ...lead,\n    checkout_url: checkoutUrl,\n    checkout_token: token,\n    mensagem_final: mensagemFinal,\n  }\n}];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "gerar-checkout-url",
+      "name": "Gerar URL de Checkout",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.canal }}",
+                    "rightValue": "whatsapp",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.canal }}",
+                    "rightValue": "sms",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "sms"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.canal }}",
+                    "rightValue": "email",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            }
+          ]
+        }
+      },
+      "id": "switch-canal",
+      "name": "Switch — Canal de Disparo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.telefone }}" },
+            { "name": "message", "value": "={{ $json.mensagem_final }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-whatsapp",
+      "name": "WhatsApp via Z-API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.zenvia.com/v2/channels/sms/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-TOKEN", "value": "={{ $vars.ZENVIA_API_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "PlanoMais" },
+            { "name": "to", "value": "={{ $json.telefone }}" },
+            { "name": "contents", "value": "=[{ \"type\": \"text\", \"text\": \"{{ $json.mensagem_final }}\" }]" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-sms",
+      "name": "SMS via Zenvia",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "cobranca@planomais.com.br",
+        "fromName": "Plano Mais",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Regularize sua mensalidade Plano Mais",
+        "emailType": "html",
+        "message": "<html><body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'><div style='background: #0D3DCC; padding: 24px; text-align: center;'><h1 style='color: #50F7E8; font-size: 20px; margin: 0;'>Plano Mais</h1></div><div style='padding: 32px; background: #fff;'><h2 style='color: #002073;'>Regularize sua mensalidade</h2><p>Olá, {{$json.nome.split(' ')[0]}}!</p><p>Identificamos que sua mensalidade está em aberto.</p>{{$json.desconto > 0 ? `<div style='background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin: 16px 0;'><strong style='color: #16a34a;'>Oferta Especial: ${$json.desconto}% de desconto!</strong></div>` : ''}}<a href='{{$json.checkout_url}}' style='display: inline-block; background: #0D3DCC; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;'>Pagar Agora</a></div></body></html>",
+        "options": {}
+      },
+      "id": "enviar-email",
+      "name": "Email via SMTP",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [860, 440],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-planomais",
+          "name": "SMTP Plano Mais"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "mensagens",
+        "columns": "lead_id, canal, conteudo, tipo, status, criado_em",
+        "additionalFields": {}
+      },
+      "id": "registrar-envio",
+      "name": "Registrar Envio no Banco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, leadId: $json.id, canal: $json.canal } }}"
+      },
+      "id": "resposta-webhook",
+      "name": "Resposta OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1280, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Receber do WF1": {
+      "main": [[{ "node": "Gerar URL de Checkout", "type": "main", "index": 0 }]]
+    },
+    "Gerar URL de Checkout": {
+      "main": [[{ "node": "Switch — Canal de Disparo", "type": "main", "index": 0 }]]
+    },
+    "Switch — Canal de Disparo": {
+      "whatsapp": [{ "node": "WhatsApp via Z-API", "type": "main", "index": 0 }],
+      "sms": [{ "node": "SMS via Zenvia", "type": "main", "index": 0 }],
+      "email": [{ "node": "Email via SMTP", "type": "main", "index": 0 }]
+    },
+    "WhatsApp via Z-API": {
+      "main": [[{ "node": "Registrar Envio no Banco", "type": "main", "index": 0 }]]
+    },
+    "SMS via Zenvia": {
+      "main": [[{ "node": "Registrar Envio no Banco", "type": "main", "index": 0 }]]
+    },
+    "Email via SMTP": {
+      "main": [[{ "node": "Registrar Envio no Banco", "type": "main", "index": 0 }]]
+    },
+    "Registrar Envio no Banco": {
+      "main": [[{ "node": "Resposta OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "last",
+    "saveDataErrorExecution": "all"
+  },
+  "tags": ["plano-mais", "cobranca", "disparo"]
+}

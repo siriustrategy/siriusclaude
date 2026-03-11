@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSidebar } from '@/contexts/SidebarContext'
+import { createClient } from '@/lib/supabase/client'
 import {
   MessageSquare, Users, Megaphone, BarChart3,
   DollarSign, Settings, LogOut, TrendingUp, Shield,
@@ -115,12 +116,49 @@ export default function Sidebar() {
   const { perfil: usuario, signOut } = useAuth()
   const { collapsed, toggleCollapsed } = useSidebar()
 
-  const [online, setOnline] = useState(true)
+  const supabase = createClient()
+  const [online, setOnline] = useState(false)
   const [iconeSelecionado, setIconeSelecionado] = useState('user')
   const [showIconSelector, setShowIconSelector] = useState(false)
 
   const isGestor = usuario?.role === 'gestor'
   const IconeAvatarAtual = ICONES_AVATAR.find(i => i.id === iconeSelecionado)?.Icon || User
+
+  // Carregar status online do banco ao montar
+  useEffect(() => {
+    async function loadStatus() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('usuarios')
+        .select('status_online')
+        .eq('id', user.id)
+        .single()
+      if (data) setOnline(data.status_online === 'online')
+    }
+    loadStatus()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function toggleOnline() {
+    const novoStatus = online ? 'offline' : 'online'
+    // Atualiza UI imediatamente (otimista)
+    setOnline(!online)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { error } = await supabase
+      .from('usuarios')
+      .update({
+        status_online: novoStatus,
+        ultimo_online: novoStatus === 'offline' ? new Date().toISOString() : null,
+      })
+      .eq('id', user.id)
+    // Se falhou, reverte o estado da UI
+    if (error) {
+      console.error('Erro ao atualizar status online:', error)
+      setOnline(online)
+    }
+  }
 
   async function handleLogout() {
     await signOut()
@@ -233,18 +271,18 @@ export default function Sidebar() {
                   <div style={{
                     position: 'absolute', bottom: -2, right: -2,
                     width: 10, height: 10, borderRadius: '50%',
-                    background: online ? '#1E8449' : '#7A90B8',
+                    background: online ? '#1E8449' : '#DC2626',
                     border: '2px solid var(--sidebar-bg)',
                   }} />
                 </div>
                 <button
-                  onClick={() => setOnline(p => !p)}
+                  onClick={toggleOnline}
                   style={{
-                    background: online ? 'rgba(30,132,73,0.12)' : 'rgba(122,144,184,0.12)',
-                    border: `1px solid ${online ? 'rgba(30,132,73,0.25)' : 'rgba(122,144,184,0.25)'}`,
+                    background: online ? 'rgba(30,132,73,0.12)' : 'rgba(220,38,38,0.12)',
+                    border: `1px solid ${online ? 'rgba(30,132,73,0.25)' : 'rgba(220,38,38,0.25)'}`,
                     borderRadius: 6, width: '100%', padding: '3px 0',
                     cursor: 'pointer', fontSize: 8, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700,
-                    color: online ? '#1E8449' : '#7A90B8', letterSpacing: '0.06em',
+                    color: online ? '#1E8449' : '#DC2626', letterSpacing: '0.06em',
                   }}
                 >
                   {online ? 'ON' : 'OFF'}
@@ -270,7 +308,7 @@ export default function Sidebar() {
                     <div style={{
                       position: 'absolute', bottom: -1, right: -1,
                       width: 10, height: 10, borderRadius: '50%',
-                      background: online ? '#1E8449' : '#7A90B8',
+                      background: online ? '#1E8449' : '#DC2626',
                       border: '2px solid var(--sidebar-bg)',
                     }} />
                   </div>
@@ -285,17 +323,17 @@ export default function Sidebar() {
                 </div>
                 {/* Botão Online/Offline */}
                 <button
-                  onClick={() => setOnline(p => !p)}
+                  onClick={toggleOnline}
                   style={{
                     width: '100%', padding: '6px 10px', borderRadius: 8,
-                    background: online ? 'rgba(30,132,73,0.10)' : 'rgba(122,144,184,0.10)',
-                    border: `1px solid ${online ? 'rgba(30,132,73,0.22)' : 'rgba(122,144,184,0.20)'}`,
+                    background: online ? 'rgba(30,132,73,0.10)' : 'rgba(220,38,38,0.10)',
+                    border: `1px solid ${online ? 'rgba(30,132,73,0.22)' : 'rgba(220,38,38,0.22)'}`,
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     transition: 'all 0.15s',
                   }}
                 >
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: online ? '#1E8449' : '#7A90B8', flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: online ? '#1E8449' : '#7A90B8' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: online ? '#1E8449' : '#DC2626', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: online ? '#1E8449' : '#DC2626' }}>
                     {online ? 'Online' : 'Offline'}
                   </span>
                 </button>

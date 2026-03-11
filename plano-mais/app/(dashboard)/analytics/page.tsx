@@ -1,153 +1,236 @@
-import { BarChart3, TrendingUp, DollarSign, Target, Users, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react'
+'use client'
 
+import { useState } from 'react'
+import {
+  BarChart3, TrendingUp, DollarSign, Target, Users,
+  AlertTriangle, ArrowUp, ArrowDown, Sparkles, Calendar,
+} from 'lucide-react'
+
+// ===================== MOCK DATA =====================
 const FUNIL_DATA = [
-  { fase: 'Pré-Vencimento', leads: 0, cor: '#0D3DCC' },
-  { fase: 'Mês 1 (0%)',     leads: 0, cor: '#3B65FF' },
-  { fase: 'Mês 2 (0%)',     leads: 0, cor: '#7C3AED' },
-  { fase: 'Mês 3 (5%)',     leads: 0, cor: '#D97706' },
-  { fase: 'Mês 4 (15%)',    leads: 0, cor: '#DC2626' },
-  { fase: 'Mês 5 (20%)',    leads: 0, cor: '#C0392B' },
-  { fase: 'Pós D+150',      leads: 0, cor: '#7A90B8' },
+  { fase: 'Pre-vencimento', leads: 48, conversoes: 12, cor: '#0D3DCC' },
+  { fase: 'Mes 1 (0%)',     leads: 67, conversoes: 9,  cor: '#3B65FF' },
+  { fase: 'Mes 2 (0%)',     leads: 53, conversoes: 7,  cor: '#7C3AED' },
+  { fase: 'Mes 3 (5%)',     leads: 41, conversoes: 14, cor: '#D97706' },
+  { fase: 'Mes 4 (15%)',    leads: 28, conversoes: 8,  cor: '#DC2626' },
+  { fase: 'Mes 5 (20%)',    leads: 19, conversoes: 4,  cor: '#C0392B' },
 ]
 
+const INSIGHTS = [
+  { icon: AlertTriangle, cor: '#E81B8F', texto: 'Leads de Bangu no Mes 3 tem 42% menos conversao — revisar abordagem nessa regiao' },
+  { icon: TrendingUp, cor: '#1E8449', texto: 'Horario ideal de disparo: 10h–11h e 18h–19h (dados dos ultimos 30 dias)' },
+  { icon: Users, cor: '#0D3DCC', texto: '23 leads tem alto risco de inadimplencia no proximo ciclo — acionar agora' },
+  { icon: Sparkles, cor: '#7C3AED', texto: 'Campanha "Desconto Mes 3" superou media em 34% — replicar modelo' },
+]
+
+const MESES = [
+  { mes: 'Out', cobrado: 84200, arrecadado: 31500 },
+  { mes: 'Nov', cobrado: 91800, arrecadado: 38200 },
+  { mes: 'Dez', cobrado: 78400, arrecadado: 28900 },
+  { mes: 'Jan', cobrado: 95600, arrecadado: 41200 },
+  { mes: 'Fev', cobrado: 102300, arrecadado: 44800 },
+  { mes: 'Mar', cobrado: 98700, arrecadado: 43150 },
+]
+
+function fmt(v: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
+}
+
+// ===================== PAGE =====================
 export default function AnalyticsPage() {
+  const [periodoAtivo, setPeriodoAtivo] = useState<'7d' | '30d' | '90d'>('30d')
+
+  const totalLeads = FUNIL_DATA.reduce((s, f) => s + f.leads, 0)
+  const totalConv = FUNIL_DATA.reduce((s, f) => s + f.conversoes, 0)
+  const mesAtual = MESES[MESES.length - 1]
+  const taxaConv = Math.round((totalConv / totalLeads) * 100)
+  const ticketMedio = Math.round(mesAtual.arrecadado / totalConv)
+  const maxArrecadado = Math.max(...MESES.map(m => m.arrecadado))
+
   return (
     <div>
-      <div className="page-label hero-item hero-item-0">
-        <BarChart3 size={10} strokeWidth={2.5} />
-        ANALYTICS & BI
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <div className="page-label hero-item hero-item-0">
+            <BarChart3 size={10} strokeWidth={2.5} />
+            ANALYTICS & BI
+          </div>
+          <h1 className="hero-item hero-item-1" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>
+            Analise Financeira
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+            Funil de cobranca, performance por fase e insights de IA
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 0, background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--border)', padding: 3 }}>
+          {(['7d', '30d', '90d'] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriodoAtivo(p)}
+              style={{
+                padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer',
+                fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 11,
+                background: periodoAtivo === p ? 'var(--card-bg)' : 'transparent',
+                color: periodoAtivo === p ? 'var(--accent)' : 'var(--text-muted)',
+                boxShadow: periodoAtivo === p ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
-      <h1 className="hero-item hero-item-1" style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>
-        Analise Financeira
-      </h1>
-      <p className="hero-item hero-item-2" style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-        Dashboard financeiro completo com insights de IA, funil de cobrança e projecoes de receita.
-      </p>
 
-      {/* KPIs principais */}
-      <div className="hero-item hero-item-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        <div className="kpi-card">
-          <div className="kpi-label"><DollarSign size={11} />Total Cobrado</div>
-          <div className="kpi-value">R$ 0</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Este mês</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label"><TrendingUp size={11} color="var(--success)" />Total Arrecadado</div>
-          <div className="kpi-value" style={{ color: 'var(--success)' }}>R$ 0</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Confirmados</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label"><Target size={11} color="var(--accent)" />Taxa de Conversao</div>
-          <div className="kpi-value">0%</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Inadimplentes pagos</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label"><Users size={11} />Ticket Médio</div>
-          <div className="kpi-value">R$ 0</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Por recuperação</div>
-        </div>
+      {/* KPIs */}
+      <div className="hero-item hero-item-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { label: 'Total Cobrado', valor: fmt(mesAtual.cobrado), icon: DollarSign, cor: '#0D3DCC', sub: 'Este mes' },
+          { label: 'Total Arrecadado', valor: fmt(mesAtual.arrecadado), icon: TrendingUp, cor: '#1E8449', sub: 'Confirmados' },
+          { label: 'Taxa de Conversao', valor: `${taxaConv}%`, icon: Target, cor: '#7C3AED', sub: 'Inadimplentes pagos' },
+          { label: 'Ticket Medio', valor: fmt(ticketMedio), icon: Users, cor: '#D97706', sub: 'Por recuperacao' },
+        ].map(k => (
+          <div key={k.label} className="glass-card" style={{ padding: '16px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: `${k.cor}15`, border: `1px solid ${k.cor}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <k.icon size={13} color={k.cor} strokeWidth={2} />
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'Space Grotesk', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{k.label}</span>
+            </div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{k.valor}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{k.sub}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="hero-item hero-item-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      {/* Grafico + Funil */}
+      <div className="hero-item hero-item-3" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16, marginBottom: 16 }}>
+
+        {/* Grafico barras - arrecadado por mes */}
+        <div className="glass-card" style={{ padding: '20px 24px' }}>
+          <div className="page-label" style={{ marginBottom: 12 }}>
+            <Calendar size={9} strokeWidth={2.5} />
+            EVOLUCAO MENSAL
+          </div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Arrecadado vs Cobrado
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 110 }}>
+            {MESES.map((m) => {
+              const hArr = Math.round((m.arrecadado / maxArrecadado) * 100)
+              const hCob = Math.round((m.cobrado / Math.max(...MESES.map(x => x.cobrado))) * 100)
+              return (
+                <div key={m.mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: '100%', flex: 1, display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+                    <div style={{ flex: 1, height: `${hCob}%`, background: 'rgba(13,61,204,0.15)', borderRadius: '3px 3px 1px 1px', border: '1px solid rgba(13,61,204,0.2)' }} />
+                    <div style={{ flex: 1, height: `${hArr}%`, background: 'linear-gradient(180deg, #1E8449 0%, #0BBFAA 100%)', borderRadius: '3px 3px 1px 1px', opacity: 0.85 }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Space Grotesk', fontWeight: 600 }}>{m.mes}</div>
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(13,61,204,0.3)', border: '1px solid rgba(13,61,204,0.4)' }} />
+              Cobrado
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: 'linear-gradient(135deg, #1E8449, #0BBFAA)' }} />
+              Arrecadado
+            </div>
+          </div>
+        </div>
 
         {/* Funil */}
-        <div className="card-accent" style={{ padding: '20px 24px' }}>
-          <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-            Funil de Cobrança
+        <div className="glass-card" style={{ padding: '20px 24px' }}>
+          <div className="page-label" style={{ marginBottom: 12 }}>
+            <Target size={9} strokeWidth={2.5} />
+            FUNIL DE COBRANCA
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-            Distribuição de leads por fase da régua
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 14 }}>
+            Leads por fase
           </div>
-          {FUNIL_DATA.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <div style={{ width: 90, fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, flexShrink: 0 }}>
-                {item.fase.split(' ').slice(0, 2).join(' ')}
+          {FUNIL_DATA.map((item) => {
+            const pct = Math.round((item.leads / Math.max(...FUNIL_DATA.map(f => f.leads))) * 100)
+            const taxa = Math.round((item.conversoes / item.leads) * 100)
+            return (
+              <div key={item.fase} style={{ marginBottom: 9 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 11, color: 'var(--text-primary)' }}>{item.fase}</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.leads} leads</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1E8449' }}>{taxa}% conv.</span>
+                  </div>
+                </div>
+                <div style={{ height: 5, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: item.cor, borderRadius: 3, opacity: 0.8 }} />
+                </div>
               </div>
-              <div style={{ flex: 1, height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ width: `${item.leads}%`, height: '100%', background: item.cor, borderRadius: 3 }} />
-              </div>
-              <div style={{ width: 24, fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk, sans-serif', textAlign: 'right' }}>{item.leads}</div>
-            </div>
-          ))}
-          <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(13,61,204,0.04)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-            Dados reais após integração com n8n (Epic 04)
+            )
+          })}
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{totalLeads} leads ativos</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#1E8449' }}>{totalConv} convertidos</span>
           </div>
         </div>
+      </div>
+
+      {/* Insights + Projecao */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
         {/* Insights IA */}
-        <div className="card-accent card-teal" style={{ padding: '20px 24px' }}>
-          <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
-            Insights de IA
+        <div className="glass-card" style={{ padding: '20px 24px' }}>
+          <div className="page-label" style={{ marginBottom: 12 }}>
+            <Sparkles size={9} strokeWidth={2.5} />
+            INSIGHTS DE IA
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-            Padrões detectados e sugestões de ação
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 14 }}>
+            Padroes detectados
           </div>
-          {[
-            { icon: AlertTriangle, cor: '#E81B8F', texto: 'Leads de Bangu no Mês 3 têm 42% menos conversão — revisar abordagem' },
-            { icon: TrendingUp, cor: 'var(--success)', texto: 'Horário ideal de disparo: 10h–11h e 18h–19h (dados dos últimos 30 dias)' },
-            { icon: Users, cor: 'var(--accent)', texto: '23 leads têm alto risco de inadimplência no próximo ciclo' },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 14, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 8 }}>
-              <item.icon size={14} color={item.cor} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.texto}</span>
-            </div>
-          ))}
-          <div style={{ marginTop: 4, padding: '8px 12px', background: 'rgba(11,191,170,0.06)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)' }}>
-            Insights baseados em dados reais após Epic 07
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {INSIGHTS.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: `${item.cor}12`, border: `1px solid ${item.cor}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <item.icon size={13} color={item.cor} strokeWidth={2} />
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, paddingTop: 2 }}>{item.texto}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Projeção */}
-      <div className="hero-item hero-item-4 card-accent card-success" style={{ padding: '20px 24px', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
-              Receita Recuperavel — Previsao IA
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Estimativa de recuperacao para os proximos 30 dias
+        {/* Projecao */}
+        <div className="glass-card" style={{ padding: '20px 24px' }}>
+          <div className="page-label" style={{ marginBottom: 12 }}>
+            <TrendingUp size={9} strokeWidth={2.5} />
+            PROJECAO — PROXIMOS 30 DIAS
+          </div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 14 }}>
+            Receita recuperavel estimada
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { label: 'Conservadora', valor: 28400, icon: ArrowDown, cor: '#7A90B8', desc: '65% da media historica' },
+              { label: 'Base', valor: 43700, icon: TrendingUp, cor: '#0D3DCC', desc: 'Tendencia atual mantida' },
+              { label: 'Otimista', valor: 58200, icon: ArrowUp, cor: '#1E8449', desc: 'Campanha ativa + sazonalidade' },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--surface-2)', border: `1px solid ${item.cor}20`, borderRadius: 10, borderLeft: `3px solid ${item.cor}` }}>
+                <item.icon size={16} color={item.cor} strokeWidth={2} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Space Grotesk', fontWeight: 600 }}>{item.label.toUpperCase()}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>{item.desc}</div>
+                </div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: item.cor }}>{fmt(item.valor)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(13,61,204,0.05)', border: '1px solid rgba(13,61,204,0.10)', borderRadius: 8 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Projecao baseada em historico de 6 meses. Dados reais e precisos apos integracao com n8n (Epic 04).
             </div>
           </div>
-          <span className="badge badge-green">Epic 07</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {[
-            { label: 'Projeção Conservadora', value: 'R$ 0', icon: ArrowDown, cor: 'var(--text-muted)' },
-            { label: 'Projeção Base', value: 'R$ 0', icon: TrendingUp, cor: 'var(--accent)' },
-            { label: 'Projeção Otimista', value: 'R$ 0', icon: ArrowUp, cor: 'var(--success)' },
-          ].map(item => (
-            <div key={item.label} style={{ padding: '14px 16px', background: 'var(--surface-2)', borderRadius: 10, textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600 }}>{item.label}</div>
-              <item.icon size={16} color={item.cor} style={{ margin: '0 auto 4px' }} />
-              <div style={{ fontSize: 20, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: item.cor }}>{item.value}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Features coming */}
-      <div className="hero-item hero-item-4 glass-card" style={{ padding: '20px 24px' }}>
-        <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>
-          Analytics Completo — Epic 07
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-          {[
-            'Taxa de conversão por fase',
-            'Performance por atendente',
-            'Motivos de cancelamento (Pareto)',
-            'ROI por campanha e canal',
-            'Tempo médio de atendimento',
-            'NPS pós-conversa',
-            'Análise de cohort de pagadores',
-            'Custo por lead recuperado',
-            'Exportação PDF e CSV',
-          ].map(f => (
-            <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: 'var(--text-secondary)', padding: '5px 0' }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 5 }} />
-              {f}
-            </div>
-          ))}
         </div>
       </div>
     </div>

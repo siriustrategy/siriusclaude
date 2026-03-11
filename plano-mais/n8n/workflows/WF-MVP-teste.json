@@ -1,0 +1,302 @@
+{
+  "name": "WF-MVP — Teste Chat (Recebe + Salva + Responde)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf-mvp-whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-entrada",
+      "name": "Webhook — Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "wf-mvp-whatsapp"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalizar payload da Evolution API\nconst body = $json.body || $json.data || $json;\n\n// remoteJid vem como '5521999999999@s.whatsapp.net'\nconst remoteJid = body?.key?.remoteJid || body?.remoteJid || '';\nconst phone = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');\n\n// Ignorar mensagens enviadas por nós mesmos\nconst fromMe = body?.key?.fromMe || false;\nif (fromMe) return [];\n\n// Extrair texto da mensagem\nconst text = (\n  body?.message?.conversation ||\n  body?.message?.extendedTextMessage?.text ||\n  body?.message?.imageMessage?.caption ||\n  ''\n).trim();\n\nif (!phone || !text) return [];\n\nconst pushName = body?.pushName || 'Lead';\n\nreturn [{ json: { phone, text, pushName } }];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "normalizar",
+      "name": "Normalizar Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, nome, telefone, fase_cobranca, plano, status FROM leads WHERE REGEXP_REPLACE(telefone, '[^0-9]', '', 'g') = $1 LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ [$json.phone] }}"
+        }
+      },
+      "id": "buscar-lead",
+      "name": "Buscar Lead por Telefone",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first()?.json;\nconst payload = $('Normalizar Payload').first().json;\n\nif (lead?.id) {\n  return [{ json: { ...payload, lead_id: lead.id, nome: lead.nome, fase: lead.fase_cobranca, plano: lead.plano, lead_existia: true } }];\n}\n\n// Lead não encontrado — criar placeholder\nreturn [{ json: { ...payload, lead_id: null, nome: payload.pushName, fase: 'mes1', plano: 'Desconhecido', lead_existia: false } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "check-lead",
+      "name": "Lead Existe?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (nome, telefone, status, fase_cobranca, plano, valor_mensalidade, valor_em_aberto, data_vencimento) VALUES ($1, $2, 'inadimplente', 'mes1', 'Desconhecido', 0, 0, NOW()) RETURNING id, nome, telefone, fase_cobranca, plano",
+        "additionalFields": {
+          "queryParams": "={{ [$json.pushName, $json.phone] }}"
+        }
+      },
+      "id": "criar-lead",
+      "name": "Criar Lead Placeholder",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, status, tipo FROM conversas WHERE lead_id = $1 AND status NOT IN ('fechada') ORDER BY created_at DESC LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ [$json.lead_id] }}"
+        }
+      },
+      "id": "buscar-conversa",
+      "name": "Buscar Conversa Ativa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 420],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const conv = $('Buscar Conversa Ativa').first()?.json;\nconst dados = $('Check Lead Existe').first()?.json || $('Criar Lead Placeholder').first()?.json;\n\nconst leadId = dados.lead_id || dados.id;\n\nreturn [{ json: { ...dados, lead_id: leadId, conversa_id: conv?.id || null, conversa_existe: !!conv?.id } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "merge-dados",
+      "name": "Merge Lead + Conversa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversas (lead_id, status, tipo) VALUES ($1, 'aberta', 'BOT') RETURNING id",
+        "additionalFields": {
+          "queryParams": "={{ [$json.lead_id] }}"
+        }
+      },
+      "id": "criar-conversa",
+      "name": "Criar Conversa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1520, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $('Merge Lead + Conversa').first().json;\nconst novaConversa = $('Criar Conversa').first()?.json;\n\nconst conversaId = dados.conversa_id || novaConversa?.id;\n\nreturn [{ json: { ...dados, conversa_id: conversaId } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "resolver-conversa",
+      "name": "Resolver Conversa ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO mensagens (conversa_id, remetente, conteudo, tipo) VALUES ($1, 'LEAD', $2, 'texto') RETURNING id",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id, $json.text] }}"
+        }
+      },
+      "id": "salvar-msg-lead",
+      "name": "Salvar Mensagem do Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1960, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $('Resolver Conversa ID').first().json;\nconst nome = (dados.nome || 'cliente').split(' ')[0];\n\nconst resposta = `Olá, ${nome}! Recebi sua mensagem. Um momento que vou verificar sua situação para você.`;\n\nreturn [{ json: { ...dados, resposta_bot: resposta } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "montar-resposta",
+      "name": "Montar Resposta MVP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2180, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WHATSAPP_API_URL }}/message/sendText/{{ $env.WHATSAPP_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.WHATSAPP_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $json.phone }}" },
+            { "name": "text", "value": "={{ $json.resposta_bot }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "enviar-whatsapp",
+      "name": "Enviar via Evolution API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO mensagens (conversa_id, remetente, conteudo, tipo) VALUES ($1, 'BOT', $2, 'texto')",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id, $json.resposta_bot] }}"
+        }
+      },
+      "id": "salvar-msg-bot",
+      "name": "Salvar Resposta do Bot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2620, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversas SET updated_at = NOW() WHERE id = $1",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id] }}"
+        }
+      },
+      "id": "atualizar-conversa",
+      "name": "Atualizar Conversa updated_at",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2840, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true } }}"
+      },
+      "id": "resposta-ok",
+      "name": "Resposta 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3060, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Evolution API": {
+      "main": [[{ "node": "Normalizar Payload", "type": "main", "index": 0 }]]
+    },
+    "Normalizar Payload": {
+      "main": [[{ "node": "Buscar Lead por Telefone", "type": "main", "index": 0 }]]
+    },
+    "Buscar Lead por Telefone": {
+      "main": [[{ "node": "Lead Existe?", "type": "main", "index": 0 }]]
+    },
+    "Lead Existe?": {
+      "main": [
+        [{ "node": "Criar Lead Placeholder", "type": "main", "index": 0 }],
+        [{ "node": "Buscar Conversa Ativa", "type": "main", "index": 0 }]
+      ]
+    },
+    "Criar Lead Placeholder": {
+      "main": [[{ "node": "Merge Lead + Conversa", "type": "main", "index": 0 }]]
+    },
+    "Buscar Conversa Ativa": {
+      "main": [[{ "node": "Merge Lead + Conversa", "type": "main", "index": 0 }]]
+    },
+    "Merge Lead + Conversa": {
+      "main": [[{ "node": "Criar Conversa", "type": "main", "index": 0 }]]
+    },
+    "Criar Conversa": {
+      "main": [[{ "node": "Resolver Conversa ID", "type": "main", "index": 0 }]]
+    },
+    "Resolver Conversa ID": {
+      "main": [[{ "node": "Salvar Mensagem do Lead", "type": "main", "index": 0 }]]
+    },
+    "Salvar Mensagem do Lead": {
+      "main": [[{ "node": "Montar Resposta MVP", "type": "main", "index": 0 }]]
+    },
+    "Montar Resposta MVP": {
+      "main": [[{ "node": "Enviar via Evolution API", "type": "main", "index": 0 }]]
+    },
+    "Enviar via Evolution API": {
+      "main": [[{ "node": "Salvar Resposta do Bot", "type": "main", "index": 0 }]]
+    },
+    "Salvar Resposta do Bot": {
+      "main": [[{ "node": "Atualizar Conversa updated_at", "type": "main", "index": 0 }]]
+    },
+    "Atualizar Conversa updated_at": {
+      "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+}

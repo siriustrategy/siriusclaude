@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Users, Search, Filter, Download, Upload, X, Phone, Mail, MapPin, Tag, MessageSquare, FileText, Clock, ChevronRight, AlertTriangle, Star, UserCheck } from 'lucide-react'
 import { Lead, FaseCobranca } from '@/types'
 import { formatCurrency, formatRelativeTime, getFaseBadge, getRiscoBadge, getAvatarColor } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 // ============================================================
-// MOCK DATA — será substituído por Supabase no Epic 02 oficial
+// MOCK DATA — fallback vazio enquanto carrega do Supabase
 // ============================================================
 const mockLeads: Lead[] = [
   {
@@ -297,11 +298,77 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
 export default function CRMPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [tabAtiva, setTabAtiva] = useState<string>('todos')
   const [busca, setBusca] = useState('')
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null)
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const leadsFiltrados = mockLeads.filter(lead => {
+  // Carregar todos os leads do Supabase
+  useEffect(() => {
+    async function loadLeads() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('leads')
+        .select(`
+          id, nome, telefone, email, cpf, plano,
+          valor_mensalidade, data_vencimento, status,
+          dias_atraso, valor_em_aberto, fase_cobranca,
+          idade, cidade, bairro, profissao,
+          tem_pet, num_pets, tem_dependentes, num_dependentes, idades_dependentes,
+          score_reputacao, risco_churn, desconto_ativo_percentual,
+          tags, ultima_interacao, ultima_mensagem_enviada,
+          data_entrada, created_at, updated_at
+        `)
+        .order('dias_atraso', { ascending: false })
+
+      if (error) {
+        console.error('[CRM] Erro ao carregar leads:', error)
+        setLeads(mockLeads) // fallback para mock se erro
+      } else if (data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped: Lead[] = (data as any[]).map(d => ({
+          id: d.id,
+          nome: d.nome,
+          telefone: d.telefone || '',
+          email: d.email || undefined,
+          cpf: d.cpf || undefined,
+          plano: d.plano,
+          valor_mensalidade: Number(d.valor_mensalidade) || 0,
+          data_vencimento: d.data_vencimento || '',
+          status: d.status || 'ativo',
+          dias_atraso: Number(d.dias_atraso) || 0,
+          valor_em_aberto: Number(d.valor_em_aberto) || 0,
+          fase_cobranca: d.fase_cobranca || 'pre',
+          idade: d.idade || undefined,
+          cidade: d.cidade || undefined,
+          bairro: d.bairro || undefined,
+          profissao: d.profissao || undefined,
+          tem_pet: d.tem_pet || false,
+          num_pets: d.num_pets || 0,
+          tem_dependentes: d.tem_dependentes || false,
+          num_dependentes: d.num_dependentes || 0,
+          idades_dependentes: d.idades_dependentes || [],
+          score_reputacao: Number(d.score_reputacao) || 50,
+          risco_churn: d.risco_churn || 'baixo',
+          desconto_ativo_percentual: Number(d.desconto_ativo_percentual) || 0,
+          tags: d.tags || [],
+          ultima_interacao: d.ultima_interacao || undefined,
+          ultima_mensagem_enviada: d.ultima_mensagem_enviada || undefined,
+          data_entrada: d.data_entrada || d.created_at || '',
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        }))
+        setLeads(mapped)
+      }
+      setLoading(false)
+    }
+    loadLeads()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const leadsFiltrados = leads.filter(lead => {
     const matchFase = tabAtiva === 'todos' || lead.fase_cobranca === tabAtiva
     const matchBusca = !busca || lead.nome.toLowerCase().includes(busca.toLowerCase()) ||
       lead.telefone.includes(busca) || (lead.cpf || '').includes(busca)
@@ -309,7 +376,7 @@ export default function CRMPage() {
   })
 
   const countPorFase = (fase: string) =>
-    fase === 'todos' ? mockLeads.length : mockLeads.filter(l => l.fase_cobranca === fase).length
+    fase === 'todos' ? leads.length : leads.filter(l => l.fase_cobranca === fase).length
 
   return (
     <div>
@@ -328,27 +395,27 @@ export default function CRMPage() {
       <div className="hero-item hero-item-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <div className="kpi-card">
           <div className="kpi-label"><Users size={11} strokeWidth={2.5} />Total Leads</div>
-          <div className="kpi-value">{mockLeads.length}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Em cobrança ativa</div>
+          <div className="kpi-value">{loading ? '—' : leads.length}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Cadastrados no sistema</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label"><AlertTriangle size={11} strokeWidth={2.5} color="var(--error)" />Alto Risco</div>
           <div className="kpi-value" style={{ color: 'var(--error)' }}>
-            {mockLeads.filter(l => l.risco_churn === 'alto').length}
+            {loading ? '—' : leads.filter(l => l.risco_churn === 'alto').length}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Risco de churn alto</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label"><Star size={11} strokeWidth={2.5} color="var(--warning)" />Score Médio</div>
           <div className="kpi-value" style={{ color: 'var(--warning)' }}>
-            {Math.round(mockLeads.reduce((s, l) => s + l.score_reputacao, 0) / mockLeads.length)}
+            {loading || leads.length === 0 ? '—' : Math.round(leads.reduce((s, l) => s + l.score_reputacao, 0) / leads.length)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Score de reputação</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label"><UserCheck size={11} strokeWidth={2.5} color="var(--success)" />Valor Total</div>
           <div className="kpi-value" style={{ color: 'var(--success)', fontSize: 20 }}>
-            {formatCurrency(mockLeads.reduce((s, l) => s + l.valor_em_aberto, 0))}
+            {loading ? '—' : formatCurrency(leads.reduce((s, l) => s + l.valor_em_aberto, 0))}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Em aberto total</div>
         </div>
@@ -426,7 +493,16 @@ export default function CRMPage() {
             </tr>
           </thead>
           <tbody>
-            {leadsFiltrados.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--accent)', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Carregando leads...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : leadsFiltrados.length === 0 ? (
               <tr>
                 <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
