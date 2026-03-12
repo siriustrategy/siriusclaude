@@ -17,14 +17,34 @@
     },
     {
       "parameters": {
-        "jsCode": "// Gerar URL de checkout personalizada\nconst lead = $json.lead || $json;\nconst baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.planomais.com.br';\n\n// Token simples (em produção: assinar com JWT/HMAC no backend)\nconst tokenData = `${lead.id}-${Date.now()}`;\nconst token = Buffer.from(tokenData).toString('base64').replace(/[+/=]/g, '').slice(0, 32);\n\nconst checkoutUrl = `${baseUrl}/checkout/${token}`;\n\n// Substituir placeholder na mensagem\nconst mensagemFinal = (lead.mensagem || '').replace('{{checkout_url}}', checkoutUrl);\n\nreturn [{\n  json: {\n    ...lead,\n    checkout_url: checkoutUrl,\n    checkout_token: token,\n    mensagem_final: mensagemFinal,\n  }\n}];",
+        "operation": "executeQuery",
+        "query": "SELECT ct.token FROM checkout_tokens ct WHERE ct.lead_id = $1::uuid AND ct.usado = false AND ct.expira_em > NOW() ORDER BY ct.created_at DESC LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ [$json.lead?.id || $json.id] }}"
+        }
+      },
+      "id": "buscar-token-checkout",
+      "name": "Buscar Token Checkout",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [420, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Montar mensagem com URL de checkout real\nconst lead = $('Webhook — Receber do WF1').first().json.lead || $('Webhook — Receber do WF1').first().json;\nconst tokenRow = $input.first().json;\n\nconst baseUrl = $vars.APP_URL || 'https://app.planomais.com.br';\nconst token = tokenRow.token;\nconst checkoutUrl = token ? `${baseUrl}/checkout/${token}` : `${baseUrl}/checkout`;\n\n// Substituir placeholder na mensagem\nconst mensagemFinal = (lead.mensagem || '').replace('{{checkout_url}}', checkoutUrl);\n\nreturn [{\n  json: {\n    ...lead,\n    checkout_url: checkoutUrl,\n    checkout_token: token,\n    mensagem_final: mensagemFinal,\n  }\n}];",
         "mode": "runOnceForEachItem"
       },
-      "id": "gerar-checkout-url",
-      "name": "Gerar URL de Checkout",
+      "id": "montar-mensagem",
+      "name": "Montar Mensagem com Checkout URL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [420, 300]
+      "position": [640, 300]
     },
     {
       "parameters": {
@@ -79,14 +99,18 @@
       "name": "Switch — Canal de Disparo",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [640, 300]
+      "position": [860, 300]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "=https://api.z-api.io/instances/{{ $vars.ZAPI_INSTANCE }}/token/{{ $vars.ZAPI_TOKEN }}/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Client-Token", "value": "={{ $vars.ZAPI_CLIENT_TOKEN }}" }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -100,7 +124,7 @@
       "name": "WhatsApp via Z-API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [860, 160]
+      "position": [1080, 160]
     },
     {
       "parameters": {
@@ -128,7 +152,7 @@
       "name": "SMS via Zenvia",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [860, 300]
+      "position": [1080, 300]
     },
     {
       "parameters": {
@@ -137,14 +161,14 @@
         "toEmail": "={{ $json.email }}",
         "subject": "Regularize sua mensalidade Plano Mais",
         "emailType": "html",
-        "message": "<html><body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'><div style='background: #0D3DCC; padding: 24px; text-align: center;'><h1 style='color: #50F7E8; font-size: 20px; margin: 0;'>Plano Mais</h1></div><div style='padding: 32px; background: #fff;'><h2 style='color: #002073;'>Regularize sua mensalidade</h2><p>Olá, {{$json.nome.split(' ')[0]}}!</p><p>Identificamos que sua mensalidade está em aberto.</p>{{$json.desconto > 0 ? `<div style='background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin: 16px 0;'><strong style='color: #16a34a;'>Oferta Especial: ${$json.desconto}% de desconto!</strong></div>` : ''}}<a href='{{$json.checkout_url}}' style='display: inline-block; background: #0D3DCC; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;'>Pagar Agora</a></div></body></html>",
+        "message": "<html><body style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'><div style='background: #0D3DCC; padding: 24px; text-align: center;'><h1 style='color: #50F7E8; font-size: 20px; margin: 0;'>Plano Mais</h1></div><div style='padding: 32px; background: #fff;'><h2 style='color: #002073;'>Regularize sua mensalidade</h2><p>Olá, {{ $json.nome.split(' ')[0] }}!</p><p>Identificamos que sua mensalidade está em aberto.</p>{{ $json.desconto > 0 ? `<div style='background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin: 16px 0;'><strong style='color: #16a34a;'>Oferta Especial: ${$json.desconto}% de desconto!</strong></div>` : '' }}<a href='{{ $json.checkout_url }}' style='display: inline-block; background: #0D3DCC; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;'>Pagar Agora</a></div></body></html>",
         "options": {}
       },
       "id": "enviar-email",
       "name": "Email via SMTP",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [860, 440],
+      "position": [1080, 440],
       "credentials": {
         "smtp": {
           "id": "smtp-planomais",
@@ -154,17 +178,17 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "schema": "public",
-        "table": "mensagens",
-        "columns": "lead_id, canal, conteudo, tipo, status, criado_em",
-        "additionalFields": {}
+        "operation": "executeQuery",
+        "query": "WITH upsert_conv AS (\n  INSERT INTO conversas (lead_id, tipo, status)\n  SELECT $1::uuid, 'BOT', 'aberta'\n  WHERE NOT EXISTS (SELECT 1 FROM conversas WHERE lead_id = $1::uuid AND status = 'aberta')\n  RETURNING id\n), get_conv AS (\n  SELECT id FROM upsert_conv\n  UNION ALL\n  SELECT id FROM conversas WHERE lead_id = $1::uuid AND status = 'aberta' LIMIT 1\n)\nINSERT INTO mensagens (conversa_id, lead_id, remetente, conteudo, tipo, status_entrega)\nSELECT id, $1::uuid, 'BOT', $2, 'texto', 'enviado'\nFROM get_conv LIMIT 1",
+        "additionalFields": {
+          "queryParams": "={{ [$('Montar Mensagem com Checkout URL').first().json.id, $('Montar Mensagem com Checkout URL').first().json.mensagem_final] }}"
+        }
       },
       "id": "registrar-envio",
       "name": "Registrar Envio no Banco",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1080, 300],
+      "position": [1300, 300],
       "credentials": {
         "postgres": {
           "id": "supabase-pg",
@@ -175,20 +199,23 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { success: true, leadId: $json.id, canal: $json.canal } }}"
+        "responseBody": "={{ { success: true, leadId: $('Montar Mensagem com Checkout URL').first().json.id, canal: $('Montar Mensagem com Checkout URL').first().json.canal } }}"
       },
       "id": "resposta-webhook",
       "name": "Resposta OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1280, 300]
+      "position": [1520, 300]
     }
   ],
   "connections": {
     "Webhook — Receber do WF1": {
-      "main": [[{ "node": "Gerar URL de Checkout", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Buscar Token Checkout", "type": "main", "index": 0 }]]
     },
-    "Gerar URL de Checkout": {
+    "Buscar Token Checkout": {
+      "main": [[{ "node": "Montar Mensagem com Checkout URL", "type": "main", "index": 0 }]]
+    },
+    "Montar Mensagem com Checkout URL": {
       "main": [[{ "node": "Switch — Canal de Disparo", "type": "main", "index": 0 }]]
     },
     "Switch — Canal de Disparo": {

@@ -25,7 +25,7 @@ const USUARIOS = [
 
 const INTEGRACOES = [
   { nome: 'n8n Webhooks', status: 'pendente', descricao: 'Motor de cobranca automatico', cor: '#D97706' },
-  { nome: 'Evolution API', status: 'pendente', descricao: 'WhatsApp Business', cor: '#D97706' },
+  { nome: 'Z-API', status: 'conectado', descricao: 'WhatsApp Business', cor: '#1E8449' },
   { nome: 'Asaas API', status: 'pendente', descricao: 'Checkout e pagamentos', cor: '#D97706' },
   { nome: 'Supabase', status: 'conectado', descricao: 'Banco de dados (produção)', cor: '#1E8449' },
 ]

@@ -15,18 +15,6 @@ function zapiHeaders() {
   return headers
 }
 
-// Baixa arquivo de URL e retorna base64 (para buckets sem acesso público)
-async function toBase64(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return null
-    const buf = await res.arrayBuffer()
-    return Buffer.from(buf).toString('base64')
-  } catch {
-    return null
-  }
-}
-
 // ─── Route ────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -54,6 +42,7 @@ export async function POST(req: NextRequest) {
   const tipoFinal = tipo === 'nota_interna' ? 'nota_interna'
     : tipo === 'audio'     ? 'audio'
     : tipo === 'imagem'    ? 'imagem'
+    : tipo === 'video'     ? 'video'
     : tipo === 'documento' ? 'documento'
     : 'texto'
 
@@ -94,15 +83,18 @@ export async function POST(req: NextRequest) {
         let body: Record<string, unknown> = {}
 
         if (tipoFinal === 'audio' && arquivo_url) {
-          // Z-API /send-audio aceita URL pública ou base64
-          // Converte para base64 para garantir funcionamento mesmo com bucket privado
-          const b64 = await toBase64(arquivo_url)
+          // Z-API /send-audio: envia URL pública diretamente (mais confiável que base64)
+          // O bucket "mensagens" deve ser público no Supabase Storage
           endpoint = `${base}/send-audio`
-          body = { phone, audio: b64 ?? arquivo_url }
+          body = { phone, audio: arquivo_url }
 
         } else if (tipoFinal === 'imagem' && arquivo_url) {
           endpoint = `${base}/send-image`
           body = { phone, image: arquivo_url, caption: conteudo?.trim() || '' }
+
+        } else if (tipoFinal === 'video' && arquivo_url) {
+          endpoint = `${base}/send-video`
+          body = { phone, video: arquivo_url, caption: conteudo?.trim() || '' }
 
         } else if (tipoFinal === 'documento' && arquivo_url) {
           // Extensão do arquivo para o endpoint Z-API
@@ -132,6 +124,7 @@ export async function POST(req: NextRequest) {
 
         if (!waRes.ok) {
           console.error(`[Z-API] ERRO ${waRes.status}:`, waBody)
+          waDebug = { ...waDebug, ok: false }
         } else {
           console.log(`[Z-API] OK tipo=${tipoFinal} → ${phone}`)
         }

@@ -1,5 +1,5 @@
 {
-  "name": "WF3 — Agente Conversacional IA (WhatsApp)",
+  "name": "WF3 — Sofia Agente IA v2 (RAG + Memória + Aprendizado)",
   "nodes": [
     {
       "parameters": {
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalizar payload do Z-API / Evolution API\nconst body = $json.body || $json;\nconst phone = (body.phone || body.from || '').replace(/\\D/g, '');\nconst text = body.text?.message || body.message?.conversation || body.message?.extendedTextMessage?.text || '';\nconst messageId = body.messageId || body.key?.id || Date.now().toString();\n\nreturn [{\n  json: {\n    phone,\n    text: text.trim(),\n    messageId,\n    timestamp: new Date().toISOString(),\n  }\n}];",
+        "jsCode": "const body = $json.body || $json;\nconst phone = (body.phone || body.from || '').replace(/\\D/g, '');\nconst text = body.text?.message || body.message?.conversation || body.message?.extendedTextMessage?.text || '';\nconst messageId = body.messageId || body.key?.id || Date.now().toString();\n\nreturn [{ json: { phone, text: text.trim(), messageId, timestamp: new Date().toISOString() } }];",
         "mode": "runOnceForEachItem"
       },
       "id": "normalizar-payload",
@@ -29,38 +29,45 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.*, c.id as conversa_id, c.status as conversa_status, c.atribuida_a FROM leads l LEFT JOIN conversas c ON c.lead_id = l.id AND c.status IN ('bot','aberta') WHERE REGEXP_REPLACE(l.telefone, '\\D', '', 'g') = $1 LIMIT 1",
-        "additionalFields": {
-          "queryParams": "={{ [$json.phone] }}"
-        }
+        "query": "SELECT l.*, c.id as conversa_id, c.status as conversa_status, c.tipo as conversa_tipo FROM leads l LEFT JOIN conversas c ON c.lead_id = l.id AND c.status = 'aberta' WHERE REGEXP_REPLACE(l.telefone, '\\D', '', 'g') = $1 ORDER BY c.inicio DESC LIMIT 1",
+        "additionalFields": { "queryParams": "={{ [$json.phone] }}" }
       },
       "id": "buscar-lead",
       "name": "Buscar Lead por Telefone",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [640, 300],
-      "credentials": {
-        "postgres": {
-          "id": "supabase-pg",
-          "name": "Supabase PostgreSQL"
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO mensagens (conversa_id, lead_id, remetente, conteudo, tipo) VALUES ($1::uuid, $2::uuid, 'LEAD', $3, 'texto') ON CONFLICT DO NOTHING",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id, $json.id, $('Normalizar Payload').first().json.text] }}"
         }
-      }
+      },
+      "id": "salvar-msg-lead",
+      "name": "Salvar Mensagem Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [640, 500],
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
     },
     {
       "parameters": {
         "conditions": {
           "options": { "caseSensitive": false },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.conversa_status }}",
-              "rightValue": "atendente",
-              "operator": { "type": "string", "operation": "notEquals" }
-            }
-          ]
+          "conditions": [{
+            "leftValue": "={{ $json.conversa_tipo }}",
+            "rightValue": "HUMANO",
+            "operator": { "type": "string", "operation": "notEquals" }
+          }]
         }
       },
       "id": "check-atendente",
-      "name": "Está com Atendente?",
+      "name": "Está com Atendente Humano?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [860, 300]
@@ -68,122 +75,221 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT m.conteudo, m.tipo FROM mensagens m WHERE m.conversa_id = $1 ORDER BY m.criado_em DESC LIMIT 10",
-        "additionalFields": {
-          "queryParams": "={{ [$json.conversa_id] }}"
-        }
+        "query": "SELECT mensagem_cliente, resposta_agente, fase_cobranca FROM agente_aprendizado WHERE engajamento = 'positivo' AND fase_cobranca = $1 ORDER BY created_at DESC LIMIT 3",
+        "additionalFields": { "queryParams": "={{ [$json.fase_cobranca || 'mes1'] }}" }
       },
-      "id": "buscar-historico",
-      "name": "Buscar Histórico da Conversa",
+      "id": "buscar-padroes",
+      "name": "Buscar Padrões de Sucesso",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1080, 180],
-      "credentials": {
-        "postgres": {
-          "id": "supabase-pg",
-          "name": "Supabase PostgreSQL"
-        }
-      }
+      "position": [1080, 300],
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
     },
     {
       "parameters": {
-        "jsCode": "// Montar contexto para o agente IA\nconst lead = $('Buscar Lead por Telefone').first().json;\nconst historico = $input.all().map(m => m.json);\nconst mensagemAtual = $('Normalizar Payload').first().json.text;\n\nconst fase = lead.fase || 'mes1';\nconst DESCONTO = { pre:0, mes1:0, mes2:0, mes3:5, mes4:15, mes5:20, pos:0 };\nconst desconto = DESCONTO[fase] || 0;\nconst valor = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(lead.valor_divida || 0);\nconst valorDesconto = desconto > 0 \n  ? new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format((lead.valor_divida || 0) * (1 - desconto/100))\n  : null;\n\nconst histFormatado = historico\n  .reverse()\n  .map(m => `${m.tipo === 'bot' ? 'Assistente' : 'Cliente'}: ${m.conteudo}`)\n  .join('\\n');\n\nconst systemPrompt = `Você é o assistente de cobrança do Plano Mais, um plano de saúde acessível.\nSeu objetivo é ajudar o cliente a regularizar a situação de inadimplência de forma empática e objetiva.\n\nDados do cliente:\n- Nome: ${lead.nome}\n- Valor em aberto: ${valor}\n- Dias de atraso: ${lead.dias_atraso}\n- Fase de cobrança: ${fase}\n${desconto > 0 ? `- OFERTA ESPECIAL ATIVA: ${desconto}% de desconto — pague agora por apenas ${valorDesconto}` : ''}\n\nRegras:\n1. Sempre se identificar como assistente do Plano Mais\n2. Ser empático e nunca ameaçar\n3. Se o cliente quiser pagar, fornecer o link de checkout\n4. Se o cliente pedir para falar com atendente, transferir IMEDIATAMENTE (responda TRANSFERIR_ATENDENTE)\n5. Se não conseguir resolver em 3 trocas, transferir para atendente\n6. Nunca inventar valores ou descontos diferentes dos informados acima\n7. Responder em português, de forma curta e clara (max 3 parágrafos)\n\nHistórico:\n${histFormatado || '(Primeira mensagem)'}`;\n\nreturn [{\n  json: {\n    lead,\n    mensagemAtual,\n    systemPrompt,\n    conversa_id: lead.conversa_id,\n    checkout_url: `https://app.planomais.com.br/checkout/${lead.id}`,\n  }\n}];",
+        "jsCode": "// === DADOS PRINCIPAIS ===\nconst lead = $('Buscar Lead por Telefone').first().json;\nconst phone = $('Normalizar Payload').first().json.phone;\nconst mensagemAtual = $('Normalizar Payload').first().json.text;\nconst padroes = $input.all().map(p => p.json).filter(p => p.mensagem_cliente);\n\n// === CALCULAR DESCONTO POR FASE ===\nconst fase = lead.fase_cobranca || 'mes1';\nconst DESCONTO = { pre: 0, mes1: 0, mes2: 0, mes3: 5, mes4: 15, mes5: 20, pos: 0 };\nconst desconto = DESCONTO[fase] || 0;\nconst fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);\nconst valor = fmt(lead.valor_em_aberto);\nconst valorDesconto = desconto > 0 ? fmt((lead.valor_em_aberto || 0) * (1 - desconto / 100)) : null;\nconst baseUrl = $vars.APP_URL || 'https://app.planomais.com.br';\nconst sessionId = lead.conversa_id || `phone_${phone}`;\n\n// === FEW-SHOT: APRENDIZADO DE CONVERSAS REAIS ===\nconst fewShot = padroes.length > 0\n  ? `\\n\\n━━━━━━━━━━━━━━━━━━\\nAPRENDIZADO — CONVERSAS REAIS BEM-SUCEDIDAS\\n━━━━━━━━━━━━━━━━━━\\n${padroes.map((p, i) => `[Exemplo ${i + 1} — fase ${p.fase_cobranca}]\\nCliente disse: \"${p.mensagem_cliente}\"\\nSofia respondeu: \"${p.resposta_agente}\"`).join('\\n\\n')}\\n\\nBASEIE SEU TOM e LÓGICA nesses exemplos. Nunca copie literalmente — adapte ao contexto atual.`\n  : '';\n\n// === SEÇÃO DE DESCONTO ===\nconst descontoSection = desconto > 0\n  ? `- OFERTA ATIVA: ${desconto}% de desconto — regularize hoje por apenas ${valorDesconto}\\n- Apresente como oportunidade, nunca como pressão: \"Tenho uma condição especial disponível agora...\"`\n  : `- Sem desconto ativo nesta fase — foque nos benefícios de manter o plano ativo`;\n\n// === SYSTEM PROMPT COMPLETO ===\nconst systemPrompt = `Você é a Sofia, assistente humanizada do Plano Mais — um plano de saúde acessível.\n\nVocê NÃO é um robô de cobrança. Você é alguém que genuinamente se preocupa com o cliente — e sabe que por trás de um boleto em aberto quase sempre tem uma história: um mês difícil, um esquecimento, uma prioridade que pesou mais.\n\nSeu único objetivo: ajudar ${lead.nome} a não perder a proteção que já construiu.\n\n━━━━━━━━━━━━━━━━━━\nCONTEXTO DO CLIENTE\n━━━━━━━━━━━━━━━━━━\n- Nome: ${lead.nome}\n- Valor em aberto: ${valor}\n- Dias em atraso: ${lead.dias_atraso} dias\n- Fase de cobrança: ${fase}\n${descontoSection}\n- Link de pagamento: ${baseUrl}/checkout\n\n━━━━━━━━━━━━━━━━━━\nCOMO CONDUZIR A CONVERSA\n━━━━━━━━━━━━━━━━━━\n\n1. PRIMEIRO: entenda, nunca comece cobrando.\nSe o cliente não explicou o motivo, pergunte com interesse genuíno:\n- \"Tudo bem por aí? Queria entender o que aconteceu pra gente ver a melhor saída juntos.\"\n- \"Às vezes uma situação inesperada aparece — me conta o que rolou?\"\n\n2. VALIDE antes de qualquer proposta.\nSe o cliente contar uma dificuldade, reconheça — nunca minimize:\n- \"Faz sentido, isso é mais comum do que parece.\"\n- \"Entendo. Fico feliz que me contou — assim consigo te ajudar de verdade.\"\n\n3. ATIVE o medo de perder, nunca a culpa.\nO gatilho mais poderoso não é o valor do boleto — é o que o cliente PERDE sem o plano:\n- \"Com ${lead.dias_atraso} dias de atraso, o plano pode ser suspenso — e qualquer consulta ou emergência vira um gasto enorme no boleto, sem o desconto do plano.\"\n- \"Você já tem esse acesso à saúde. A gente quer muito que você não perca isso por um momento passageiro.\"\n- \"Imagine precisar de uma urgência amanhã sem o plano ativo. É exatamente isso que a gente quer te ajudar a evitar.\"\n\n4. APRESENTE a saída como solução, não como cobrança.\n- Se tiver desconto: \"Tenho uma condição especial disponível agora — ${desconto > 0 ? `${desconto}% de desconto, regularize hoje por apenas ${valorDesconto}` : 'veja as opções disponíveis'}. Quer aproveitar?\"\n- Sempre termine com o link: ${baseUrl}/checkout\n- Reforce: \"Assim que pagar, o plano volta imediatamente — sem burocracia, sem nova carência.\"\n\n━━━━━━━━━━━━━━━━━━\nFERRAMENTA DISPONÍVEL\n━━━━━━━━━━━━━━━━━━\nVocê tem acesso à base de conhecimento completa do Plano Mais via ferramenta \"conhecimento_plano\".\nUSE a ferramenta quando o cliente perguntar sobre: coberturas, rede credenciada, carências, regras, procedimentos incluídos, benefícios específicos.\nNUNCA invente informações sobre o plano — consulte a ferramenta.\n\n━━━━━━━━━━━━━━━━━━\nREGRAS ABSOLUTAS\n━━━━━━━━━━━━━━━━━━\n- NUNCA ameace, pressione ou use tom intimidador\n- NUNCA invente valores, descontos ou condições além dos informados acima\n- NUNCA use as palavras: \"dívida\", \"devedor\", \"cobrança\", \"negativação\", \"protesto\"\n- SEMPRE use: \"situação em aberto\", \"pendência\", \"regularizar\"\n- Respostas CURTAS: máximo 4 linhas por mensagem — WhatsApp não é email\n- Emoji permitido com moderação para humanizar (1 por mensagem no máximo)\n- Se o cliente pedir atendente humano: responda SOMENTE a palavra TRANSFERIR_ATENDENTE\n- Se sem progresso após 3 trocas consecutivas: responda SOMENTE a palavra TRANSFERIR_ATENDENTE${fewShot}`;\n\nreturn [{ json: { lead, mensagemAtual, systemPrompt, sessionId, conversa_id: lead.conversa_id, phone, fase, desconto } }];",
         "mode": "runOnceForAllItems"
       },
       "id": "montar-contexto",
       "name": "Montar Contexto para IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1300, 180]
+      "position": [1300, 300]
     },
     {
       "parameters": {
-        "model": "claude-haiku-4-5-20251001",
-        "messages": {
-          "values": [
-            {
-              "role": "user",
-              "content": "={{ $json.mensagemAtual }}"
-            }
-          ]
-        },
-        "system": "={{ $json.systemPrompt }}",
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.mensagemAtual }}",
         "options": {
-          "maxTokens": 512,
-          "temperature": 0.3
+          "systemMessage": "={{ $json.systemPrompt }}",
+          "maxIterations": 5,
+          "returnIntermediateSteps": false
         }
       },
-      "id": "claude-haiku",
-      "name": "Claude Haiku — Gerar Resposta",
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.3,
-      "position": [1520, 180],
-      "credentials": {
-        "anthropicApi": {
-          "id": "anthropic-api",
-          "name": "Anthropic API"
-        }
-      }
+      "id": "sofia-agente",
+      "name": "Sofia — Agente IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1520, 300]
     },
     {
       "parameters": {
-        "jsCode": "const resposta = $json.content?.[0]?.text || $json.text || '';\nconst transferir = resposta.includes('TRANSFERIR_ATENDENTE');\nconst respostaLimpa = resposta.replace('TRANSFERIR_ATENDENTE', '').trim();\n\nreturn [{\n  json: {\n    ...$('Montar Contexto para IA').first().json,\n    resposta_ia: respostaLimpa,\n    transferir,\n  }\n}];",
+        "model": "claude-sonnet-4-6",
+        "options": {
+          "maxTokens": 600,
+          "temperature": 0.7
+        }
+      },
+      "id": "claude-sonnet",
+      "name": "Claude Sonnet 4.6",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [1320, 520],
+      "credentials": { "anthropicApi": { "id": "anthropic-api", "name": "Anthropic API" } }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "tableName": "n8n_chat_histories",
+        "contextWindowLength": 15
+      },
+      "id": "postgres-memory",
+      "name": "Memoria — Historico da Conversa",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.2,
+      "position": [1520, 520],
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
+    },
+    {
+      "parameters": {
+        "name": "conhecimento_plano",
+        "description": "Base de conhecimento completa do Plano Mais. Use quando o cliente perguntar sobre: coberturas, rede credenciada, carências, procedimentos incluídos/excluídos, benefícios, regras do plano, FAQ, formas de pagamento aceitas, e exemplos de como lidar com objeções comuns."
+      },
+      "id": "rag-tool",
+      "name": "Conhecimento do Plano — RAG",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [1720, 520]
+    },
+    {
+      "parameters": {
+        "tableName": "documentos_rag",
+        "queryName": "match_documentos_rag",
+        "topK": 5,
+        "options": {}
+      },
+      "id": "supabase-vector",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [1720, 720],
+      "credentials": { "supabaseApi": { "id": "supabase-api", "name": "Supabase API" } }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "openai-embeddings",
+      "name": "OpenAI Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [1920, 720],
+      "credentials": { "openAiApi": { "id": "openai-api", "name": "OpenAI API" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const resposta = $json.output || '';\nconst transferir = resposta.includes('TRANSFERIR_ATENDENTE');\nconst respostaLimpa = resposta.replace(/TRANSFERIR_ATENDENTE/g, '').trim();\nconst ctx = $('Montar Contexto para IA').first().json;\n\nreturn [{ json: { ...ctx, resposta_ia: respostaLimpa, transferir } }];",
         "mode": "runOnceForEachItem"
       },
       "id": "processar-resposta",
       "name": "Processar Resposta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1720, 180]
+      "position": [1740, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detectar engajamento do cliente com base na mensagem enviada\nconst clientMsg = ($('Normalizar Payload').first().json.text || '').toLowerCase();\n\nconst sinaisPositivos = ['sim', 'quero', 'pode', 'vamos', 'ok', 'ta bom', 'tá bom', 'como faço', 'como pago', 'pagar', 'pix', 'cartão', 'cartao', 'quanto', 'desconto', 'link', 'aceito', 'combinado', 'consegue', 'me manda', 'me envia', 'quero pagar', 'quero regularizar', 'me ajuda'];\n\nconst sinaisNegativos = ['não', 'nao', 'chega', 'para', 'sai', 'cancela', 'cancelar', 'nao quero', 'não quero', 'nao tenho', 'não tenho', 'deixa pra la', 'deixa pra lá', 'remove', 'bloqueia', 'me tira', 'para de me mandar', 'nao me envia'];\n\nconst engajamento = sinaisPositivos.some(k => clientMsg.includes(k)) ? 'positivo'\n  : sinaisNegativos.some(k => clientMsg.includes(k)) ? 'negativo'\n  : 'neutro';\n\nreturn [{ json: { ...$json, engajamento, mensagem_cliente: clientMsg } }];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "avaliar-engajamento",
+      "name": "Avaliar Engajamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1960, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO mensagens (conversa_id, lead_id, remetente, conteudo, tipo) VALUES ($1::uuid, $2::uuid, 'BOT', $3, 'texto')",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id, $json.lead.id, $json.resposta_ia] }}"
+        }
+      },
+      "id": "salvar-msg-bot",
+      "name": "Salvar Mensagem Bot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1740, 500],
+      "continueOnFail": true,
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO agente_aprendizado (conversa_id, lead_id, fase_cobranca, mensagem_cliente, resposta_agente, engajamento) VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6)",
+        "additionalFields": {
+          "queryParams": "={{ [$json.conversa_id, $json.lead.id, $json.fase, $json.mensagem_cliente, $json.resposta_ia, $json.engajamento] }}"
+        }
+      },
+      "id": "salvar-aprendizado",
+      "name": "Salvar Aprendizado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2180, 460],
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO custos_operacao (tipo, quantidade, custo_unitario, custo_total, referencia_id, referencia_tipo) VALUES ('claude_sonnet_api', 1, 0.015000, 0.015000, $1::uuid, 'lead')",
+        "additionalFields": {
+          "queryParams": "={{ [$json.lead.id] }}"
+        }
+      },
+      "id": "registrar-custo-ia",
+      "name": "Registrar Custo IA",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2180, 140],
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
     },
     {
       "parameters": {
         "conditions": {
-          "conditions": [
-            {
-              "leftValue": "={{ $json.transferir }}",
-              "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
-            }
-          ]
+          "conditions": [{
+            "leftValue": "={{ $json.transferir }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }]
         }
       },
       "id": "check-transferir",
       "name": "Transferir para Atendente?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1940, 180]
+      "position": [2400, 300]
     },
     {
       "parameters": {
-        "operation": "update",
-        "schema": "public",
-        "table": "conversas",
-        "columns": "status, updated_at",
+        "operation": "executeQuery",
+        "query": "UPDATE conversas SET tipo = 'HUMANO', status = 'aberta', updated_at = NOW() WHERE id = $1::uuid",
         "additionalFields": {
-          "whereClause": "id = '{{ $json.conversa_id }}'"
+          "queryParams": "={{ [$json.conversa_id] }}"
         }
       },
       "id": "atualizar-fila",
-      "name": "Colocar na Fila — Atendente",
+      "name": "Transferir para Fila — Atendente",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2160, 120],
-      "credentials": {
-        "postgres": {
-          "id": "supabase-pg",
-          "name": "Supabase PostgreSQL"
-        }
-      }
+      "position": [2620, 120],
+      "credentials": { "postgres": { "id": "supabase-pg", "name": "Supabase PostgreSQL" } }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
+        "url": "=https://api.z-api.io/instances/{{ $vars.ZAPI_INSTANCE }}/token/{{ $vars.ZAPI_TOKEN }}/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Client-Token", "value": "={{ $vars.ZAPI_CLIENT_TOKEN }}" }]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "={{ $json.lead.telefone }}" },
+            { "name": "phone", "value": "={{ $json.phone }}" },
             { "name": "message", "value": "={{ $json.resposta_ia }}" }
           ]
         },
@@ -193,7 +299,7 @@
       "name": "Enviar Resposta WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2160, 280]
+      "position": [2620, 300]
     },
     {
       "parameters": {
@@ -204,7 +310,7 @@
       "name": "Resposta 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2380, 300]
+      "position": [2840, 300]
     }
   ],
   "connections": {
@@ -215,33 +321,65 @@
       "main": [[{ "node": "Buscar Lead por Telefone", "type": "main", "index": 0 }]]
     },
     "Buscar Lead por Telefone": {
-      "main": [[{ "node": "Está com Atendente?", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Está com Atendente Humano?", "type": "main", "index": 0 },
+        { "node": "Salvar Mensagem Lead", "type": "main", "index": 0 }
+      ]]
     },
-    "Está com Atendente?": {
-      "true": [{ "node": "Buscar Histórico da Conversa", "type": "main", "index": 0 }],
-      "false": [{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]
+    "Está com Atendente Humano?": {
+      "main": [
+        [{ "node": "Buscar Padrões de Sucesso", "type": "main", "index": 0 }],
+        [{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]
+      ]
     },
-    "Buscar Histórico da Conversa": {
+    "Buscar Padrões de Sucesso": {
       "main": [[{ "node": "Montar Contexto para IA", "type": "main", "index": 0 }]]
     },
     "Montar Contexto para IA": {
-      "main": [[{ "node": "Claude Haiku — Gerar Resposta", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Sofia — Agente IA", "type": "main", "index": 0 }]]
     },
-    "Claude Haiku — Gerar Resposta": {
+    "Sofia — Agente IA": {
       "main": [[{ "node": "Processar Resposta IA", "type": "main", "index": 0 }]]
     },
     "Processar Resposta IA": {
-      "main": [[{ "node": "Transferir para Atendente?", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Avaliar Engajamento", "type": "main", "index": 0 },
+        { "node": "Salvar Mensagem Bot", "type": "main", "index": 0 }
+      ]]
+    },
+    "Avaliar Engajamento": {
+      "main": [[
+        { "node": "Transferir para Atendente?", "type": "main", "index": 0 },
+        { "node": "Salvar Aprendizado", "type": "main", "index": 0 },
+        { "node": "Registrar Custo IA", "type": "main", "index": 0 }
+      ]]
     },
     "Transferir para Atendente?": {
-      "true": [{ "node": "Colocar na Fila — Atendente", "type": "main", "index": 0 }],
-      "false": [{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]
+      "main": [
+        [{ "node": "Transferir para Fila — Atendente", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]
+      ]
     },
-    "Colocar na Fila — Atendente": {
+    "Transferir para Fila — Atendente": {
       "main": [[{ "node": "Enviar Resposta WhatsApp", "type": "main", "index": 0 }]]
     },
     "Enviar Resposta WhatsApp": {
       "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
+    },
+    "Claude Sonnet 4.6": {
+      "ai_languageModel": [[{ "node": "Sofia — Agente IA", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Memoria — Historico da Conversa": {
+      "ai_memory": [[{ "node": "Sofia — Agente IA", "type": "ai_memory", "index": 0 }]]
+    },
+    "Conhecimento do Plano — RAG": {
+      "ai_tool": [[{ "node": "Sofia — Agente IA", "type": "ai_tool", "index": 0 }]]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [[{ "node": "Conhecimento do Plano — RAG", "type": "ai_vectorStore", "index": 0 }]]
+    },
+    "OpenAI Embeddings": {
+      "ai_embedding": [[{ "node": "Supabase Vector Store", "type": "ai_embedding", "index": 0 }]]
     }
   },
   "settings": {
@@ -249,5 +387,5 @@
     "saveDataSuccessExecution": "last",
     "saveDataErrorExecution": "all"
   },
-  "tags": ["plano-mais", "cobranca", "agente-ia", "whatsapp"]
+  "tags": ["plano-mais", "cobranca", "agente-ia", "whatsapp", "rag", "memoria", "aprendizado"]
 }

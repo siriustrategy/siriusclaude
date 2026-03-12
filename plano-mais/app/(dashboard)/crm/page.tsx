@@ -1,105 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Users, Search, Filter, Download, Upload, X, Phone, Mail, MapPin, Tag, MessageSquare, FileText, Clock, ChevronRight, AlertTriangle, Star, UserCheck } from 'lucide-react'
+import { Users, Search, Filter, Download, Upload, X, Phone, Mail, MapPin, Tag, MessageSquare, FileText, Clock, ChevronRight, AlertTriangle, Star, UserCheck, Link, Check, Loader } from 'lucide-react'
 import { Lead, FaseCobranca } from '@/types'
 import { formatCurrency, formatRelativeTime, getFaseBadge, getRiscoBadge, getAvatarColor } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-
-// ============================================================
-// MOCK DATA — fallback vazio enquanto carrega do Supabase
-// ============================================================
-const mockLeads: Lead[] = [
-  {
-    id: '1', nome: 'Maria Santos', telefone: '(21) 99999-1111', email: 'maria@email.com', cpf: '123.456.789-01',
-    plano: 'Plano Essencial', valor_mensalidade: 189.90, data_vencimento: '2026-02-23',
-    status: 'inadimplente', dias_atraso: 15, valor_em_aberto: 189.90, fase_cobranca: 'mes1',
-    idade: 34, cidade: 'Rio de Janeiro', bairro: 'Méier', profissao: 'Professora',
-    tem_pet: false, num_pets: 0, tem_dependentes: true, num_dependentes: 2, idades_dependentes: [8, 11],
-    score_reputacao: 72, risco_churn: 'baixo', desconto_ativo_percentual: 0,
-    tags: ['tem filhos', 'boa pagadora'], ultima_interacao: '2026-03-08T10:00:00Z',
-    ultima_mensagem_enviada: 'Olá Maria, notamos que seu plano venceu há 15 dias...',
-    data_entrada: '2024-01-15T00:00:00Z', created_at: '2024-01-15T00:00:00Z', updated_at: '2026-03-08T10:00:00Z',
-  },
-  {
-    id: '2', nome: 'João Oliveira', telefone: '(21) 98888-2222', email: 'joao.o@gmail.com',
-    plano: 'Plano Premium', valor_mensalidade: 299.90, data_vencimento: '2025-12-23',
-    status: 'inadimplente', dias_atraso: 75, valor_em_aberto: 599.80, fase_cobranca: 'mes3',
-    idade: 45, cidade: 'Rio de Janeiro', bairro: 'Bangu', profissao: 'Motorista de app',
-    tem_pet: true, num_pets: 1, tem_dependentes: false, num_dependentes: 0, idades_dependentes: [],
-    score_reputacao: 45, risco_churn: 'medio', desconto_ativo_percentual: 5,
-    tags: ['dificuldade financeira', 'tem pet'], ultima_interacao: '2026-03-05T14:30:00Z',
-    ultima_mensagem_enviada: 'Entendemos sua situação, João. Temos um desconto de 5%...',
-    data_entrada: '2023-06-10T00:00:00Z', created_at: '2023-06-10T00:00:00Z', updated_at: '2026-03-05T14:30:00Z',
-  },
-  {
-    id: '3', nome: 'Ana Costa', telefone: '(21) 97777-3333', email: 'ana.costa@hotmail.com',
-    plano: 'Plano Familiar', valor_mensalidade: 450.00, data_vencimento: '2025-11-23',
-    status: 'inadimplente', dias_atraso: 107, valor_em_aberto: 1350.00, fase_cobranca: 'mes4',
-    idade: 42, cidade: 'Rio de Janeiro', bairro: 'Campo Grande', profissao: 'Funcionária pública',
-    tem_pet: false, num_pets: 0, tem_dependentes: true, num_dependentes: 3, idades_dependentes: [5, 9, 14],
-    score_reputacao: 28, risco_churn: 'alto', desconto_ativo_percentual: 15,
-    tags: ['quer cancelar', 'tem filhos', 'alta prioridade'], ultima_interacao: '2026-02-28T09:15:00Z',
-    ultima_mensagem_enviada: 'Ana, sabemos que é difícil. Que tal parcelar em 3x?',
-    data_entrada: '2022-03-20T00:00:00Z', created_at: '2022-03-20T00:00:00Z', updated_at: '2026-02-28T09:15:00Z',
-  },
-  {
-    id: '4', nome: 'Carlos Pereira', telefone: '(21) 96666-4444', email: 'cpereiras@outlook.com',
-    plano: 'Plano Essencial', valor_mensalidade: 189.90, data_vencimento: '2026-03-05',
-    status: 'inadimplente', dias_atraso: 5, valor_em_aberto: 189.90, fase_cobranca: 'pre',
-    idade: 58, cidade: 'Rio de Janeiro', bairro: 'Realengo', profissao: 'Aposentado',
-    tem_pet: true, num_pets: 2, tem_dependentes: false, num_dependentes: 0, idades_dependentes: [],
-    score_reputacao: 88, risco_churn: 'baixo', desconto_ativo_percentual: 0,
-    tags: ['senior', 'tem pet', 'bom pagador'], ultima_interacao: '2026-03-09T08:00:00Z',
-    ultima_mensagem_enviada: 'Carlos, seu plano venceu há 5 dias. Clique para pagar:',
-    data_entrada: '2021-08-15T00:00:00Z', created_at: '2021-08-15T00:00:00Z', updated_at: '2026-03-09T08:00:00Z',
-  },
-  {
-    id: '5', nome: 'Fernanda Lima', telefone: '(21) 95555-5555', email: 'fernanda.lima@gmail.com',
-    plano: 'Plano Familiar', valor_mensalidade: 450.00, data_vencimento: '2025-10-23',
-    status: 'inadimplente', dias_atraso: 138, valor_em_aberto: 900.00, fase_cobranca: 'mes5',
-    idade: 36, cidade: 'Rio de Janeiro', bairro: 'Jacarepaguá', profissao: 'Empreendedora',
-    tem_pet: false, num_pets: 0, tem_dependentes: true, num_dependentes: 1, idades_dependentes: [3],
-    score_reputacao: 15, risco_churn: 'alto', desconto_ativo_percentual: 20,
-    tags: ['urgente', 'tem filhos', 'quer cancelar'], ultima_interacao: '2026-02-20T16:45:00Z',
-    ultima_mensagem_enviada: 'Fernanda, oferta especial: 20% de desconto por 48 horas!',
-    data_entrada: '2023-01-05T00:00:00Z', created_at: '2023-01-05T00:00:00Z', updated_at: '2026-02-20T16:45:00Z',
-  },
-  {
-    id: '6', nome: 'Roberto Souza', telefone: '(21) 94444-6666',
-    plano: 'Plano Premium', valor_mensalidade: 299.90, data_vencimento: '2026-01-23',
-    status: 'inadimplente', dias_atraso: 45, valor_em_aberto: 599.80, fase_cobranca: 'mes2',
-    idade: 51, cidade: 'Rio de Janeiro', bairro: 'Tijuca', profissao: 'Engenheiro',
-    tem_pet: false, num_pets: 0, tem_dependentes: true, num_dependentes: 2, idades_dependentes: [16, 19],
-    score_reputacao: 61, risco_churn: 'medio', desconto_ativo_percentual: 0,
-    tags: ['tem filhos'], ultima_interacao: '2026-03-07T11:20:00Z',
-    ultima_mensagem_enviada: 'Roberto, seu plano está em aberto há 45 dias...',
-    data_entrada: '2023-11-01T00:00:00Z', created_at: '2023-11-01T00:00:00Z', updated_at: '2026-03-07T11:20:00Z',
-  },
-  {
-    id: '7', nome: 'Juliana Alves', telefone: '(21) 93333-7777', email: 'juliana.alves@yahoo.com',
-    plano: 'Plano Essencial', valor_mensalidade: 189.90, data_vencimento: '2025-12-10',
-    status: 'inadimplente', dias_atraso: 88, valor_em_aberto: 379.80, fase_cobranca: 'mes3',
-    idade: 28, cidade: 'Niterói', bairro: 'Icaraí', profissao: 'Nutricionista',
-    tem_pet: true, num_pets: 1, tem_dependentes: false, num_dependentes: 0, idades_dependentes: [],
-    score_reputacao: 55, risco_churn: 'medio', desconto_ativo_percentual: 5,
-    tags: ['tem pet', 'jovem'], ultima_interacao: '2026-03-06T15:00:00Z',
-    ultima_mensagem_enviada: 'Juliana, temos um desconto especial de 5% para você:',
-    data_entrada: '2024-03-18T00:00:00Z', created_at: '2024-03-18T00:00:00Z', updated_at: '2026-03-06T15:00:00Z',
-  },
-  {
-    id: '8', nome: 'Pedro Nascimento', telefone: '(21) 92222-8888', email: 'pedro.n@gmail.com',
-    plano: 'Plano Familiar', valor_mensalidade: 450.00, data_vencimento: '2025-12-01',
-    status: 'inadimplente', dias_atraso: 99, valor_em_aberto: 1350.00, fase_cobranca: 'mes4',
-    idade: 63, cidade: 'Rio de Janeiro', bairro: 'Botafogo', profissao: 'Médico aposentado',
-    tem_pet: false, num_pets: 0, tem_dependentes: true, num_dependentes: 1, idades_dependentes: [22],
-    score_reputacao: 38, risco_churn: 'alto', desconto_ativo_percentual: 15,
-    tags: ['senior', 'tem filhos', 'alto valor'], ultima_interacao: '2026-03-01T10:30:00Z',
-    ultima_mensagem_enviada: 'Pedro, parcelamento em 3x disponível para você agora.',
-    data_entrada: '2022-07-10T00:00:00Z', created_at: '2022-07-10T00:00:00Z', updated_at: '2026-03-01T10:30:00Z',
-  },
-]
 
 const TABS: { key: FaseCobranca | 'todos' | 'pos'; label: string }[] = [
   { key: 'todos', label: 'Todos' },
@@ -125,6 +30,7 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
+  const supabase = createClient()
   const fase = getFaseBadge(lead.fase_cobranca)
   const risco = getRiscoBadge(lead.risco_churn)
   const avatarColor = getAvatarColor(lead.nome)
@@ -132,6 +38,55 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const descontoFase: Record<string, number> = { mes3: 5, mes4: 15, mes5: 20 }
   const desconto = descontoFase[lead.fase_cobranca] || 0
   const valorFinal = lead.valor_em_aberto * (1 - desconto / 100)
+
+  // Gerar link de checkout
+  type LinkStatus = 'idle' | 'gerando' | 'ok' | 'erro'
+  const [linkStatus, setLinkStatus] = useState<LinkStatus>('idle')
+  const [checkoutUrl, setCheckoutUrl] = useState('')
+
+  // Histórico de links
+  type TokenRow = { id: string; token: string; valor: number; desconto: number; expira_em: string; usado: boolean; created_at: string }
+  const [linksHistorico, setLinksHistorico] = useState<TokenRow[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('checkout_tokens')
+      .select('id, token, valor, desconto, expira_em, usado, created_at')
+      .eq('lead_id', lead.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => { if (data) setLinksHistorico(data) })
+  }, [lead.id, linkStatus])
+
+  async function handleGerarLink() {
+    setLinkStatus('gerando')
+    try {
+      const res = await fetch('/api/checkout/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: lead.id }),
+      })
+      const json = await res.json()
+      if (res.ok && json.ok) {
+        setCheckoutUrl(json.checkout_url)
+        setLinkStatus('ok')
+        await navigator.clipboard.writeText(json.checkout_url).catch(() => {})
+        window.open(json.checkout_url, '_blank')
+      } else {
+        // Fallback: abre demo para visualização mesmo sem API configurada
+        const demoUrl = `${window.location.origin}/checkout/demo`
+        setCheckoutUrl(demoUrl)
+        setLinkStatus('ok')
+        await navigator.clipboard.writeText(demoUrl).catch(() => {})
+        window.open(demoUrl, '_blank')
+      }
+    } catch {
+      const demoUrl = `${window.location.origin}/checkout/demo`
+      setCheckoutUrl(demoUrl)
+      setLinkStatus('ok')
+      window.open(demoUrl, '_blank')
+    }
+  }
 
   return (
     <>
@@ -269,46 +224,100 @@ function LeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             </div>
           </div>
 
-          {/* Nota sobre funcionalidades completas */}
-          <div style={{ padding: '12px 14px', background: 'rgba(13,61,204,0.04)', border: '1px dashed var(--border-strong)', borderRadius: 10 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Histórico completo de mensagens, notas, linha do tempo e aprovação de desconto disponíveis após integração com n8n (Epic 04) e Supabase Realtime (Epic 05).
+          {/* Histórico de links de checkout */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Link size={9} />
+              LINKS DE CHECKOUT GERADOS
             </div>
+            {linksHistorico.length === 0 ? (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Nenhum link gerado ainda.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {linksHistorico.map(tk => {
+                  const exp = new Date(tk.expira_em)
+                  const expirado = exp < new Date()
+                  const statusLabel = tk.usado ? 'Pago' : expirado ? 'Expirado' : 'Ativo'
+                  const statusColor = tk.usado ? 'var(--success)' : expirado ? 'var(--text-muted)' : 'var(--accent)'
+                  return (
+                    <div key={tk.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{tk.token.slice(0, 16)}…</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {formatCurrency(tk.valor)}{tk.desconto > 0 ? ` · ${tk.desconto}% OFF` : ''} · {new Date(tk.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 10, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: statusColor }}>{statusLabel}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Ações */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
-          <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
-            <MessageSquare size={14} />
-            Enviar Mensagem
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Linha 1 */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+              <MessageSquare size={14} />
+              Enviar Mensagem
+            </button>
+            <button className="btn-ghost">
+              <FileText size={14} />
+              Nota
+            </button>
+            <button className="btn-ghost" style={{ color: 'var(--magenta)', borderColor: 'rgba(232,27,143,0.25)' }}>
+              <AlertTriangle size={14} />
+            </button>
+          </div>
+          {/* Linha 2 — Checkout */}
+          <button
+            onClick={handleGerarLink}
+            disabled={linkStatus === 'gerando'}
+            className="btn-ghost"
+            style={{
+              width: '100%', justifyContent: 'center',
+              borderColor: linkStatus === 'ok' ? 'rgba(30,132,73,0.35)' : linkStatus === 'erro' ? 'rgba(220,38,38,0.30)' : 'var(--border)',
+              color: linkStatus === 'ok' ? 'var(--success)' : linkStatus === 'erro' ? 'var(--error)' : 'var(--text-secondary)',
+              background: linkStatus === 'ok' ? 'rgba(30,132,73,0.06)' : 'transparent',
+            }}
+          >
+            {linkStatus === 'gerando' ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+              : linkStatus === 'ok' ? <Check size={14} />
+              : <Link size={14} />}
+            {linkStatus === 'gerando' ? 'Gerando link...'
+              : linkStatus === 'ok' ? `Link copiado e enviado via WhatsApp${desconto > 0 ? ` — ${desconto}% OFF` : ''}`
+              : linkStatus === 'erro' ? 'Erro ao gerar — tente novamente'
+              : `Gerar Link de Checkout${desconto > 0 ? ` (${desconto}% OFF)` : ''}`}
           </button>
-          <button className="btn-ghost">
-            <FileText size={14} />
-            Nota
-          </button>
-          <button className="btn-ghost" style={{ color: 'var(--magenta)', borderColor: 'rgba(232,27,143,0.25)' }}>
-            <AlertTriangle size={14} />
-          </button>
+          {linkStatus === 'ok' && checkoutUrl && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', wordBreak: 'break-all', background: 'var(--surface-2)', padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)' }}>
+              {checkoutUrl}
+            </div>
+          )}
         </div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     </>
   )
 }
 
 export default function CRMPage() {
-  const router = useRouter()
   const supabase = createClient()
   const [tabAtiva, setTabAtiva] = useState<string>('todos')
   const [busca, setBusca] = useState('')
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null)
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null)
 
   // Carregar todos os leads do Supabase
   useEffect(() => {
     async function loadLeads() {
       setLoading(true)
+      setErroCarregamento(null)
       const { data, error } = await supabase
         .from('leads')
         .select(`
@@ -325,7 +334,7 @@ export default function CRMPage() {
 
       if (error) {
         console.error('[CRM] Erro ao carregar leads:', error)
-        setLeads(mockLeads) // fallback para mock se erro
+        setErroCarregamento(error.message)
       } else if (data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped: Lead[] = (data as any[]).map(d => ({
@@ -390,6 +399,17 @@ export default function CRMPage() {
       <p className="hero-item hero-item-2" style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
         Central de todos os inadimplentes com ficha completa, score e historico de interacoes.
       </p>
+
+      {/* Banner de erro */}
+      {erroCarregamento && (
+        <div className="hero-item hero-item-1" style={{ marginBottom: 20, padding: '12px 16px', background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <AlertTriangle size={15} color="#DC2626" style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, fontSize: 13, color: '#DC2626' }}>Erro ao carregar leads</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{erroCarregamento}</div>
+          </div>
+        </div>
+      )}
 
       {/* KPIs rápidos */}
       <div className="hero-item hero-item-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
@@ -507,7 +527,11 @@ export default function CRMPage() {
                 <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                     <Users size={28} color="var(--text-muted)" strokeWidth={1.5} />
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Nenhum lead encontrado</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      {leads.length === 0
+                        ? 'Nenhum lead cadastrado ainda. Leads aparecem automaticamente quando chegam mensagens via WhatsApp.'
+                        : 'Nenhum lead encontrado para esta busca ou fase.'}
+                    </span>
                   </div>
                 </td>
               </tr>

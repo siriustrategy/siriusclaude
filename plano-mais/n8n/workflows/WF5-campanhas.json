@@ -18,7 +18,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT * FROM campanhas WHERE id = $1 AND status = 'agendada'",
+        "query": "SELECT c.*, t.conteudo as mensagem_template, t.variaveis FROM campanhas c JOIN templates_mensagem t ON t.id = c.template_id WHERE c.id = $1::uuid AND c.status IN ('agendada', 'rascunho')",
         "additionalFields": {
           "queryParams": "={{ [$json.campanhaId] }}"
         }
@@ -38,9 +38,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT l.* FROM leads l WHERE l.status NOT IN ('pago','cancelado') AND l.ativo = true AND ($1 = 'todos' OR l.fase = ANY(string_to_array($1, ',')))",
+        "query": "SELECT l.* FROM leads l WHERE l.status NOT IN ('pago','cancelado','arquivado') AND (\n  $1 = 'todos'\n  OR l.fase_cobranca::text = ANY(string_to_array($1, ','))\n)",
         "additionalFields": {
-          "queryParams": "={{ [$json.filtro_fases || 'todos'] }}"
+          "queryParams": "={{ [$json.segmento_leads?.fases ? $json.segmento_leads.fases.join(',') : 'todos'] }}"
         }
       },
       "id": "buscar-leads-segmento",
@@ -57,12 +57,10 @@
     },
     {
       "parameters": {
-        "operation": "update",
-        "schema": "public",
-        "table": "campanhas",
-        "columns": "status, iniciada_em, total_destinatarios",
+        "operation": "executeQuery",
+        "query": "UPDATE campanhas SET status = 'em_execucao', iniciada_em = NOW(), total_leads = $2 WHERE id = $1::uuid",
         "additionalFields": {
-          "whereClause": "id = '{{ $('Buscar Campanha').first().json.id }}'"
+          "queryParams": "={{ [$('Buscar Campanha').first().json.id, $input.all().length] }}"
         }
       },
       "id": "marcar-em-execucao",
@@ -79,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Preparar lote de envios com rate limiting (max 30/min)\nconst campanha = $('Buscar Campanha').first().json;\nconst leads = $input.all().map(i => i.json);\n\nconst envios = [];\nlet delayMs = 0;\nconst delayPorEnvio = 2000; // 2 segundos entre envios (30/min)\n\nfor (const lead of leads) {\n  const nome = lead.nome.split(' ')[0];\n  let mensagem = campanha.mensagem_template || '';\n  \n  // Substituir variáveis no template\n  mensagem = mensagem\n    .replace('{{nome}}', nome)\n    .replace('{{valor}}', new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(lead.valor_divida))\n    .replace('{{dias}}', lead.dias_atraso)\n    .replace('{{link}}', `https://app.planomais.com.br/checkout/${lead.id}`);\n  \n  envios.push({\n    json: {\n      lead_id: lead.id,\n      campanha_id: campanha.id,\n      telefone: lead.telefone,\n      email: lead.email,\n      mensagem,\n      canal: campanha.canal || 'whatsapp',\n      delay_ms: delayMs,\n    }\n  });\n  delayMs += delayPorEnvio;\n}\n\nreturn envios;",
+        "jsCode": "// Preparar lote de envios com rate limiting (max 30/min)\nconst campanha = $('Buscar Campanha').first().json;\nconst leads = $input.all().map(i => i.json);\n\nconst envios = [];\nlet delayMs = 0;\nconst delayPorEnvio = 2000; // 2 segundos entre envios (30/min)\n\nfor (const lead of leads) {\n  const nome = lead.nome.split(' ')[0];\n  let mensagem = campanha.mensagem_template || '';\n  \n  // Substituir variáveis no template\n  mensagem = mensagem\n    .replace(/\\{\\{nome\\}\\}/g, nome)\n    .replace(/\\{\\{valor\\}\\}/g, new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(lead.valor_em_aberto || 0))\n    .replace(/\\{\\{dias\\}\\}/g, lead.dias_atraso)\n    .replace(/\\{\\{link\\}\\}/g, `${$vars.APP_URL || 'https://app.planomais.com.br'}/checkout`);\n  \n  envios.push({\n    json: {\n      lead_id: lead.id,\n      campanha_id: campanha.id,\n      id: lead.id,\n      telefone: lead.telefone,\n      email: lead.email,\n      nome: lead.nome,\n      fase_cobranca: lead.fase_cobranca,\n      valor_em_aberto: lead.valor_em_aberto,\n      dias_atraso: lead.dias_atraso,\n      mensagem,\n      canal: campanha.canal || 'whatsapp',\n      delay_ms: delayMs,\n    }\n  });\n  delayMs += delayPorEnvio;\n}\n\nreturn envios;",
         "mode": "runOnceForAllItems"
       },
       "id": "preparar-lote",
@@ -102,7 +100,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://sua-instancia.n8n.cloud/webhook/wf2-disparo",
+        "url": "={{ $vars.N8N_INSTANCE_URL }}/webhook/wf2-disparo",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -120,11 +118,11 @@
     },
     {
       "parameters": {
-        "operation": "insert",
-        "schema": "public",
-        "table": "campanha_envios",
-        "columns": "campanha_id, lead_id, status, enviado_em",
-        "additionalFields": {}
+        "operation": "executeQuery",
+        "query": "INSERT INTO resultados_campanha (campanha_id, lead_id, mensagem_enviada, enviado_em, status)\nVALUES ($1::uuid, $2::uuid, $3, NOW(), 'enviado')\nON CONFLICT (campanha_id, lead_id) DO UPDATE SET status = 'enviado', enviado_em = NOW()",
+        "additionalFields": {
+          "queryParams": "={{ [$json.campanha_id, $json.lead_id, $json.mensagem] }}"
+        }
       },
       "id": "registrar-envio-campanha",
       "name": "Registrar Envio da Campanha",
@@ -161,7 +159,10 @@
       "main": [[{ "node": "Marcar Campanha — Em Execução", "type": "main", "index": 0 }]]
     },
     "Marcar Campanha — Em Execução": {
-      "main": [[{ "node": "Preparar Lote com Rate Limiting", "type": "main", "index": 0 }], [{ "node": "Resposta — Campanha Iniciada", "type": "main", "index": 0 }]]
+      "main": [
+        [{ "node": "Preparar Lote com Rate Limiting", "type": "main", "index": 0 }],
+        [{ "node": "Resposta — Campanha Iniciada", "type": "main", "index": 0 }]
+      ]
     },
     "Preparar Lote com Rate Limiting": {
       "main": [[{ "node": "Rate Limiting — Aguardar", "type": "main", "index": 0 }]]

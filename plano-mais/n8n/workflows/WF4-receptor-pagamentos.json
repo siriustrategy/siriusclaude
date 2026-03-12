@@ -1,5 +1,5 @@
 {
-  "name": "WF4 — Receptor de Pagamentos (Webhook)",
+  "name": "WF4 — Receptor de Pagamentos (Webhook Cell Coin)",
   "nodes": [
     {
       "parameters": {
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalizar payload de diferentes provedores de pagamento\n// Compatível com: Asaas, Pagar.me, MercadoPago, EFI (Gerencianet)\nconst body = $json;\n\nlet leadId, valor, metodo, status, transacaoId, provedor;\n\n// Detectar provedor pelo payload\nif (body.payment) {\n  // Asaas\n  provedor = 'asaas';\n  leadId = body.payment.externalReference || body.payment.description?.match(/lead:([a-z0-9-]+)/)?.[1];\n  valor = body.payment.value;\n  metodo = body.payment.billingType?.toLowerCase();\n  status = body.payment.status;\n  transacaoId = body.payment.id;\n} else if (body.current_status) {\n  // Pagar.me\n  provedor = 'pagarme';\n  leadId = body.metadata?.lead_id;\n  valor = (body.amount || 0) / 100;\n  metodo = body.payment_method;\n  status = body.current_status === 'paid' ? 'CONFIRMED' : body.current_status;\n  transacaoId = body.id;\n} else if (body.action?.includes('payment')) {\n  // MercadoPago\n  provedor = 'mercadopago';\n  leadId = body.data?.metadata?.lead_id;\n  valor = body.data?.transaction_amount;\n  metodo = body.data?.payment_method_id;\n  status = body.data?.status === 'approved' ? 'CONFIRMED' : body.data?.status;\n  transacaoId = body.data?.id?.toString();\n}\n\n// Verificar se pagamento foi confirmado\nconst confirmado = ['CONFIRMED', 'RECEIVED', 'paid', 'approved'].includes(status);\n\nreturn [{\n  json: {\n    leadId,\n    valor,\n    metodo: metodo || 'desconhecido',\n    status,\n    transacaoId,\n    provedor,\n    confirmado,\n    timestamp: new Date().toISOString(),\n  }\n}];",
+        "jsCode": "// Normalizar payload de diferentes provedores de pagamento\n// Compatível com: Cell Coin, Asaas, Pagar.me, MercadoPago\nconst body = $json;\n\nlet leadId, valor, metodo, status, transacaoId, provedor;\n\n// Cell Coin (formato principal)\nif (body.event && (body.event.includes('payment') || body.event.includes('PAYMENT'))) {\n  provedor = 'cellcoin';\n  const data = body.data || body.payload || {};\n  leadId = data.externalId || data.external_id || data.referenceId;\n  valor = data.amount || data.value || 0;\n  const tipo = (data.paymentType || data.type || '').toLowerCase();\n  if (tipo.includes('pix')) metodo = 'pix';\n  else if (tipo.includes('boleto') || tipo.includes('bank_slip')) metodo = 'boleto';\n  else if (tipo.includes('card') || tipo.includes('credit') || tipo.includes('debit')) metodo = 'cartao';\n  else metodo = 'pix';\n  const evt = (body.event || '').toUpperCase();\n  status = (evt.includes('CONFIRMED') || evt.includes('PAID') || evt.includes('APPROVED')) ? 'CONFIRMED' : evt;\n  transacaoId = data.transactionId || data.id || body.id;\n\n// Asaas\n} else if (body.payment) {\n  provedor = 'asaas';\n  leadId = body.payment.externalReference || body.payment.description?.match(/lead:([a-z0-9-]+)/)?.[1];\n  valor = body.payment.value;\n  const bt = (body.payment.billingType || '').toLowerCase();\n  if (bt === 'pix') metodo = 'pix';\n  else if (bt === 'boleto') metodo = 'boleto';\n  else if (bt === 'credit_card') metodo = 'cartao';\n  else metodo = 'pix';\n  status = body.payment.status;\n  transacaoId = body.payment.id;\n\n// Pagar.me\n} else if (body.current_status) {\n  provedor = 'pagarme';\n  leadId = body.metadata?.lead_id;\n  valor = (body.amount || 0) / 100;\n  const pm = (body.payment_method || '').toLowerCase();\n  if (pm === 'pix') metodo = 'pix';\n  else if (pm === 'boleto') metodo = 'boleto';\n  else metodo = 'cartao';\n  status = body.current_status === 'paid' ? 'CONFIRMED' : body.current_status;\n  transacaoId = body.id;\n\n// MercadoPago\n} else if (body.action?.includes('payment')) {\n  provedor = 'mercadopago';\n  leadId = body.data?.metadata?.lead_id;\n  valor = body.data?.transaction_amount;\n  metodo = 'cartao';\n  status = body.data?.status === 'approved' ? 'CONFIRMED' : body.data?.status;\n  transacaoId = body.data?.id?.toString();\n}\n\n// Verificar se pagamento foi confirmado\nconst confirmado = ['CONFIRMED', 'RECEIVED', 'paid', 'approved', 'PAID', 'APPROVED'].includes(status);\n\nreturn [{\n  json: {\n    leadId,\n    valor: parseFloat(valor) || 0,\n    metodo: metodo || 'pix',\n    status,\n    transacaoId,\n    provedor,\n    confirmado,\n    timestamp: new Date().toISOString(),\n  }\n}];",
         "mode": "runOnceForEachItem"
       },
       "id": "normalizar-pagamento",
@@ -47,9 +47,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO pagamentos (lead_id, valor, metodo, status, transacao_id, provedor, criado_em) VALUES ($1, $2, $3, 'confirmado', $4, $5, NOW()) ON CONFLICT (transacao_id) DO NOTHING RETURNING id",
+        "query": "INSERT INTO pagamentos (lead_id, valor, valor_original, desconto_aplicado, metodo, status, data_pagamento, referencia)\nVALUES ($1::uuid, $2, $2, 0, $3::pagamento_metodo, 'confirmado', NOW(), $4)\nRETURNING id",
         "additionalFields": {
-          "queryParams": "={{ [$json.leadId, $json.valor, $json.metodo, $json.transacaoId, $json.provedor] }}"
+          "queryParams": "={{ [$json.leadId, $json.valor, $json.metodo, $json.transacaoId] }}"
         }
       },
       "id": "registrar-pagamento",
@@ -67,9 +67,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE leads SET status = 'pago', fase = 'pre', data_pagamento = NOW(), updated_at = NOW() WHERE id = $1 RETURNING nome, telefone, email, valor_divida",
+        "query": "UPDATE leads SET status = 'pago', fase_cobranca = 'pre', updated_at = NOW() WHERE id = $1::uuid RETURNING nome, telefone, email, valor_em_aberto",
         "additionalFields": {
-          "queryParams": "={{ [$json.leadId] }}"
+          "queryParams": "={{ [$('Normalizar Payload do Provedor').first().json.leadId] }}"
         }
       },
       "id": "atualizar-lead-pago",
@@ -86,7 +86,47 @@
     },
     {
       "parameters": {
-        "jsCode": "// Montar mensagem de confirmação para o cliente\nconst lead = $input.first().json;\nconst pagamento = $('Normalizar Payload do Provedor').first().json;\n\nconst valorPago = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(pagamento.valor || 0);\nconst nome = (lead.nome || '').split(' ')[0];\n\nconst mensagem = `Parabéns, ${nome}! Seu pagamento de ${valorPago} foi confirmado. Seus benefícios Plano Mais estão ativos. Obrigado por regularizar! Qualquer dúvida, estamos aqui.`;\n\nreturn [{\n  json: {\n    telefone: lead.telefone,\n    email: lead.email,\n    nome: lead.nome,\n    mensagem,\n    valorPago,\n    leadId: pagamento.leadId,\n  }\n}];",
+        "operation": "executeQuery",
+        "query": "UPDATE checkout_tokens SET usado = true WHERE lead_id = $1::uuid AND usado = false",
+        "additionalFields": {
+          "queryParams": "={{ [$('Normalizar Payload do Provedor').first().json.leadId] }}"
+        }
+      },
+      "id": "marcar-token-usado",
+      "name": "Marcar Token Checkout como Usado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 320],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem, lead_id, prioridade)\nSELECT u.id, 'pagamento_confirmado', 'Pagamento Recebido!',\n  CONCAT('Lead ', l.nome, ' pagou R$ ', $2::numeric, ' via ', $3),\n  $1::uuid, 'alta'\nFROM usuarios u, leads l\nWHERE l.id = $1::uuid AND u.role = 'gestor' AND u.ativo = true",
+        "additionalFields": {
+          "queryParams": "={{ [$('Normalizar Payload do Provedor').first().json.leadId, $('Normalizar Payload do Provedor').first().json.valor, $('Normalizar Payload do Provedor').first().json.metodo] }}"
+        }
+      },
+      "id": "notificar-dashboard",
+      "name": "Notificar Dashboard — Gestores",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 460],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Montar mensagem de confirmação para o cliente\nconst lead = $('Atualizar Lead — Status Pago').first().json;\nconst pagamento = $('Normalizar Payload do Provedor').first().json;\n\nconst valorPago = new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(pagamento.valor || 0);\nconst nome = (lead.nome || '').split(' ')[0];\n\nconst mensagem = `Parabéns, ${nome}! Seu pagamento de ${valorPago} foi confirmado. Seus benefícios Plano Mais estão ativos. Obrigado por regularizar! Qualquer dúvida, estamos aqui.`;\n\nreturn [{\n  json: {\n    telefone: lead.telefone,\n    email: lead.email,\n    nome: lead.nome,\n    mensagem,\n    valorPago,\n    leadId: pagamento.leadId,\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "preparar-confirmacao",
@@ -98,7 +138,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.z-api.io/instances/{{ZAPI_INSTANCE}}/token/{{ZAPI_TOKEN}}/send-text",
+        "url": "=https://api.z-api.io/instances/{{ $vars.ZAPI_INSTANCE }}/token/{{ $vars.ZAPI_TOKEN }}/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Client-Token", "value": "={{ $vars.ZAPI_CLIENT_TOKEN }}" }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -117,7 +163,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE conversas SET status = 'encerrada', updated_at = NOW() WHERE lead_id = $1 AND status IN ('bot', 'aberta', 'fila')",
+        "query": "UPDATE conversas SET status = 'fechada', fim = NOW() WHERE lead_id = $1::uuid AND status IN ('aberta', 'pausada')",
         "additionalFields": {
           "queryParams": "={{ [$json.leadId] }}"
         }
@@ -169,13 +215,20 @@
       "false": [{ "node": "Resposta — Ignorado", "type": "main", "index": 0 }]
     },
     "Registrar Pagamento no Banco": {
-      "main": [[{ "node": "Atualizar Lead — Status Pago", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Atualizar Lead — Status Pago", "type": "main", "index": 0 },
+        { "node": "Marcar Token Checkout como Usado", "type": "main", "index": 0 },
+        { "node": "Notificar Dashboard — Gestores", "type": "main", "index": 0 }
+      ]]
     },
     "Atualizar Lead — Status Pago": {
       "main": [[{ "node": "Preparar Mensagem Confirmação", "type": "main", "index": 0 }]]
     },
     "Preparar Mensagem Confirmação": {
-      "main": [[{ "node": "Confirmar via WhatsApp", "type": "main", "index": 0 }], [{ "node": "Encerrar Conversa Ativa", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Confirmar via WhatsApp", "type": "main", "index": 0 },
+        { "node": "Encerrar Conversa Ativa", "type": "main", "index": 0 }
+      ]]
     },
     "Confirmar via WhatsApp": {
       "main": [[{ "node": "Resposta 200 OK", "type": "main", "index": 0 }]]
@@ -189,5 +242,5 @@
     "saveDataSuccessExecution": "last",
     "saveDataErrorExecution": "all"
   },
-  "tags": ["plano-mais", "pagamentos", "webhook"]
+  "tags": ["plano-mais", "pagamentos", "webhook", "cellcoin"]
 }

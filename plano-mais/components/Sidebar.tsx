@@ -37,14 +37,21 @@ const ICONES_AVATAR = [
   { id: 'heart', Icon: Heart },
 ]
 
-function PlusLogo() {
+function PlusLogo({ small }: { small?: boolean }) {
+  if (small) {
+    return (
+      <div style={{
+        width: 32, height: 32, borderRadius: 9, background: '#fff',
+        border: '1px solid rgba(13,61,204,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden', flexShrink: 0,
+      }}>
+        <img src="/logo-mais-assistencial.png" alt="Mais Assistencial" style={{ width: 28, height: 'auto', objectFit: 'contain' }} />
+      </div>
+    )
+  }
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="9" fill="#0D3DCC" />
-      <text x="50%" y="52%" dominantBaseline="central" textAnchor="middle"
-        fontFamily="Space Grotesk, sans-serif" fontWeight="800" fontSize="13" fill="#50F7E8"
-        style={{ userSelect: 'none' }}>P+</text>
-    </svg>
+    <img src="/logo-mais-assistencial.png" alt="Mais Assistencial" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
   )
 }
 
@@ -209,7 +216,7 @@ export default function Sidebar() {
           // Modo recolhido: logo em cima, botão toggle abaixo
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-              <PlusLogo />
+              <PlusLogo small />
             </Link>
             <button
               onClick={toggleCollapsed}
@@ -224,18 +231,15 @@ export default function Sidebar() {
             </button>
           </div>
         ) : (
-          // Modo expandido: logo e botão lado a lado
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          // Modo expandido: logo centralizada, botão toggle no canto
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
               <PlusLogo />
-              <div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 12, color: 'var(--text-primary)', letterSpacing: '0.04em', lineHeight: 1.1 }}>PLANO MAIS</div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 500, fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.12em' }}>COBRANCA</div>
-              </div>
             </Link>
             <button
               onClick={toggleCollapsed}
               style={{
+                position: 'absolute', right: 0,
                 background: 'var(--surface-2)', border: '1px solid var(--border)',
                 borderRadius: 7, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',

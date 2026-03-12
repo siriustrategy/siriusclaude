@@ -6,9 +6,11 @@ import {
   Info, X, AlertTriangle, CheckCheck, Check,
   FileText, MessageSquare, Zap, ChevronDown, Clock,
   Paperclip, ArrowLeftRight, Headphones, Download, Mic, Square,
+  Link2,
 } from 'lucide-react'
 import { getFaseBadge, getRiscoBadge, formatRelativeTime, getAvatarColor, formatCurrency } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 
 // ====================================================================
 // TIPOS
@@ -86,9 +88,40 @@ function Avatar({ nome, size = 38 }: { nome: string; size?: number }) {
 // ====================================================================
 // PAINEL DE INFORMAÇÕES DO LEAD (direita)
 // ====================================================================
-function InfoPanel({ conversa, onClose }: { conversa: Conversa; onClose: () => void }) {
+function InfoPanel({ conversa, userId, onClose }: { conversa: Conversa; userId: string | null; onClose: () => void }) {
+  const supabase = createClient()
   const fase = getFaseBadge(conversa.fase)
   const risco = getRiscoBadge(conversa.risco)
+  const [notaTexto, setNotaTexto] = useState('')
+  const [salvandoNota, setSalvandoNota] = useState(false)
+  const [notas, setNotas] = useState<{ id: string; conteudo: string; created_at: string }[]>([])
+
+  // Carrega notas do lead quando abre
+  useEffect(() => {
+    if (!conversa.lead_id) return
+    supabase.from('notas_crm')
+      .select('id, conteudo, created_at')
+      .eq('lead_id', conversa.lead_id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(({ data }) => { if (data) setNotas(data) })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversa.lead_id])
+
+  async function handleSalvarNota() {
+    if (!notaTexto.trim() || !conversa.lead_id || !userId) return
+    setSalvandoNota(true)
+    const { data } = await supabase.from('notas_crm')
+      .insert({ lead_id: conversa.lead_id, usuario_id: userId, conteudo: notaTexto.trim(), tipo: 'geral' })
+      .select('id, conteudo, created_at')
+      .single()
+    if (data) {
+      setNotas(prev => [data, ...prev])
+      setNotaTexto('')
+    }
+    setSalvandoNota(false)
+  }
+
   return (
     <div style={{ width: 280, borderLeft: '1px solid var(--border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -123,16 +156,40 @@ function InfoPanel({ conversa, onClose }: { conversa: Conversa; onClose: () => v
             </div>
           ))}
         </div>
+
+        {/* Notas do CRM — persistidas no banco */}
         <div>
-          <div style={{ fontSize: 10, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 8 }}>NOTAS INTERNAS</div>
+          <div style={{ fontSize: 10, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 8 }}>NOTAS DO LEAD</div>
           <textarea
             className="input-field"
-            placeholder="Adicionar nota sobre este lead..."
-            style={{ height: 80, resize: 'none', fontSize: 12 }}
+            placeholder="Nova nota sobre este lead..."
+            style={{ height: 72, resize: 'none', fontSize: 12 }}
+            value={notaTexto}
+            onChange={e => setNotaTexto(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleSalvarNota() }}
           />
-          <button className="btn-secondary" style={{ marginTop: 8, width: '100%', justifyContent: 'center', fontSize: 12 }}>
-            Salvar Nota
+          <button
+            className="btn-secondary"
+            style={{ marginTop: 6, width: '100%', justifyContent: 'center', fontSize: 12 }}
+            onClick={handleSalvarNota}
+            disabled={salvandoNota || !notaTexto.trim()}
+          >
+            {salvandoNota ? 'Salvando...' : 'Salvar Nota'}
           </button>
+
+          {/* Histórico de notas */}
+          {notas.length > 0 && (
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {notas.map(n => (
+                <div key={n.id} style={{ padding: '8px 10px', background: 'rgba(214,137,16,0.07)', border: '1px solid rgba(214,137,16,0.18)', borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{n.conteudo}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                    {new Date(n.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -144,11 +201,14 @@ function InfoPanel({ conversa, onClose }: { conversa: Conversa; onClose: () => v
 // ====================================================================
 export default function ChatPage() {
   const supabase = createClient()
+  const { perfil } = useAuth()
+  const isGestor = perfil?.role === 'gestor'
 
   const [userId, setUserId] = useState<string | null>(null)
   const [conversas, setConversas] = useState<Conversa[]>([])
   const [conversaAtiva, setConversaAtiva] = useState<Conversa>(CONVERSA_VAZIA)
   const [msgs, setMsgs] = useState<Msg[]>([])
+  const [mapaAtendentes, setMapaAtendentes] = useState<Record<string, string>>({})
   const [tabLista, setTabLista] = useState<'minhas' | 'fila' | 'historico'>('historico')
   const [mensagem, setMensagem] = useState('')
   const [tipoInput, setTipoInput] = useState<TipoMsg>('mensagem')
@@ -158,18 +218,34 @@ export default function ChatPage() {
   const [showTransferir, setShowTransferir] = useState(false)
   const [atendentesOnline, setAtendentesOnline] = useState<{ id: string; nome: string }[]>([])
   const [busca, setBusca] = useState('')
+  const [gerandoLink, setGerandoLink] = useState(false)
+  const [linkGerado, setLinkGerado] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [uploadando, setUploadando] = useState(false)
   const [uploadErro, setUploadErro] = useState<string | null>(null)
   const [gravando, setGravando] = useState(false)
   const [tempoGravacao, setTempoGravacao] = useState(0)
-  const [arquivoPreview, setArquivoPreview] = useState<{ blob: Blob; url: string; nome: string; tipo: 'imagem' | 'audio' | 'documento' } | null>(null)
+  const [arquivoPreview, setArquivoPreview] = useState<{ blob: Blob; url: string; nome: string; tipo: 'imagem' | 'audio' | 'video' | 'documento' } | null>(null)
   const [legendaArquivo, setLegendaArquivo] = useState('')
   const chatRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Cleanup: libera microfone e timer ao sair da página
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      }
+      streamRef.current?.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Carregar user atual
   useEffect(() => {
@@ -238,6 +314,21 @@ export default function ChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Carregar mapa de atendentes (gestor precisa ver nome de quem atende cada conversa)
+  useEffect(() => {
+    if (!isGestor) return
+    supabase.from('usuarios')
+      .select('id, nome')
+      .then(({ data }) => {
+        if (data) {
+          const mapa: Record<string, string> = {}
+          data.forEach((u: { id: string; nome: string }) => { mapa[u.id] = u.nome })
+          setMapaAtendentes(mapa)
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGestor])
+
   // Carregar respostas rápidas do banco
   useEffect(() => {
     supabase.from('respostas_rapidas')
@@ -289,8 +380,10 @@ export default function ChatPage() {
   const isHumano = conversaAtiva.tipo === 'HUMANO' || conversaAtiva.tipo === 'MISTO'
   const isMinhaConversa = conversaAtiva.atendente_id === userId
 
-  // Minhas = conversas ativas onde este atendente está assignado
-  const minhas = conversas.filter(c => c.atendente_id === userId && c.status !== 'fechada')
+  // Gestor: "Em Atendimento" = todas com atendente; Atendente: "Minhas" = só as suas
+  const minhas = isGestor
+    ? conversas.filter(c => c.atendente_id !== null && c.status !== 'fechada')
+    : conversas.filter(c => c.atendente_id === userId && c.status !== 'fechada')
   // Fila = sem atendente + precisam de atendimento humano (tipo != BOT) + não fechadas
   const fila = conversas.filter(c => !c.atendente_id && c.tipo !== 'BOT' && c.status !== 'fechada')
   // Histórico = BOT ainda ativo (sem atendente humano) + todas as encerradas
@@ -326,11 +419,44 @@ export default function ChatPage() {
 
     if (res.ok && json.msg) {
       setMsgs(prev => [...prev, mapMsg(json.msg)])
-      setConversas(prev => prev.map(c =>
-        c.id === conversaAtiva.id ? { ...c, ultima_mensagem: texto, ultima_msg_remetente: 'ATENDENTE', total_msgs: c.total_msgs + 1 } : c
-      ))
+      // Nota interna NÃO atualiza preview na lista (é interna)
+      if (tipoInput === 'nota_interna') {
+        setConversas(prev => prev.map(c =>
+          c.id === conversaAtiva.id ? { ...c, total_msgs: c.total_msgs + 1 } : c
+        ))
+      } else {
+        setConversas(prev => prev.map(c =>
+          c.id === conversaAtiva.id ? { ...c, ultima_mensagem: texto, ultima_msg_remetente: 'ATENDENTE', total_msgs: c.total_msgs + 1 } : c
+        ))
+        // Avisa se Z-API falhou
+        if (json._wa && json._wa.ok === false) {
+          setUploadErro(`Salvo, mas NÃO enviado ao WhatsApp. Z-API: ${json._wa.response || 'erro desconhecido'}`)
+        }
+      }
     }
     setEnviando(false)
+  }
+
+  async function handleGerarLinkCheckout() {
+    if (!conversaAtiva.lead_id || gerandoLink) return
+    setGerandoLink(true)
+    try {
+      const res = await fetch('/api/checkout/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: conversaAtiva.lead_id, enviar_whatsapp: true }),
+      })
+      const data = await res.json()
+      if (data.checkout_url) {
+        await navigator.clipboard.writeText(data.checkout_url)
+        setLinkGerado(true)
+        setTimeout(() => setLinkGerado(false), 3000)
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setGerandoLink(false)
+    }
   }
 
   async function handleAssumirConversa() {
@@ -384,8 +510,9 @@ export default function ChatPage() {
     const file = e.target.files?.[0]
     if (!file || !conversaAtiva.id) return
     e.target.value = ''
-    const tipo: 'imagem' | 'audio' | 'documento' = file.type.startsWith('audio/') ? 'audio'
+    const tipo: 'imagem' | 'audio' | 'video' | 'documento' = file.type.startsWith('audio/') ? 'audio'
       : file.type.startsWith('image/') ? 'imagem'
+      : file.type.startsWith('video/') ? 'video'
       : 'documento'
     const url = URL.createObjectURL(file)
     setArquivoPreview({ blob: file, url, nome: file.name, tipo })
@@ -409,13 +536,16 @@ export default function ChatPage() {
         .find(m => MediaRecorder.isTypeSupported(m)) ?? ''
 
       const mr = new MediaRecorder(stream, mimePreferido ? { mimeType: mimePreferido } : undefined)
+      streamRef.current = stream  // guarda referência para cleanup
       chunksRef.current = []
 
       mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
 
       mr.onstop = () => {
-        stream.getTracks().forEach(t => t.stop())
-        if (timerRef.current) clearInterval(timerRef.current)
+        // Para todas as tracks e libera o microfone
+        streamRef.current?.getTracks().forEach(t => t.stop())
+        streamRef.current = null
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
         setGravando(false)
         setTempoGravacao(0)
 
@@ -500,6 +630,10 @@ export default function ChatPage() {
       setConversas(prev => prev.map(c =>
         c.id === conversaAtiva.id ? { ...c, ultima_mensagem: legenda || nome, ultima_msg_remetente: 'ATENDENTE', total_msgs: c.total_msgs + 1 } : c
       ))
+      // Avisa se Z-API falhou (mensagem salva no banco mas NÃO chegou no WhatsApp)
+      if (json._wa && json._wa.ok === false) {
+        setUploadErro(`Salvo, mas NÃO enviado ao WhatsApp. Z-API retornou: ${json._wa.response || 'erro desconhecido'}`)
+      }
     } else {
       setUploadErro(json.error || 'Erro ao registrar mensagem')
     }
@@ -517,11 +651,11 @@ export default function ChatPage() {
           ============================================================ */}
       <div style={{ width: 340, borderRight: '1px solid var(--border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
 
-        {/* Tabs Minhas / Fila / Histórico */}
+        {/* Tabs Em Atendimento / Fila / Histórico */}
         <div style={{ padding: '12px 16px 0', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', gap: 0 }}>
             {([
-              { key: 'minhas', label: 'Minhas', count: minhas.length },
+              { key: 'minhas', label: isGestor ? 'Em Atendimento' : 'Minhas', count: minhas.length },
               { key: 'fila', label: 'Fila', count: fila.length },
               { key: 'historico', label: 'Histórico', count: historico.length },
             ] as const).map(tab => (
@@ -580,7 +714,9 @@ export default function ChatPage() {
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {listaFiltrada.length === 0 && (
             <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-              {tabLista === 'minhas' ? 'Nenhuma conversa ativa' : tabLista === 'fila' ? 'Nenhum cliente na fila' : 'Sem histórico'}
+              {tabLista === 'minhas'
+                ? (isGestor ? 'Nenhuma conversa em atendimento' : 'Nenhuma conversa ativa')
+                : tabLista === 'fila' ? 'Nenhum cliente na fila' : 'Sem histórico'}
             </div>
           )}
           {listaFiltrada.map(c => {
@@ -623,6 +759,13 @@ export default function ChatPage() {
                         ? <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(13,61,204,0.10)', color: '#0D3DCC', border: '1px solid rgba(13,61,204,0.22)' }}>BOT</span>
                         : <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.05em', background: 'rgba(11,191,170,0.10)', color: '#0BBFAA', border: '1px solid rgba(11,191,170,0.22)' }}>ATENDIMENTO</span>
                       }
+                      {/* Tag do atendente — visível apenas para gestor em conversas com atendente */}
+                      {isGestor && c.atendente_id && mapaAtendentes[c.atendente_id] && (
+                        <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 5, fontFamily: 'Space Grotesk,sans-serif', fontWeight: 700, letterSpacing: '0.04em', background: 'rgba(232,27,143,0.08)', color: '#E81B8F', border: '1px solid rgba(232,27,143,0.22)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <UserCheck size={8} />
+                          {mapaAtendentes[c.atendente_id].split(' ')[0]}
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 185, fontStyle: c.ultima_msg_remetente !== 'LEAD' ? 'italic' : 'normal' }}>
@@ -674,6 +817,16 @@ export default function ChatPage() {
             </button>
             {isMinhaConversa && conversaAtiva.status !== 'fechada' ? (
               <>
+                <button
+                  className={linkGerado ? 'btn-secondary' : 'btn-ghost'}
+                  style={{ fontSize: 12, color: linkGerado ? 'var(--success)' : 'var(--text-secondary)' }}
+                  onClick={handleGerarLinkCheckout}
+                  disabled={gerandoLink}
+                  title="Gerar e enviar link de checkout via WhatsApp"
+                >
+                  <Link2 size={13} />
+                  {gerandoLink ? 'Gerando...' : linkGerado ? 'Copiado!' : 'Gerar Link'}
+                </button>
                 <button className="btn-ghost" style={{ fontSize: 12, color: 'var(--text-secondary)' }}
                   onClick={async () => {
                     await supabase.from('conversas').update({ tipo: 'BOT', atendente_id: null }).eq('id', conversaAtiva.id)
@@ -946,6 +1099,14 @@ export default function ChatPage() {
                           style={{ maxHeight: 160, maxWidth: '100%', borderRadius: 8, display: 'block' }}
                         />
                       )}
+                      {/* Preview de vídeo */}
+                      {arquivoPreview.tipo === 'video' && (
+                        <video
+                          src={arquivoPreview.url}
+                          controls
+                          style={{ maxHeight: 160, maxWidth: '100%', borderRadius: 8, display: 'block' }}
+                        />
+                      )}
                       {/* Preview de áudio */}
                       {arquivoPreview.tipo === 'audio' && (
                         <div>
@@ -1015,7 +1176,7 @@ export default function ChatPage() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.mp3,.ogg,.mp4,.aac"
+                      accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.mp3,.ogg,.aac"
                       style={{ display: 'none' }}
                       onChange={handleUploadArquivo}
                     />
@@ -1086,7 +1247,7 @@ export default function ChatPage() {
           </div>
 
           {/* Info panel lateral */}
-          {showInfo && <InfoPanel conversa={conversaAtiva} onClose={() => setShowInfo(false)} />}
+          {showInfo && <InfoPanel conversa={conversaAtiva} userId={userId} onClose={() => setShowInfo(false)} />}
         </div>
       </div>
 

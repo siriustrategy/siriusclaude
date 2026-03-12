@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSidebar } from '@/contexts/SidebarContext'
+import NotificacoesDropdown from '@/components/NotificacoesDropdown'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':  'Dashboard',
@@ -46,10 +46,7 @@ export default function Header() {
         <span className={`badge ${isGestor ? 'badge-blue' : 'badge-teal'}`}>
           {isGestor ? 'Gestor' : 'Atendente'}
         </span>
-        <button style={{ position: 'relative', background: 'var(--muted-bg)', border: '1px solid var(--border)', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-          <Bell size={16} strokeWidth={2} />
-          <span className="magenta-glow-pulse" style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: 'var(--magenta)', borderRadius: '50%', border: '1.5px solid var(--sidebar-bg)' }} />
-        </button>
+        <NotificacoesDropdown />
         <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #0D3DCC 0%, #0BBFAA 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 12, color: '#FFF', cursor: 'pointer', flexShrink: 0 }}>
           {initials}
         </div>

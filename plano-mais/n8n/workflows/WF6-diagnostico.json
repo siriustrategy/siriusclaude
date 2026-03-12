@@ -21,7 +21,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT fase, COUNT(*) as total, SUM(valor_divida) as valor_total, AVG(dias_atraso) as media_dias FROM leads WHERE status NOT IN ('pago','cancelado') AND ativo = true GROUP BY fase ORDER BY CASE fase WHEN 'pre' THEN 1 WHEN 'mes1' THEN 2 WHEN 'mes2' THEN 3 WHEN 'mes3' THEN 4 WHEN 'mes4' THEN 5 WHEN 'mes5' THEN 6 WHEN 'pos' THEN 7 END",
+        "query": "SELECT fase_cobranca, COUNT(*) as total, SUM(valor_em_aberto) as valor_total, AVG(dias_atraso) as media_dias FROM leads WHERE status NOT IN ('pago','cancelado','arquivado') GROUP BY fase_cobranca ORDER BY CASE fase_cobranca WHEN 'pre' THEN 1 WHEN 'mes1' THEN 2 WHEN 'mes2' THEN 3 WHEN 'mes3' THEN 4 WHEN 'mes4' THEN 5 WHEN 'mes5' THEN 6 WHEN 'pos' THEN 7 END",
         "additionalFields": {}
       },
       "id": "stats-por-fase",
@@ -39,7 +39,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT DATE(criado_em) as data, canal, COUNT(*) as enviados, COUNT(CASE WHEN status = 'entregue' THEN 1 END) as entregues, COUNT(CASE WHEN status = 'lido' THEN 1 END) as lidos FROM mensagens WHERE criado_em >= NOW() - INTERVAL '1 day' GROUP BY 1,2 ORDER BY 1,2",
+        "query": "SELECT DATE(timestamp) as data, tipo, COUNT(*) as enviados, COUNT(CASE WHEN status_entrega = 'entregue' THEN 1 END) as entregues, COUNT(CASE WHEN status_entrega = 'lido' THEN 1 END) as lidos FROM mensagens WHERE timestamp >= NOW() - INTERVAL '1 day' AND remetente = 'BOT' GROUP BY 1,2 ORDER BY 1,2",
         "additionalFields": {}
       },
       "id": "stats-mensagens",
@@ -57,7 +57,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT COUNT(*) as pagamentos_hoje, SUM(valor) as valor_recuperado_hoje, COUNT(CASE WHEN metodo = 'pix' THEN 1 END) as via_pix, COUNT(CASE WHEN metodo = 'boleto' THEN 1 END) as via_boleto, COUNT(CASE WHEN metodo = 'cartao' THEN 1 END) as via_cartao FROM pagamentos WHERE DATE(criado_em) = CURRENT_DATE AND status = 'confirmado'",
+        "query": "SELECT COUNT(*) as pagamentos_hoje, SUM(valor) as valor_recuperado_hoje, COUNT(CASE WHEN metodo = 'pix' THEN 1 END) as via_pix, COUNT(CASE WHEN metodo = 'boleto' THEN 1 END) as via_boleto, COUNT(CASE WHEN metodo = 'cartao' THEN 1 END) as via_cartao FROM pagamentos WHERE DATE(data_pagamento) = CURRENT_DATE AND status = 'confirmado'",
         "additionalFields": {}
       },
       "id": "stats-pagamentos",
@@ -74,28 +74,46 @@
     },
     {
       "parameters": {
-        "jsCode": "// Montar relatório executivo\nconst fases = $('Stats — Leads por Fase').all().map(i => i.json);\nconst mensagens = $('Stats — Mensagens Hoje').all().map(i => i.json);\nconst pagamentos = $('Stats — Pagamentos Hoje').first().json;\n\nconst totalLeads = fases.reduce((s, f) => s + Number(f.total), 0);\nconst totalDivida = fases.reduce((s, f) => s + Number(f.valor_total), 0);\nconst totalMensagens = mensagens.reduce((s, m) => s + Number(m.enviados), 0);\nconst hoje = new Date().toLocaleDateString('pt-BR');\n\nconst linhasFases = fases.map(f => {\n  const desconto = { pre:0, mes1:0, mes2:0, mes3:5, mes4:15, mes5:20, pos:0 }[f.fase] || 0;\n  return `  • ${f.fase.padEnd(5)}: ${f.total} leads | R$ ${Number(f.valor_total).toLocaleString('pt-BR')} | ~${Math.round(f.media_dias)}d atraso${desconto > 0 ? ` (${desconto}% desc. ativo)` : ''}`;\n}).join('\\n');\n\nconst relatorio = `RELATORIO DIARIO — PLANO MAIS INADIMPLENCIA\n${hoje} | Gerado pelo WF6 Diagnostico\n\n== CARTEIRA ATUAL ==\nTotal de inadimplentes: ${totalLeads} leads\nValor total em aberto: R$ ${totalDivida.toLocaleString('pt-BR')}\n\nDistribuicao por fase:\n${linhasFases}\n\n== ATIVIDADE DE HOJE ==\nMensagens disparadas: ${totalMensagens}\nPagamentos recebidos: ${pagamentos.pagamentos_hoje || 0}\nValor recuperado: R$ ${Number(pagamentos.valor_recuperado_hoje || 0).toLocaleString('pt-BR')}\n  via PIX: ${pagamentos.via_pix || 0}\n  via Boleto: ${pagamentos.via_boleto || 0}\n  via Cartao: ${pagamentos.via_cartao || 0}\n\n== ALERTAS ==\n${fases.filter(f => f.fase === 'mes5' && f.total > 0).length > 0 ? '⚠ ATENCAO: Leads em mes5 — contato urgente necessario!' : '✓ Sem alertas criticos'}\n\nProximo scheduler: amanha 08h00`;\n\nreturn [{ json: { relatorio, dados: { fases, pagamentos, totalLeads, totalDivida } } }];",
+        "operation": "executeQuery",
+        "query": "SELECT SUM(custo_total) as custo_dia FROM custos_operacao WHERE data = CURRENT_DATE",
+        "additionalFields": {}
+      },
+      "id": "stats-custos",
+      "name": "Stats — Custos Hoje",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [420, 640],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-pg",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Montar relatório executivo\nconst fases = $('Stats — Leads por Fase').all().map(i => i.json);\nconst mensagens = $('Stats — Mensagens Hoje').all().map(i => i.json);\nconst pagamentos = $('Stats — Pagamentos Hoje').first().json;\nconst custos = $('Stats — Custos Hoje').first().json;\n\nconst totalLeads = fases.reduce((s, f) => s + Number(f.total), 0);\nconst totalDivida = fases.reduce((s, f) => s + Number(f.valor_total || 0), 0);\nconst totalMensagens = mensagens.reduce((s, m) => s + Number(m.enviados), 0);\nconst hoje = new Date().toLocaleDateString('pt-BR');\n\nconst linhasFases = fases.map(f => {\n  const desconto = { pre:0, mes1:0, mes2:0, mes3:5, mes4:15, mes5:20, pos:0 }[f.fase_cobranca] || 0;\n  return `  • ${f.fase_cobranca.padEnd(5)}: ${f.total} leads | R$ ${Number(f.valor_total || 0).toLocaleString('pt-BR')} | ~${Math.round(f.media_dias || 0)}d atraso${desconto > 0 ? ` (${desconto}% desc. ativo)` : ''}`;\n}).join('\\n');\n\nconst relatorio = `RELATORIO DIARIO — PLANO MAIS INADIMPLENCIA\n${hoje} | Gerado pelo WF6 Diagnostico\n\n== CARTEIRA ATUAL ==\nTotal de inadimplentes: ${totalLeads} leads\nValor total em aberto: R$ ${totalDivida.toLocaleString('pt-BR')}\n\nDistribuicao por fase:\n${linhasFases}\n\n== ATIVIDADE DE HOJE ==\nMensagens disparadas: ${totalMensagens}\nPagamentos recebidos: ${pagamentos.pagamentos_hoje || 0}\nValor recuperado: R$ ${Number(pagamentos.valor_recuperado_hoje || 0).toLocaleString('pt-BR')}\n  via PIX: ${pagamentos.via_pix || 0}\n  via Boleto: ${pagamentos.via_boleto || 0}\n  via Cartao: ${pagamentos.via_cartao || 0}\n\n== CUSTOS OPERACIONAIS ==\nCusto total hoje: R$ ${Number(custos.custo_dia || 0).toFixed(4)}\n\n== ALERTAS ==\n${fases.filter(f => f.fase_cobranca === 'mes5' && f.total > 0).length > 0 ? 'ATENCAO: Leads em mes5 — contato urgente necessario!' : 'Sem alertas criticos'}\n\nProximo scheduler: amanha 08h00`;\n\nreturn [{ json: { relatorio, dados: { fases, pagamentos, totalLeads, totalDivida } } }];",
         "mode": "runOnceForAllItems"
       },
       "id": "montar-relatorio",
       "name": "Montar Relatório Executivo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 340]
+      "position": [660, 400]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO diagnostico_logs (data, relatorio_texto, dados_json, criado_em) VALUES (CURRENT_DATE, $1, $2::jsonb, NOW())",
+        "query": "INSERT INTO auditoria (acao, tabela, registro_id, dados_novos)\nVALUES ('diagnostico_diario', 'leads', gen_random_uuid(), $1::jsonb)",
         "additionalFields": {
-          "queryParams": "={{ [$json.relatorio, JSON.stringify($json.dados)] }}"
+          "queryParams": "={{ [JSON.stringify($json.dados)] }}"
         }
       },
       "id": "salvar-diagnostico",
-      "name": "Salvar Diagnóstico no Banco",
+      "name": "Salvar Diagnóstico (Auditoria)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [880, 340],
+      "position": [880, 400],
       "credentials": {
         "postgres": {
           "id": "supabase-pg",
@@ -117,7 +135,7 @@
       "name": "Enviar Email ao Gestor",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [1100, 240],
+      "position": [1100, 300],
       "credentials": {
         "smtp": {
           "id": "smtp-planomais",
@@ -141,7 +159,7 @@
       "name": "Notificar Slack (opcional)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1100, 440]
+      "position": [1100, 500]
     }
   ],
   "connections": {
@@ -149,7 +167,8 @@
       "main": [[
         { "node": "Stats — Leads por Fase", "type": "main", "index": 0 },
         { "node": "Stats — Mensagens Hoje", "type": "main", "index": 0 },
-        { "node": "Stats — Pagamentos Hoje", "type": "main", "index": 0 }
+        { "node": "Stats — Pagamentos Hoje", "type": "main", "index": 0 },
+        { "node": "Stats — Custos Hoje", "type": "main", "index": 0 }
       ]]
     },
     "Stats — Leads por Fase": {
@@ -161,10 +180,13 @@
     "Stats — Pagamentos Hoje": {
       "main": [[{ "node": "Montar Relatório Executivo", "type": "main", "index": 0 }]]
     },
-    "Montar Relatório Executivo": {
-      "main": [[{ "node": "Salvar Diagnóstico no Banco", "type": "main", "index": 0 }]]
+    "Stats — Custos Hoje": {
+      "main": [[{ "node": "Montar Relatório Executivo", "type": "main", "index": 0 }]]
     },
-    "Salvar Diagnóstico no Banco": {
+    "Montar Relatório Executivo": {
+      "main": [[{ "node": "Salvar Diagnóstico (Auditoria)", "type": "main", "index": 0 }]]
+    },
+    "Salvar Diagnóstico (Auditoria)": {
       "main": [[
         { "node": "Enviar Email ao Gestor", "type": "main", "index": 0 },
         { "node": "Notificar Slack (opcional)", "type": "main", "index": 0 }

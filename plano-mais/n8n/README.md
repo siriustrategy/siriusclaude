@@ -51,8 +51,11 @@ Configure em **Settings > Variables**:
 
 | Variável | Descrição |
 |----------|-----------|
+| `N8N_INSTANCE_URL` | URL base do seu n8n (ex: `https://meu-n8n.cloud`) |
+| `APP_URL` | URL do dashboard (ex: `https://app.planomais.com.br`) |
 | `ZAPI_INSTANCE` | ID da instância Z-API |
 | `ZAPI_TOKEN` | Token da instância Z-API |
+| `ZAPI_CLIENT_TOKEN` | Client-Token da Z-API |
 | `ZENVIA_API_TOKEN` | Token da API Zenvia (SMS) |
 | `SLACK_WEBHOOK_URL` | URL do webhook do Slack (WF6, opcional) |
 
